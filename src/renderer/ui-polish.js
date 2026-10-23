@@ -1,0 +1,14 @@
+'use strict';
+(()=>{
+ const signatures=new WeakMap();
+ function range(node){if(!node||node.type!=='range')return;const min=Number(node.min)||0,max=Number(node.max||100),value=Number(node.value),fill=max>min?Math.max(0,Math.min(100,(value-min)/(max-min)*100)):0;
+  const signature=fill+':'+node.disabled;if(signatures.get(node)===signature)return;signatures.set(node,signature);node.style.setProperty('--range-fill',fill+'%');}
+ window.WaveUI={range,ranges:root=>{for(const node of (root||document).querySelectorAll('input[type="range"]'))range(node);}};
+ document.addEventListener('input',event=>range(event.target));window.WaveUI.ranges();
+ if(!document.getElementById('settings-dialog'))return;
+ const section=document.createElement('section');section.className='shortcut-settings';section.innerHTML='<h3>Управление с клавиатуры</h3><p class="muted">Нажмите F1, чтобы открыть список сочетаний.</p><button id="shortcuts-open" class="secondary">Горячие клавиши</button>';document.querySelector('#settings-dialog .modal-card').append(section);
+ const dialog=document.createElement('dialog');dialog.id='shortcuts-dialog';dialog.className='modal-overlay hidden';dialog.setAttribute('aria-labelledby','shortcuts-heading');dialog.innerHTML='<section class="modal-card"><div class="section-head"><h2 id="shortcuts-heading">Горячие клавиши</h2><button id="shortcuts-close" class="secondary">Закрыть</button></div><dl class="shortcuts-list"><div><dt>Поиск музыки</dt><dd><kbd>Ctrl</kbd> <kbd>K</kbd></dd></div><div><dt>Воспроизведение / пауза</dt><dd><kbd>Пробел</kbd></dd></div><div><dt>Назад / вперёд</dt><dd><kbd>Alt</kbd> <kbd>←</kbd> / <kbd>→</kbd></dd></div><div><dt>Переход между песнями списка</dt><dd><kbd>↑</kbd> <kbd>↓</kbd></dd></div><div><dt>Начало / конец списка</dt><dd><kbd>Home</kbd> <kbd>End</kbd></dd></div><div><dt>Закрыть окно</dt><dd><kbd>Esc</kbd></dd></div></dl><p class="muted">Пробел управляет воспроизведением, когда фокус вне поля, кнопки и строки песни. Стрелки, Home и End работают при фокусе на названии или кнопке запуска песни. Боковые кнопки мыши — назад и вперёд. Мультимедийные клавиши работают через Windows.</p></section>';document.body.append(dialog);
+ const about=document.createElement('footer');about.className='settings-about';about.innerHTML='<span>Wave</span><span id="settings-version">Версия 1.0.9.9</span>';document.querySelector('#settings-dialog .modal-card').append(about);
+ document.getElementById('shortcuts-open').onclick=()=>dialog.classList.remove('hidden');document.getElementById('shortcuts-close').onclick=()=>dialog.classList.add('hidden');
+ document.addEventListener('keydown',event=>{if(event.key==='F1'&&!event.ctrlKey&&!event.altKey&&!event.metaKey){event.preventDefault();if(dialog.open)dialog.classList.add('hidden');else dialog.classList.remove('hidden');}});
+})();

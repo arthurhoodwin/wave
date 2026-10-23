@@ -1,4 +1,5 @@
 'use strict';
+require('./stdio-guard.cjs').installStdioGuard();
 const releaseVersion=require('../../package.json').releaseVersion||require('../../package.json').version;
 const electron=require('electron');const {app,BrowserWindow,ipcMain,safeStorage,dialog}=electron;
 const path=require('node:path');

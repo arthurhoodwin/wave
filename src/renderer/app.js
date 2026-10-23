@@ -15,6 +15,7 @@ function setIcon(node,name,fallback){if(window.WaveIcons)window.WaveIcons.set(no
 const trackNumberFormat=new Intl.NumberFormat('ru-RU'),trackPlural=new Intl.PluralRules('ru-RU');function countTracks(n){const form=trackPlural.select(n);return trackNumberFormat.format(n)+' '+(form==='one'?'трек':form==='few'?'трека':'треков');}
 let controlsSignature;
 function controls(){
+ window.WaveUI?.ranges();
  window.waveDesktop?.publish();window.WaveSong?.controls();window.WaveCollection?.controls();
  const signature=JSON.stringify([state.refreshing,state.online,state.nativePlayback,state.current?.id,playable(state.current),state.playing,state.busy,state.loading,state.ready,state.collectionBusy,state.shuffle,state.repeat,state.duration>0,(state.hasPlayableTracks??state.tracks.some(playable)),hasNextTrack(),!!previousTrack(),!!ownPlaylist(),has('mutate'),has('volume'),has('seek')]);
  if(signature===controlsSignature)return;controlsSignature=signature;
