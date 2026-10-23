@@ -6,3 +6,5 @@
 
 .song-cover-image{display:block}.song-cover-image img{width:100%;height:100%;object-fit:cover;display:block}.song-cover-image .wave-icon{width:80px;height:80px;margin:calc(50% - 40px)}
 @media(max-width:850px){button.now-art{flex-basis:44px}}@media(max-width:600px){button.now-art{flex-basis:36px}}
+
+.lyrics-source-link{color:var(--text-accent);text-decoration:underline;text-underline-offset:3px}

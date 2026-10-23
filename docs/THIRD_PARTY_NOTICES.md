@@ -5,6 +5,7 @@
 | Компонент | Лицензия | Где находится / источник |
 |---|---|---|
 | Hls.js 1.7.3 | BSD-2-Clause | `src/renderer/vendor/hls.LICENSE`; https://github.com/video-dev/hls.js |
+| htmlparser2 12.0.0 и DOM-зависимости | MIT / BSD-2-Clause (лицензии каждого пакета сохраняются) | Пакеты node_modules в поставке; https://github.com/fb55/htmlparser2 |
 | Inter Variable | SIL Open Font License 1.1 | `src/renderer/fonts/Inter-LICENSE.txt`; https://github.com/rsms/inter |
 | Electron | MIT и лицензии Chromium/Node.js | Поставляемые Electron `LICENSE` и `LICENSES.chromium.html`; https://github.com/electron/electron |
 | electron-builder | MIT | Инструмент сборки; https://github.com/electron-userland/electron-builder |

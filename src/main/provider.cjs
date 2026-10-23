@@ -23,8 +23,8 @@ const playerScript=body=>`(()=>{const p=(${playerLookup.toString()})();if(!p)ret
 class VkProvider {
   constructor(engine,playEngine=engine,options={}){this.clearSession=options.clearSession;this.network=options.network;this.nativePlayer=options.player;this.engine=engine;this.playEngine=playEngine;this.tracks=new Map();this.handles=new Map();this.playlists=new Map();this.playlistHandles=new Map();this.collection=null;this.active=null;this.root=null;this.serial=Promise.resolve();this.playSerial=Promise.resolve();this.playRequest=0;this.playPending=false;this.playNavigating=false;this.warmRequest=0;this.savedPlaylists=[];this.store=options.store;this.onSession=options.onSession||(()=>{});this.onOperations=options.onOperations||(()=>{});this.session=null;this.online=false;this.saveTimer=null;this.cache=new PlaylistCache(engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));}
   exclusive(fn){const next=this.serial.then(fn,fn);this.serial=next.catch(()=>{});return next;}
-  operations(){return this.operationLog?.slice()||[];}
-  operationChanged(){this.onOperations?.(this.operations());}
+  operations(full=true){return(this.operationLog||[]).map(operation=>{if(full)return{...operation};const {results,...summary}=operation;return{...summary,detailsAvailable:!!results};});}
+  operationChanged(){this.onOperations?.(this.operations(false));}
   absorbPlaylists(rows,route,{revision=this.sidebarRevision||0}={}){
     const previous=this.savedPlaylists.slice(),incoming=[];
     for(const row of rows||[]){const signature=JSON.stringify(row.vkId?['vk',row.vkId]:[row.index,row.title,row.owner]);let id=this.playlistHandles.get(signature);
@@ -47,7 +47,7 @@ class VkProvider {
     if(command.action==='create')playlistId=[...this.playlists].find(([,p])=>p.vkId===result.vkId)?.[0];
     if(['like','unlike'].includes(command.action))playlistId='library:'+this.root;
     if(!playlistId&&result.vkId){playlistId=randomUUID();this.playlists.set(playlistId,{vkId:result.vkId,title:result.title,owner:result.owner||this.savedPlaylists.find(p=>p.editable)?.owner||'',cover:cover(result.cover),index:0,editable:true,route:'https://vk.ru'+this.root+'?section=all'});}
-    if(result.vkId&&playlistId){const item=this.playlists.get(playlistId);item.confirmedRevision=this.sidebarRevision;item.route=result.route||item.route;if(result.owner)item.owner=result.owner;if(cover(result.cover))item.cover=cover(result.cover);if(!this.savedPlaylists.some(p=>p.id===playlistId))this.savedPlaylists.unshift(this.publicPlaylist(playlistId,item));}
+    if(result.vkId&&playlistId){this.playlistHandles.set(JSON.stringify(['vk',result.vkId]),playlistId);const item=this.playlists.get(playlistId);item.confirmedRevision=this.sidebarRevision;item.route=result.route||item.route;if(result.owner)item.owner=result.owner;if(cover(result.cover))item.cover=cover(result.cover);if(!this.savedPlaylists.some(p=>p.id===playlistId))this.savedPlaylists.unshift(this.publicPlaylist(playlistId,item));}
     if(result.title&&this.playlists.has(playlistId)){this.playlists.get(playlistId).title=result.title;const p=this.savedPlaylists.find(p=>p.id===playlistId);if(p)p.title=result.title;}
     if(playlistId&&this.playlists.has(playlistId))this.savedPlaylists=this.savedPlaylists.map(p=>p.id===playlistId?this.publicPlaylist(playlistId,this.playlists.get(playlistId)):p);
     let snapshot;
@@ -62,8 +62,11 @@ class VkProvider {
     }
     if(['like','unlike'].includes(command.action)){for(const t of this.tracks.values())if(t.key===context.track.key)t.owned=result.owned;for(const entry of this.cache.entries.values())for(const t of entry.items.values())if(this.tracks.get(t.id)?.key===context.track.key)t.owned=result.owned;}
     if(result.route)this.invalidatePlayback(result.route);
-    this.scheduleSave();return{playlistId,collection:snapshot,playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0,owned:result.owned,changed:result.changed};
+    const ownership=['like','unlike'].includes(command.action)?require('./collection-batch.cjs').ownership(this,new Map([[context.track.key,result.owned]])):undefined;this.scheduleSave();return{playlistId,collection:snapshot,playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0,owned:result.owned,ownership,changed:result.changed};
   }
+  batchPreview(input){return require('./collection-batch.cjs').preview(this,input);}
+  batchExecute(input){return require('./collection-batch.cjs').execute(this,input);}
+  batchCancel(id){return require('./collection-batch.cjs').cancel(this,id);}
   mutate(input){
     const command=validateCommand(input);this.operationLog??=[];this.mutationSerial??=Promise.resolve();this.editor??=this.network||new CollectionEditor(this.engine);
     const playlist=this.playlists.get(command.playlistId),track=this.tracks.get(command.trackId),before=this.tracks.get(command.beforeTrackId);
@@ -123,7 +126,7 @@ class VkProvider {
   async checkSession(){
     const s=this.network?{ready:!!this.network.accountId,root:this.network.accountId?'/audios'+this.network.accountId:null}:await this.engine.evaluate(expression(()=>({ready:!!window.vk?.id,root:Number.isSafeInteger(Number(window.vk?.id))&&Number(window.vk?.id)>0?'/audios'+window.vk.id:null})));
     if(s?.ready&&/^\/audios\d+$/.test(s.root||'')){
-      if(this.root&&this.root!==s.root){
+      if(this.root&&this.root!==s.root){this.lyricsSources?.clear();this.batchPlans?.clear();this.ownedKeys?.clear();this.ownedAccount=null;if(this.runningBatch)this.runningBatch.cancelled=true;
         ++this.playRequest;++this.warmRequest;try{if(this.active)await this.pause();}catch{}
         if(this.editor!==this.network)await this.editor?.close();if(this.network){this.network.audioRefs.clear();this.network.playlistRefs.clear();await this.nativePlayer?.stop();}this.editor=null;this.operationLog=[];this.operationChanged();await this.cache.close();this.cache=new PlaylistCache(this.engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));this.tracks.clear();this.searchArtists?.clear();this.searchEntries?.clear();this.searchController?.abort();this.handles.clear();this.playlists.clear();this.playlistHandles.clear();this.savedPlaylists=[];this.collection=null;this.active=null;this.setSession({state:'signedOut',accountChanged:true});
       }
@@ -131,7 +134,9 @@ class VkProvider {
     }
     return this.setSession({state:this.root?'cached':'signedOut',cached:!!this.root,verifying:false,message:this.root?'Войдите в VK для воспроизведения. Сохранённые списки доступны.':'Войдите в отдельном окне VK.'});
   }
-  async lyrics(id){if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');return this.network.lyrics(track.key);}
+  cancelLyrics(){this.lyricsSources?.cancel();return true;}
+  reconcileOwnership(rows){this.ownedAccount=this.root;this.ownedKeys=new Set(rows.map(t=>t.key));return require('./collection-batch.cjs').ownership(this,new Map(rows.map(t=>[t.key,true])));}
+  async lyrics(id){if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');this.lyricsSources??=new (require('./lyrics-sources.cjs').LyricsSources)();const root=this.root;const result=await this.lyricsSources.get(track,root,()=>this.network.lyrics(track.key));if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}
   async account(){if(!this.network||!this.online)throw Error('Подключитесь к VK, чтобы получить профиль');return this.network.profile();}
   async status(){return this.session||this.checkSession();}
   async login(){
@@ -175,7 +180,7 @@ class VkProvider {
       const signature=JSON.stringify([context.playlistId||context.cacheId||raw.route,context.scope,row.key,row.title,row.artist,row.time,context.cacheId?occurrence:0]);
       let id=this.handles.get(signature);if(!id){id=randomUUID();this.handles.set(signature,id);}
       const duration=(row.time||'').split(':').map(Number).reduce((a,b)=>a*60+b,0)||0;
-      const track={id,title:row.title,artist:row.artist||'Неизвестный исполнитель',duration,available:row.available!==false&&duration>0,owned:context.kind==='library'?true:row.owned,...trackMeta(row)};
+      const track={id,title:row.title,artist:row.artist||'Неизвестный исполнитель',duration,available:row.available!==false&&duration>0,...trackMeta(row),owned:context.kind==='library'?true:typeof row.owned==='boolean'?row.owned:this.ownedAccount===this.root?this.ownedKeys?.has(row.key):undefined};
       this.tracks.set(id,{...row,...track,route:raw.route,scope:context.scope});context.items.set(id,track);
     }
     if(context.cacheId&&raw.total!==null&&raw.total!==undefined)context.total=raw.total;
@@ -246,7 +251,7 @@ class VkProvider {
     const albums=[],contributions=[];for(const row of info?.albums||[]){if(!row.title)continue;const signature=JSON.stringify(['album',route,row.title,row.owner]);let key=this.playlistHandles.get(signature);if(!key){key=randomUUID();this.playlistHandles.set(signature,key);}this.playlists.set(key,{...row,kind:'album',route,cover:cover(row.cover)});(row.section==='contribution'?contributions:albums).push({id:key,title:row.title,owner:row.owner,cover:cover(row.cover)});}
     this.preparePlayback(route);this.scheduleSave();return {...result,title:artist.name,albums,contributions,cover:cover(track.cover)};
   });}
-  async close(){this.closing=true;for(const c of this.searchPageControllers||[])c.abort();this.searchController?.abort();clearTimeout(this.reconnectTimer);if(this.editor!==this.network)await this.editor?.close();await this.mutationSerial;await this.nativePlayer?.close();this.network?.close();clearTimeout(this.saveTimer);await this.cache.close();if(this.store&&this.root)await this.store.save(this.exportMetadata());await this.store?.close();}
+  async close(){this.closing=true;this.lyricsSources?.clear();for(const c of this.searchPageControllers||[])c.abort();this.searchController?.abort();clearTimeout(this.reconnectTimer);if(this.editor!==this.network)await this.editor?.close();await this.mutationSerial;await this.nativePlayer?.close();this.network?.close();clearTimeout(this.saveTimer);await this.cache.close();if(this.store&&this.root)await this.store.save(this.exportMetadata());await this.store?.close();}
   more(){return this.exclusive(async()=>{
     if(this.network)return networkProvider.more(this);
     if(!this.collection)throw Error('Сначала откройте медиатеку, поиск или плейлист');

@@ -1,6 +1,6 @@
 'use strict';
 const {randomUUID}=require('node:crypto');
-function complete(p,entry,result,root,cache){if(cache.closed||p.root!==root)return;entry.total=result.total;entry.title=result.title||entry.title;entry.route=result.route;entry.cover=result.cover||entry.cover;if(result.rows.length!==result.total)throw Error('VK вернул неполный список');entry.items=new Map();p.absorbRows({rows:result.rows,total:result.total,route:result.route},entry);if(entry.items.size!==result.total)throw Error('Список VK содержит несовпадающие записи');cache.finish(entry,true);}
+function complete(p,entry,result,root,cache){if(cache.closed||p.root!==root)return;entry.total=result.total;entry.title=result.title||entry.title;entry.route=result.route;entry.cover=result.cover||entry.cover;if(result.rows.length!==result.total)throw Error('VK вернул неполный список');entry.items=new Map();p.absorbRows({rows:result.rows,total:result.total,route:result.route},entry);if(entry.items.size!==result.total)throw Error('Список VK содержит несовпадающие записи');if(entry.kind==='library')p.reconcileOwnership?.(result.rows);cache.finish(entry,true);}
 function failed(cache,entry){if(cache.closed)return;entry.cacheState='error';entry.error='Не удалось обновить список из VK. Повторите подключение.';cache.finish(entry,false);}
 async function loadLibrary(p,refresh,target){
  const cache=p.cache,root=p.root,revision=p.sidebarRevision||0;const entry=cache.create('library:'+root,'Моя музыка','library');entry.route='https://vk.ru'+root+'?section=all';
