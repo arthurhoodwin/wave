@@ -134,9 +134,10 @@ class VkProvider {
     }
     return this.setSession({state:this.root?'cached':'signedOut',cached:!!this.root,verifying:false,message:this.root?'Войдите в VK для воспроизведения. Сохранённые списки доступны.':'Войдите в отдельном окне VK.'});
   }
+  trackAlbum(id){return require('./track-album.cjs').trackAlbum(this,id);}
   cancelLyrics(){this.lyricsSources?.cancel();return true;}
   reconcileOwnership(rows){this.ownedAccount=this.root;this.ownedKeys=new Set(rows.map(t=>t.key));return require('./collection-batch.cjs').ownership(this,new Map(rows.map(t=>[t.key,true])));}
-  async lyrics(id){if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');this.lyricsSources??=new (require('./lyrics-sources.cjs').LyricsSources)();const root=this.root;const result=await this.lyricsSources.get(track,root,()=>this.network.lyrics(track.key));if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}
+  async lyrics(id){if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');this.lyricsSources??=new (require('./lyrics-sources.cjs').LyricsSources)();const root=this.root;const cached=this.lyricsSources.peek(track,root);if(cached){if(this.lyricsSources.job?.key!==this.lyricsSources.key(track))this.lyricsSources.cancel();return{...cached,cached:true};}if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');const result=await this.lyricsSources.get(track,root,()=>this.network.lyrics(track.key));if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}
   async account(){if(!this.network||!this.online)throw Error('Подключитесь к VK, чтобы получить профиль');return this.network.profile();}
   async status(){return this.session||this.checkSession();}
   async login(){

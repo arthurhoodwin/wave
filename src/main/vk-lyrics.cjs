@@ -1,0 +1,5 @@
+'use strict';
+const {normalize}=require('../renderer/lyrics-timing.js');
+// Observed audio.getLyrics: timestamps[].begin/end are milliseconds, line is text.
+function vkLyrics(raw){const stamps=raw?.lyrics?.timestamps,records=Array.isArray(stamps)&&stamps.length<=6000?stamps:[];const valid=records.filter(r=>r&&typeof r.line==='string'&&r.line.length<=4096);const lines=raw?.lyrics?.text;let text=Array.isArray(lines)?lines.filter(s=>typeof s==='string').join('\n'):typeof raw?.text==='string'?raw.text:valid.map(r=>r.line).join('\n');if(!text.trim()&&valid.length)text=valid.map(r=>r.line).join('\n');if(text.length>200000)throw Error('Текст слишком большой. Выберите другую песню.');const timings=normalize(valid.filter(r=>Number.isFinite(r.begin)&&r.begin>=0&&r.begin<=604800000&&Number.isFinite(r.end)&&r.end>=r.begin&&r.end<=604800000).map(r=>({time:r.begin/1000,end:r.end/1000,text:r.line})));return{text,source:'VK',credits:typeof raw?.credits==='string'?raw.credits.slice(0,4000):'',...(timings.length?{timings}:{})};}
+module.exports={vkLyrics};
