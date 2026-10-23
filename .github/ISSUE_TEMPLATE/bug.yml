@@ -1,0 +1,27 @@
+name: Ошибка
+description: Что-то работает не так
+title: '[Bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 'Не отправляйте пароли, токены, cookies, файлы профиля и потоковые ссылки. Скриншоты обезличьте.'
+  - type: input
+    id: version
+    attributes:
+      label: Версия Wave и Windows
+      placeholder: 'Wave 1.0.3, Windows 11 x64'
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Как повторить
+      description: Шаги, ожидаемый результат и то, что получилось.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Дополнительные сведения
+      description: Точный текст ошибки. Для воспроизведения — работает ли эта же запись в VK?

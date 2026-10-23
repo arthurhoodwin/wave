@@ -1,0 +1,26 @@
+node_modules/
+wave-releases/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+!build/update-public.pem
+*.key
+*.pfx
+*.p12
+*.exe
+*.waveupdate
+*.blockmap
+*.asar
+work/
+profile/
+userData/
+metadata-v1/
+updates-v1/
+Cookies*
+Local State
+Thumbs.db
+.DS_Store

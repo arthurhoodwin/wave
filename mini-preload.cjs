@@ -1,0 +1,2 @@
+'use strict';
+const {contextBridge,ipcRenderer}=require('electron');contextBridge.exposeInMainWorld('desktop',Object.freeze({status:()=>ipcRenderer.invoke('desktop:request','status'),action:(type,time)=>ipcRenderer.invoke('desktop:request','action',{type,time}),onState:callback=>{if(typeof callback!=='function')return()=>{};const listener=(_e,s)=>callback(s);ipcRenderer.on('desktop:state',listener);return()=>ipcRenderer.removeListener('desktop:state',listener);}}));

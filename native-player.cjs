@@ -1,0 +1,35 @@
+'use strict';
+class NativePlayer{
+ constructor({api,proxy,send,onState=()=>{},loadTimeoutMs=6500}){this.loadTimeoutMs=loadTimeoutMs;this.api=api;this.proxy=proxy;this.send=send;this.onState=onState;this.volumeRevision=0;this.pending=new Map();this.sequence=0;this.generation=0;this.current=null;this.closed=false;this.loading=false;this.desiredPlaying=false;this.last={playing:false,currentTime:0,duration:0,volume:.5,ended:false,buffering:false};proxy.onNetworkError=()=>{this.mediaNetworkError=true;};proxy.onExpired=id=>{if(this.current?.leaseId!==id)return;this.current.expired=true;if(this.current.started)this.recover().catch(()=>{});};}
+ emit(error){this.onState({...this.last,currentId:this.current?.id||null,...(error?{error}:{} )});}
+ command(type,params={},timeout=12000){if(this.closed)return Promise.reject(Error('Плеер закрыт'));const id=++this.sequence,generation=this.generation;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.pending.delete(id);reject(Error('Плеер не подтвердил действие. Повторите запуск.'));},timeout);this.pending.set(id,{resolve,reject,timer,generation});if(this.send({id,generation,type,...params})===false){clearTimeout(timer);this.pending.delete(id);resolve({...this.last,playing:false});}});}
+ accept(event){if(!event||event.generation!==this.generation||!['state','error'].includes(event.type))return;const number=(value,fallback,max)=>Number.isFinite(value)&&value>=0&&value<=max?value:fallback;
+  this.last={playing:event.playing===true,currentTime:number(event.currentTime,this.last.currentTime,604800),duration:number(event.duration,this.last.duration,604800),volume:(Number(event.volumeRevision)||0)>=this.volumeRevision?number(event.volume,this.last.volume,1):this.last.volume,ended:event.ended===true,buffering:event.buffering===true};
+  const job=this.pending.get(event.requestId);if(job){clearTimeout(job.timer);this.pending.delete(event.requestId);if(event.type==='error')job.reject(Error('Не удалось загрузить аудио VK. Повторите запуск.'));else job.resolve({...this.last});}
+  if(event.type==='error'){if(!this.loading){this.failed=true;this.last.playing=false;this.emit('Не удалось продолжить аудио VK. Повторите запуск.');}}else this.emit();
+ }
+ cancel(){for(const job of this.pending.values()){clearTimeout(job.timer);job.reject(Error('Выбран другой трек'));}this.pending.clear();}
+ async play(track,{position=0}={}){
+  let generation=++this.generation;this.cancel();this.failed=false;this.desiredPlaying=true;this.loading=true;this.current={...track,started:false,expired:false,refreshes:0};this.proxy.reset();this.last={...this.last,playing:false,currentTime:position,duration:track.duration,ended:false,buffering:true};this.emit();
+  const current=()=>{if(generation!==this.generation||this.closed)throw Error('Выбран другой трек');};
+  try{for(let attempt=0;attempt<2;attempt++){
+    if(attempt){generation=++this.generation;this.cancel();this.proxy.reset();this.current.refreshes++;}
+    await this.command('reset',{},1500);current();
+    const media=await this.api.resolveAudio(track.key);current();const lease=await this.proxy.open(media.url);current();Object.assign(this.current,{leaseId:lease.leaseId,expired:false});
+    try{const state=await this.command('load',{url:lease.url,format:media.format,position,volume:this.last.volume,volumeRevision:this.volumeRevision,autoplay:this.desiredPlaying},this.loadTimeoutMs);current();if(!state.playing&&this.desiredPlaying)throw Error('Аудио не начало воспроизводиться');this.current.started=true;this.loading=false;return{...state,playing:state.playing};}
+    catch(error){current();if(attempt>0)throw Error('Аудиосервер VK не смог загрузить эту песню. Повторите запуск или выберите другую.');}
+  }}catch(error){if(generation===this.generation){const cleanupGeneration=++this.generation;this.cancel();this.proxy.reset();await this.command('reset',{},1500).catch(()=>{});if(cleanupGeneration!==this.generation)throw error;this.loading=false;this.failed=true;this.last={...this.last,playing:false,currentTime:position,duration:track.duration,ended:false,buffering:false};this.emit(error.message);}throw error;}
+ }
+ async recover(){if(this.loading||this.closed||!this.current||this.current.refreshes>=1)return;const generation=this.generation,track=this.current;track.refreshes++;this.loading=true;
+   try{const media=await this.api.resolveAudio(track.key);if(generation!==this.generation)return;const lease=await this.proxy.open(media.url);if(generation!==this.generation)return;track.leaseId=lease.leaseId;track.expired=false;await this.command('load',{url:lease.url,format:media.format,position:this.last.currentTime,volume:this.last.volume,volumeRevision:this.volumeRevision,autoplay:this.desiredPlaying});this.failed=false;}
+  catch{if(generation===this.generation){const cleanupGeneration=++this.generation;this.cancel();this.proxy.reset();await this.command('reset',{},1500).catch(()=>{});if(cleanupGeneration!==this.generation)return;this.failed=true;this.loading=false;this.last.playing=false;this.emit('Не удалось обновить аудиопоток VK. Повторите запуск.');}}finally{if(generation===this.generation)this.loading=false;}
+ }
+ async pause(){this.desiredPlaying=false;if(!this.current)return{playing:false};return this.command('pause');}
+ async stop(){++this.generation;this.cancel();this.current=null;this.desiredPlaying=false;this.proxy.reset();this.last={...this.last,playing:false,currentTime:0,duration:0,ended:false,buffering:false};await this.command('reset',{},1500);}
+ async resume(){if(!this.current)throw Error('Выберите песню для воспроизведения');this.desiredPlaying=true;if(this.failed)return this.play(this.current,{position:this.last.currentTime});return this.command('resume');}
+ async seek(time){if(!this.current)throw Error('Выберите песню');return this.command('seek',{time:Math.max(0,Math.min(Number(time)||0,this.last.duration||604800))});}
+ async volume(value){const volume=Math.max(0,Math.min(1,Number(value)||0));this.last.volume=volume;const volumeRevision=++this.volumeRevision;return this.command('volume',{volume,volumeRevision});}
+ state(){return{...this.last,key:this.current?.key||'',title:this.current?.title||'',artist:this.current?.artist||'',currentId:this.current?.id||null};}
+ async close(){this.closed=true;this.cancel();await this.proxy.close();}
+}
+module.exports={NativePlayer};

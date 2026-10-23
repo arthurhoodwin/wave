@@ -1,0 +1,15 @@
+name: Идея
+description: Предложить улучшение Wave
+title: '[Idea] '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую задачу хотите решить?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Как это могло бы работать?

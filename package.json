@@ -1,0 +1,79 @@
+{
+  "name": "wave-vk-research-client",
+  "version": "1.0.3",
+  "private": false,
+  "description": "Windows music client with an independent VK network adapter and local audio player",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "research": "electron . --research-session",
+    "test": "node --test *.test.cjs",
+    "dist": "node build/prepare.cjs && electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "axe-core": "4.14.0",
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3",
+    "sharp": "0.35.5"
+  },
+  "dependencies": {
+    "hls.js": "1.7.3"
+  },
+  "author": "Wave contributors",
+  "build": {
+    "appId": "app.wave.vk",
+    "productName": "Wave",
+    "directories": {
+      "output": "../wave-releases"
+    },
+    "electronDist": "node_modules/electron/dist",
+    "npmRebuild": false,
+    "asar": true,
+    "files": [
+      "*.cjs",
+      "!*.test.cjs",
+      "ui/**/*",
+      "build/wave.ico",
+      "build/wave.png",
+      "build/update-public.pem",
+      "build/apply-update.ps1",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/wave.ico",
+      "artifactName": "Wave-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Wave",
+      "uninstallDisplayName": "Wave",
+      "deleteAppDataOnUninstall": false,
+      "include": "build/installer.nsh",
+      "installerIcon": "build/wave.ico",
+      "uninstallerIcon": "build/wave.ico",
+      "runAfterFinish": true
+    },
+    "forceCodeSigning": false,
+    "asarUnpack": [
+      "build/apply-update.ps1"
+    ]
+  },
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arthurhoodwin/wave.git"
+  },
+  "homepage": "https://github.com/arthurhoodwin/wave#readme",
+  "bugs": {
+    "url": "https://github.com/arthurhoodwin/wave/issues"
+  }
+}
