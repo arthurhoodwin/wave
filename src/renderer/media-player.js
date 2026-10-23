@@ -1,9 +1,27 @@
 'use strict';
 (()=>{let active=null,prepared=null,tail=null,generation=0,volume=.5,desiredPlaying=false,volumeRevision=0,transitionId=0;
  const report=(audio,gen,requestId,type='state',buffering=false)=>{if(gen!==generation)return;window.music.mediaEvent({type,generation:gen,requestId,playing:!!audio&&!audio.paused&&!audio.ended,currentTime:Math.max(0,Number(audio?.currentTime)||0),duration:Number.isFinite(audio?.duration)?audio.duration:0,volume,volumeRevision,ended:!!audio?.ended,buffering});};
- const destroy=instance=>{if(!instance)return;instance.destroyed=true;instance.disconnect?.();instance.hls?.destroy();instance.audio.pause();instance.audio.removeAttribute('src');instance.audio.load();instance.rejectReady?.(Error('Cancelled'));};
+ const destroy=instance=>{if(!instance)return;instance.destroyed=true;instance.cancelSeek?.();instance.disconnect?.();instance.hls?.destroy();instance.audio.pause();instance.audio.removeAttribute('src');instance.audio.load();instance.rejectReady?.(Error('Cancelled'));};
  const stopTail=()=>{transitionId++;if(tail){destroy(tail);tail=null;}if(active)active.disconnect?.gain?.(1,1,0);};
  const discard=()=>{destroy(prepared);prepared=null;};const dispose=()=>{stopTail();discard();const old=active;active=null;destroy(old);};
+ async function seek(instance,command,gen){
+  stopTail();discard();instance.cancelSeek?.();const audio=instance.audio;
+  const target=Math.max(0,Math.min(Number(command.time)||0,Number.isFinite(audio.duration)?audio.duration:command.time));
+  await new Promise(resolve=>{
+   let timer,settled=false;
+   const finish=(type='state',cancelled=false)=>{if(settled)return;settled=true;clearTimeout(timer);for(const event of ['seeked','canplay','timeupdate'])audio.removeEventListener(event,check);instance.cancelSeek=null;instance.seeking=false;if(!cancelled&&gen===generation&&active===instance&&!instance.destroyed)report(audio,gen,command.id,type);resolve();};
+   const check=()=>{if(!audio.seeking&&audio.readyState>=2&&Math.abs(audio.currentTime-target)<.25)finish();};
+   instance.cancelSeek=()=>finish('state',true);instance.seeking=true;
+   for(const event of ['seeked','canplay','timeupdate'])audio.addEventListener(event,check);
+   timer=setTimeout(()=>finish('seek-error'),8000);
+   // A VOD seek is bounded by duration, never by the currently buffered range.
+   // Restart HLS loading at the destination instead of finishing the old fragment.
+   try{let buffered=false;for(let i=0;i<audio.buffered.length;i++)if(target>=audio.buffered.start(i)&&target<audio.buffered.end(i))buffered=true;
+    if(!buffered)instance.hls?.startLoad(target);
+    audio.currentTime=target;report(audio,gen,undefined,'state',true);check();
+   }catch{finish('seek-error');}
+  });
+ }
  async function load(command,gen,isPrepared){const audio=new Audio();audio.preload='auto';audio.crossOrigin='anonymous';audio.volume=volume;const instance={audio,hls:null,generation:gen,token:command.token};if(isPrepared){discard();prepared=instance;}else{dispose();active=instance;volume=command.volume;audio.volume=volume;volumeRevision=Math.max(volumeRevision,Number(command.volumeRevision)||0);desiredPlaying=command.autoplay!==false;}
  const valid=()=>!instance.destroyed&&generation===gen&&(active===instance||prepared===instance);let acknowledged=false,failed=false;const ack=()=>{if(!valid()||failed||prepared===instance)return;if(!acknowledged){acknowledged=true;report(audio,gen,command.id);}else report(audio,gen);};
  const ready=new Promise((resolve,reject)=>{instance.rejectReady=reject;audio.addEventListener('canplay',()=>{instance.ready=true;instance.rejectReady=null;resolve();},{once:true});});ready.catch(()=>{});
@@ -17,7 +35,7 @@
  try{if(type==='discardPrepared'){discard();report(active?.audio,gen,id);return;}if(type==='prepare'){await load(command,gen,true);return;}if(type==='load'){await load(command,gen,false);return;}
  if(type==='transition'){if(!prepared?.ready||prepared.token!==command.token||!desiredPlaying||!active)throw Error('No prepared media');stopTail();const next=prepared,old=active;prepared=null;old.switching=true;const seconds=Number.isFinite(command.seconds)?Math.max(0,Math.min(command.seconds,12,old.audio.duration-old.audio.currentTime||0)):0;next.disconnect?.gain?.(seconds?0:1,seconds?0:1,0);next.audio.volume=volume;await next.audio.play();if(gen!==generation||!desiredPlaying||active!==old){destroy(next);return;}active=next;tail=old;const fade=++transitionId;next.disconnect?.gain?.(seconds?0:1,1,seconds);old.disconnect?.gain?.(1,0,seconds);if(!next.disconnect?.gain){next.audio.volume=volume;old.audio.pause();}if(seconds===0){destroy(old);tail=null;}else setTimeout(()=>{if(fade===transitionId&&tail===old){destroy(old);tail=null;}},seconds*1000+30);report(next.audio,gen,id);return;}
  if(type==='volume'){if((Number(command.volumeRevision)||0)>=volumeRevision){volumeRevision=Number(command.volumeRevision)||0;volume=command.volume;for(const instance of [active,prepared,tail])if(instance)instance.audio.volume=volume;}report(active?.audio,gen,id);return;}
- const audio=active?.audio;if(type==='pause'&&!audio){desiredPlaying=false;report(null,gen,id);return;}if(!audio)throw Error('No media');if(type==='pause'){desiredPlaying=false;stopTail();audio.pause();}else if(type==='resume'){desiredPlaying=true;await window.waveAudio?.resume();await audio.play();}else if(type==='seek'){stopTail();discard();audio.currentTime=command.time;}else throw Error('Unknown command');report(audio,gen,id);
+ const audio=active?.audio;if(type==='pause'&&!audio){desiredPlaying=false;report(null,gen,id);return;}if(!audio)throw Error('No media');if(type==='pause'){desiredPlaying=false;stopTail();audio.pause();}else if(type==='resume'){desiredPlaying=true;await window.waveAudio?.resume();await audio.play();}else if(type==='seek'){await seek(active,command,gen);return;}else throw Error('Unknown command');report(audio,gen,id);
  }catch{if(active)active.switching=false;if(gen===generation)report(active?.audio,gen,id,type==='prepare'?'prepare-error':'error');}});
  window.WaveMediaDebug={stats:()=>({active:!!active,prepared:!!prepared,tail:!!tail,connections:window.waveAudio?.info()?.connections||0})};
 })();

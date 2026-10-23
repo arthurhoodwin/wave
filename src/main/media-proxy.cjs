@@ -36,7 +36,11 @@ class MediaProxy{
    if([401,403,410].includes(response.status)){this.onFailure('expired');if(!entry.lease.expired){entry.lease.expired=true;this.onExpired(entry.lease.id);}res.writeHead(502);res.end();return;}
    if(!response.ok){this.onFailure(response.status===451?'access':response.status===404?'expired':'network');res.writeHead(502);res.end();return;}const type=response.headers.get('content-type')||'application/octet-stream';const hls=/mpegurl/i.test(type)||new URL(entry.url).pathname.endsWith('.m3u8');
    if(hls){const text=await response.text();const rewritten=this.rewrite(text,entry.url,entry.lease);res.setHeader('Content-Type','application/vnd.apple.mpegurl');res.writeHead(200);res.end(req.method==='HEAD'?undefined:rewritten);return;}
-   res.setHeader('Content-Type',type);for(const name of ['content-range','accept-ranges'])if(response.headers.has(name))res.setHeader(name,response.headers.get(name));res.writeHead(response.status);if(req.method==='HEAD'||!response.body){res.end();return;}
+   res.setHeader('Content-Type',type);for(const name of ['content-range','accept-ranges'])if(response.headers.has(name))res.setHeader(name,response.headers.get(name));
+   // Chromium needs the byte length to map an unbuffered time to a Range request.
+   // A decoded (compressed HTTP) body no longer has the upstream byte length.
+   const length=response.headers.get('content-length');if(length&&/^\d+$/.test(length)&&!response.headers.has('content-encoding'))res.setHeader('Content-Length',length);
+   res.writeHead(response.status);if(req.method==='HEAD'||!response.body){res.end();return;}
    await new Promise((resolve,reject)=>{const stream=Readable.fromWeb(response.body);stream.on('error',reject);res.on('error',reject);res.on('finish',resolve);res.on('close',resolve);stream.pipe(res);});
   }finally{clearTimeout(timer);this.controllers.delete(controller);}
  }
