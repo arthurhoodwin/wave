@@ -125,7 +125,7 @@ class VkProvider {
     if(s?.ready&&/^\/audios\d+$/.test(s.root||'')){
       if(this.root&&this.root!==s.root){
         ++this.playRequest;++this.warmRequest;try{if(this.active)await this.pause();}catch{}
-        if(this.editor!==this.network)await this.editor?.close();if(this.network){this.network.audioRefs.clear();this.network.playlistRefs.clear();await this.nativePlayer?.stop();}this.editor=null;this.operationLog=[];this.operationChanged();await this.cache.close();this.cache=new PlaylistCache(this.engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));this.tracks.clear();this.handles.clear();this.playlists.clear();this.playlistHandles.clear();this.savedPlaylists=[];this.collection=null;this.active=null;this.setSession({state:'signedOut',accountChanged:true});
+        if(this.editor!==this.network)await this.editor?.close();if(this.network){this.network.audioRefs.clear();this.network.playlistRefs.clear();await this.nativePlayer?.stop();}this.editor=null;this.operationLog=[];this.operationChanged();await this.cache.close();this.cache=new PlaylistCache(this.engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));this.tracks.clear();this.searchArtists?.clear();this.searchEntries?.clear();this.searchController?.abort();this.handles.clear();this.playlists.clear();this.playlistHandles.clear();this.savedPlaylists=[];this.collection=null;this.active=null;this.setSession({state:'signedOut',accountChanged:true});
       }
       this.root=s.root;if(!this.network&&typeof this.engine.fork==='function'){this.editor??=this.network||new CollectionEditor(this.engine);this.editor.warm(this.root); }const next=this.setSession({state:'ready',cached:false,verifying:false,...(this.nativePlayer?{nativePlayback:true,volume:this.nativePlayer.state().volume}:{})});const library=this.cache.byPlaylist.get('library:'+this.root);if(library?.stale)this.refreshCollection(library);return next;
     }
@@ -243,7 +243,7 @@ class VkProvider {
     const albums=[],contributions=[];for(const row of info?.albums||[]){if(!row.title)continue;const signature=JSON.stringify(['album',route,row.title,row.owner]);let key=this.playlistHandles.get(signature);if(!key){key=randomUUID();this.playlistHandles.set(signature,key);}this.playlists.set(key,{...row,kind:'album',route,cover:cover(row.cover)});(row.section==='contribution'?contributions:albums).push({id:key,title:row.title,owner:row.owner,cover:cover(row.cover)});}
     this.preparePlayback(route);this.scheduleSave();return {...result,title:artist.name,albums,contributions,cover:cover(track.cover)};
   });}
-  async close(){this.closing=true;clearTimeout(this.reconnectTimer);if(this.editor!==this.network)await this.editor?.close();await this.mutationSerial;await this.nativePlayer?.close();this.network?.close();clearTimeout(this.saveTimer);await this.cache.close();if(this.store&&this.root)await this.store.save(this.exportMetadata());await this.store?.close();}
+  async close(){this.closing=true;for(const c of this.searchPageControllers||[])c.abort();this.searchController?.abort();clearTimeout(this.reconnectTimer);if(this.editor!==this.network)await this.editor?.close();await this.mutationSerial;await this.nativePlayer?.close();this.network?.close();clearTimeout(this.saveTimer);await this.cache.close();if(this.store&&this.root)await this.store.save(this.exportMetadata());await this.store?.close();}
   more(){return this.exclusive(async()=>{
     if(this.network)return networkProvider.more(this);
     if(!this.collection)throw Error('Сначала откройте медиатеку, поиск или плейлист');
@@ -251,9 +251,11 @@ class VkProvider {
     for(let i=0;i<3;i++){await this.readRows();await this.engine.evaluate(catalog.call(catalog.scrollScope,this.collection.scope,false));await sleep(400);}
     return this.readRows();
   });}
-  search(query){if(this.network){if(typeof query!=='string'||!query.trim()||query.length>200)return Promise.reject(Error('Введите запрос длиной до 200 символов'));if(!this.online)return Promise.reject(Error('Подключитесь к VK'));return networkProvider.search(this,query.trim());}return this.exclusive(async()=>{
+  searchPage(id){if(typeof id!=='string'||id.length>200||!this.online)return Promise.reject(Error('Подключитесь к VK и откройте поиск снова.'));return networkProvider.searchPage(this,id);}
+  cancelSearch(){this.searchController?.abort();if(this.collection?.pageController&&!this.collection.items.has(this.active?.id))this.collection.pageController.abort();return{canceled:true};}
+  search(input){const query=typeof input==='string'?input:input?.query;if(input&&typeof input==='object'&&(Object.keys(input).some(k=>!['query','type','refresh'].includes(k))||!['tracks','artists','albums','playlists'].includes(input.type||'tracks')||input.refresh!==undefined&&typeof input.refresh!=='boolean'))return Promise.reject(Error('Неизвестный раздел поиска'));if(this.network){if(typeof query!=='string'||!query.trim()||query.length>200)return Promise.reject(Error('Введите запрос длиной до 200 символов'));if(!this.online)return Promise.reject(Error('Подключитесь к VK'));return networkProvider.search(this,typeof input==='object'?{query:query.trim(),type:input.type||'tracks',refresh:input.refresh===true}:query.trim());}return this.exclusive(async()=>{
     if(typeof query!=='string'||!query.trim()||query.length>200)throw Error('Введите запрос длиной до 200 символов');if((await this.status()).state!=='ready')throw Error('Войдите через VK');
-    if(this.network)return networkProvider.search(this,query.trim());
+    if(this.network)return networkProvider.search(this,typeof input==='object'?{query:query.trim(),type:input.type||'tracks',refresh:input.refresh===true}:query.trim());
     await this.route(`https://vk.ru/audio?q=${encodeURIComponent(query.trim())}`);await this.readyRows();this.collection={kind:'search',scope:'body',items:new Map()};const result=await this.readRows();this.preparePlayback(await this.engine.evaluate('location.href'));return result;
   });}
   play(id){
