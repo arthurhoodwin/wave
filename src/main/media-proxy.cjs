@@ -40,6 +40,7 @@ class MediaProxy{
    await new Promise((resolve,reject)=>{const stream=Readable.fromWeb(response.body);stream.on('error',reject);res.on('error',reject);res.on('finish',resolve);res.on('close',resolve);stream.pipe(res);});
   }finally{clearTimeout(timer);this.controllers.delete(controller);}
  }
- async close(){this.closed=true;for(const c of this.controllers)c.abort();this.entries.clear();this.lease=null;if(this.server){this.server.closeAllConnections?.();await new Promise(r=>this.server.close(r));this.server=null;}}
+ async close(){if(this.closePending)return this.closePending;this.closePending=this.finishClose();return this.closePending;}
+ async finishClose(){this.closed=true;for(const c of this.controllers)c.abort();this.entries.clear();this.lease=null;if(this.server){this.server.closeAllConnections?.();await new Promise(r=>this.server.close(r));this.server=null;}}
 }
 module.exports={MediaProxy,mediaUrl};

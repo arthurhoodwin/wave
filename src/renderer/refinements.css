@@ -8,3 +8,5 @@ body:not(.mini-window){grid-template-rows:32px 76px minmax(0,1fr) auto}.window-t
 @media(prefers-reduced-motion:reduce){dialog.modal-overlay[open] .modal-card{animation:none!important}}
 
 #account-reconnect{margin-top:10px}
+
+.crossfade-setting{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.crossfade-setting input{flex:1;min-width:100px;height:24px;accent-color:var(--text-accent)}.crossfade-setting output{min-width:80px;font-variant-numeric:tabular-nums}.transition-settings p{line-height:1.6}#update-progress{width:100%;accent-color:var(--text-accent);height:10px;margin-block:8px}

@@ -134,6 +134,9 @@ class VkProvider {
     }
     return this.setSession({state:this.root?'cached':'signedOut',cached:!!this.root,verifying:false,message:this.root?'Войдите в VK для воспроизведения. Сохранённые списки доступны.':'Войдите в отдельном окне VK.'});
   }
+  prepareTrack(input){if(!input||Object.keys(input).some(k=>!['id','fromId'].includes(k))||typeof input.id!=='string'||typeof input.fromId!=='string')throw Error('Некорректная подготовка');const track=this.tracks.get(input.id);if(!this.online||!this.nativePlayer||!track||!track.available)return{prepared:false};return this.nativePlayer.prepare(track,input.fromId);}
+  discardPrepared(){this.nativePlayer?.dropPrepared();return true;}
+  async transitionTrack(input){if(!input||Object.keys(input).some(k=>!['id','fromId','seconds'].includes(k))||typeof input.id!=='string'||typeof input.fromId!=='string'||!Number.isFinite(input.seconds)||input.seconds<0||input.seconds>12)throw Error('Некорректный переход');const track=this.tracks.get(input.id);if(!this.online||!this.nativePlayer||!track||!track.available)throw Error('Выберите доступную песню');const result=await this.nativePlayer.transition(track,input.fromId,input.seconds);if(!result.prepared)return{prepared:false};this.active={...track};return result;}
   trackAlbum(id){return require('./track-album.cjs').trackAlbum(this,id);}
   cancelLyrics(){this.lyricsSources?.cancel();return true;}
   reconcileOwnership(rows){this.ownedAccount=this.root;this.ownedKeys=new Set(rows.map(t=>t.key));return require('./collection-batch.cjs').ownership(this,new Map(rows.map(t=>[t.key,true])));}
