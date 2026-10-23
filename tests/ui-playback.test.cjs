@@ -75,6 +75,8 @@ async function test() {
   run("state.allTracks=[{id:'clickable',title:'A song',artist:'An artist',duration:120,owned:true}];state.filter='';state.sort='original';state.loading=false;state.route={type:'library'};trackList()");
   const redesigned=run('renderedRows[0].row'),titleButton=redesigned.children[1].children[1].children[0];assert.equal(redesigned.role,'group');assert.equal(titleButton.tagName,'BUTTON');let stopped=false;const beforeMenu=calls.length;redesigned.children.at(-1).onclick({stopPropagation(){stopped=true;}});assert.equal(stopped,true);assert.equal(calls.length,beforeMenu);assert.equal(get('collection-dialog').classList.contains('hidden'),false);
   titleButton.onclick({stopPropagation(){}});await new Promise(r=>setImmediate(r));assert.equal(calls.at(-1),'clickable');pending.at(-1).resolve({playing:true});await new Promise(r=>setImmediate(r));assert.equal(run('state.current.id'),'clickable');
+  // Transport remains usable while the current track is still loading.
+  run("state.online=true;state.nativePlayback=true;state.loading=false;state.current={id:'busy-a',duration:120,contextOrder:0};state.loop=[state.current,{id:'busy-b',duration:120,contextOrder:1}];state.busy=true;state.playContext=null;controls()");assert.equal(get('next').disabled,false);const interrupted=run('next()');assert.equal(calls.at(-1),'busy-b');await accept(interrupted);assert.equal(run('state.current.id'),'busy-b');
   console.log('PASS: playback/regressions; filtered and sorted playback order; route positions; stale sidebar rejected; failed selection retained; availability updated; sleep end; restored position; native song buttons; isolated row menu; unchanged renders = 0 DOM rebuilds');
 }
 test().catch(error=>{console.error(error);process.exitCode=1;});
