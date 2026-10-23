@@ -8,7 +8,7 @@ Electron main хранит сеанс и выполняет запросы VK; �
 | `network-provider.cjs`, `provider.cjs` | Коллекции и ограниченные команды интерфейса |
 | `playlist-cache.cjs`, `metadata-store.cjs` | Полнота списков, фоновая загрузка и зашифрованный кэш |
 | `native-player.cjs`, `media-proxy.cjs` | Потоки, непрозрачные временные ссылки и обновление аудио |
-| `ui/media-player.js` | HTMLAudio/Hls.js в renderer |
+| `src/renderer/media-player.js` | HTMLAudio/Hls.js в renderer |
 | `windows-integration.cjs` | Трей, мини-плеер, сон и сохранение позиции |
 | `update-manager.cjs`, `installer-launch.cjs` | Проверка подписанного пакета и установка |
 
@@ -16,4 +16,4 @@ Electron main хранит сеанс и выполняет запросы VK; �
 
 `engines.cjs`, `catalog.cjs` и `collection-editor.cjs` сохранены для исследовательского режима; обычное воспроизведение не управляет музыкальной страницей VK. Исследовательский режим требует отдельной подготовленной сессии и не нужен пользователю.
 
-Исходные личные диагностические материалы не публикуются. История — [CHANGELOG](../CHANGELOG.md), планы — [ROADMAP](../ROADMAP.md), выпуск обновления — [UPDATES](UPDATES.md).
+Исходные личные диагностические материалы не публикуются. История — [CHANGELOG](CHANGELOG.md), планы — [ROADMAP](ROADMAP.md), выпуск обновления — [UPDATES](UPDATES.md).

@@ -3,12 +3,14 @@
   "version": "1.0.3",
   "private": false,
   "description": "Windows music client with an independent VK network adapter and local audio player",
-  "main": "main.cjs",
+  "main": "src/main/main.cjs",
   "scripts": {
     "start": "electron .",
     "research": "electron . --research-session",
-    "test": "node --test *.test.cjs",
-    "dist": "node build/prepare.cjs && electron-builder --win nsis --x64 --publish never"
+    "test": "node --test tests/*.test.cjs",
+    "dist": "node scripts/prepare.cjs && electron-builder --win nsis --x64 --publish never",
+    "release": "node scripts/release.cjs",
+    "release:check": "node scripts/release.cjs --check"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "5.3.0",
@@ -25,26 +27,27 @@
     "appId": "app.wave.vk",
     "productName": "Wave",
     "directories": {
-      "output": "../wave-releases"
+      "output": "dist"
     },
     "electronDist": "node_modules/electron/dist",
     "npmRebuild": false,
     "asar": true,
     "files": [
-      "*.cjs",
-      "!*.test.cjs",
-      "ui/**/*",
-      "build/wave.ico",
-      "build/wave.png",
+      "src/**/*",
+      "assets/icons/wave.ico",
+      "assets/icons/wave.png",
       "build/update-public.pem",
-      "build/apply-update.ps1",
+      "build/windows/apply-update.ps1",
+      "LICENSE",
+      "COPYRIGHT",
+      "docs/THIRD_PARTY_NOTICES.md",
       "package.json"
     ],
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "build/wave.ico",
+      "icon": "assets/icons/wave.ico",
       "artifactName": "Wave-Setup-${version}.${ext}"
     },
     "nsis": {
@@ -57,14 +60,14 @@
       "shortcutName": "Wave",
       "uninstallDisplayName": "Wave",
       "deleteAppDataOnUninstall": false,
-      "include": "build/installer.nsh",
-      "installerIcon": "build/wave.ico",
-      "uninstallerIcon": "build/wave.ico",
+      "include": "build/windows/installer.nsh",
+      "installerIcon": "assets/icons/wave.ico",
+      "uninstallerIcon": "assets/icons/wave.ico",
       "runAfterFinish": true
     },
     "forceCodeSigning": false,
     "asarUnpack": [
-      "build/apply-update.ps1"
+      "build/windows/apply-update.ps1"
     ]
   },
   "license": "GPL-3.0-only",
