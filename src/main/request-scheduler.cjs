@@ -1,0 +1,15 @@
+'use strict';
+const cancelled=()=>Object.assign(Error('Запрос отменён'),{kind:'cancelled'});
+const rank={background:10,interactive:50,playback:100};
+class RequestScheduler{
+ constructor({limit=4,backgroundLimit=1}={}){this.limit=limit;this.backgroundLimit=backgroundLimit;this.jobs=new Map();this.queue=[];this.active=new Set();this.sequence=0;this.closed=false;this.completed=0;this.shared=0;}
+ run(key,fn,{priority='interactive',signal}={}){if(this.closed||signal?.aborted)return Promise.reject(cancelled());const getPriority=typeof priority==='function'?priority:()=>priority;priority=rank[getPriority()]?getPriority():'interactive';let job=key&&this.jobs.get(key);if(job){this.shared++;if(!job.running&&rank[priority]>rank[job.priority])job.priority=priority;}else{job={key,fn,priority,order:this.sequence++,controller:new AbortController(),subscribers:new Set(),running:false};if(key)this.jobs.set(key,job);this.queue.push(job);}
+  return new Promise((resolve,reject)=>{const sub={resolve,reject,signal,abort:null,getPriority};sub.abort=()=>{job.subscribers.delete(sub);signal?.removeEventListener('abort',sub.abort);reject(cancelled());if(!job.subscribers.size){job.controller.abort();this.queue=this.queue.filter(j=>j!==job);if(job.key&&this.jobs.get(job.key)===job)this.jobs.delete(job.key);}this.pump();};job.subscribers.add(sub);signal?.addEventListener('abort',sub.abort,{once:true});if(signal?.aborted)sub.abort();else this.pump();});
+ }
+ pump(){if(this.closed)return;for(const j of this.queue){j.priority='background';for(const s of j.subscribers){const wanted=s.getPriority();if(rank[wanted]>rank[j.priority])j.priority=wanted;}}this.queue.sort((a,b)=>rank[b.priority]-rank[a.priority]||a.order-b.order);while(this.active.size<this.limit){const background=[...this.active].filter(j=>j.priority==='background').length,normal=[...this.active].filter(j=>j.priority!=='playback').length;const index=this.queue.findIndex(j=>j.subscribers.size&&(j.priority==='playback'||normal<this.limit-1)&&(j.priority!=='background'||background<this.backgroundLimit));if(index<0)return;const job=this.queue.splice(index,1)[0];job.running=true;this.active.add(job);Promise.resolve().then(()=>job.fn(job.controller.signal)).then(value=>this.finish(job,null,value),error=>this.finish(job,error));}}
+ finish(job,error,value){this.active.delete(job);if(job.key&&this.jobs.get(job.key)===job)this.jobs.delete(job.key);for(const s of job.subscribers){s.signal?.removeEventListener('abort',s.abort);error?s.reject(error):s.resolve(value);}job.subscribers.clear();this.completed++;this.pump();}
+ cancelAll(){for(const j of [...this.queue,...this.active]){j.controller.abort();for(const s of j.subscribers){s.signal?.removeEventListener('abort',s.abort);s.reject(cancelled());}j.subscribers.clear();}this.queue=[];this.jobs.clear();}
+ close(){this.closed=true;this.cancelAll();}
+ stats(){return{active:this.active.size,queued:this.queue.length,shared:this.shared,completed:this.completed};}
+}
+module.exports={RequestScheduler};

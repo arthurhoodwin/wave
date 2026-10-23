@@ -166,7 +166,7 @@ class VkProvider {
     const playlists=context.kind==='library'?this.absorbPlaylists(raw.playlists,raw.route,{revision:context.sidebarRevision??this.sidebarRevision??0}):[];
     return{tracks:Array.from(context.items.values()),playlists,playlistsRevision:this.sidebarRevision||0,partial:true,title:context.title};
   }
-  absorbRows(raw,context){
+  absorbRows(raw,context){this.metadataRevision=(this.metadataRevision||0)+1;
     if(cover(raw.cover))context.cover=cover(raw.cover);
     const occurrences=new Map();
     for(const row of raw.rows){
@@ -182,7 +182,7 @@ class VkProvider {
   }
   library(refresh=false){
     const saved=this.cache.byPlaylist.get('library:'+this.root);
-    if(saved?.cacheState==='complete'){this.collection=saved;if(this.online&&(refresh||saved.stale||Date.now()-saved.createdAt>300000))this.refreshCollection(saved);return Promise.resolve({...this.cache.snapshot(saved),playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0});}
+    if(saved?.cacheState==='complete'){this.collection=saved;if(this.online&&(refresh||saved.stale||Date.now()-saved.createdAt>300000))this.refreshCollection(saved);return Promise.resolve({...this.cache.snapshot(saved),version:this.cacheVersion(saved),playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0});}
     return this.network?this.loadLibrary(refresh):this.exclusive(()=>this.loadLibrary(refresh));
   }
   async loadLibrary(refresh=false,target=null){
@@ -196,7 +196,7 @@ class VkProvider {
   }
   playlist(id,refresh=false){
     const saved=this.cache.byPlaylist.get(id);
-    if(saved?.cacheState==='complete'){this.collection=saved;if(this.online){this.preparePlayback(saved.route);if(refresh||saved.stale||Date.now()-saved.createdAt>300000)this.refreshCollection(saved);}return Promise.resolve(this.cache.snapshot(saved));}
+    if(saved?.cacheState==='complete'){this.collection=saved;if(this.online){this.preparePlayback(saved.route);if(refresh||saved.stale||Date.now()-saved.createdAt>300000)this.refreshCollection(saved);}return Promise.resolve(this.stampSnapshot(this.cache.snapshot(saved)));}
     return this.network?this.loadPlaylist(id,refresh):this.exclusive(()=>this.loadPlaylist(id,refresh));
   }
   async loadPlaylist(id,refresh=false,target=null){
@@ -230,7 +230,10 @@ class VkProvider {
     }
     const route=await this.engine.evaluate('location.href');this.preparePlayback(route);this.cache.start(entry,route);return this.cache.initial(entry);
   }
-  playlistCache(id){const result=this.cache.read(id);return this.cache.entries.get(id)?.kind==='library'?{...result,playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0}:result;}
+  cacheVersion(e){return JSON.stringify([this.metadataRevision||0,this.sidebarRevision||0,e.items.size,e.total,e.cacheState,e.revision||0,e.savedAt,e.refreshing,e.refreshError,e.stale]);}
+  stampSnapshot(result){const entry=this.cache.entries.get(result?.cacheId);return entry?{...result,version:this.cacheVersion(entry)}:result;}
+  playlistCache(input){const id=typeof input==='string'?input:input?.id;if(typeof id!=='string'||typeof input==='object'&&(Object.keys(input).some(k=>!['id','version','activate'].includes(k))||input.version!==undefined&&typeof input.version!=='string'||input.activate!==undefined&&typeof input.activate!=='boolean'))throw Error('Некорректная команда кэша');const e=this.cache.entries.get(id);if(!e)throw Error('Кэш устарел. Откройте список снова.');if(input?.activate===true)this.collection=e;if(this.online&&e.cacheState==='complete'&&!e.refreshing&&(e.stale||Date.now()-e.createdAt>300000))this.refreshCollection(e);const version=this.cacheVersion(e);if(typeof input==='object'&&input.version===version)return{unchanged:true,version};const result={...this.cache.snapshot(e),version};return e.kind==='library'?{...result,playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0}:result;}
+
   artist(id){if(this.network){if(!this.online)return Promise.reject(Error('Подключитесь к VK'));return networkProvider.artist(this,id);}return this.exclusive(async()=>{
     if(this.network){if(!this.online)throw Error('Подключитесь к VK');return networkProvider.artist(this,id);}
     if(this.session&&!this.online)throw Error('Подключитесь к VK для открытия исполнителя');
@@ -264,7 +267,7 @@ class VkProvider {
     if(!track)return Promise.reject(Error('Список устарел. Обновите его.'));
     if(track.available===false||!(track.duration>0))return Promise.reject(Error('Запись недоступна в VK'));
     if(this.session&&!this.online)return Promise.reject(Error('Подключитесь к VK для воспроизведения'));
-    if(this.nativePlayer){return this.nativePlayer.play(track,{position}).then(result=>{this.active={...track};return{playing:result.playing};}).catch(error=>{if(error.kind==='unavailable'){error.unavailableIds=[];for(const [trackId,t] of this.tracks)if(t.key===track.key){t.available=false;error.unavailableIds.push(trackId);for(const entry of this.cache.entries.values())if(entry.items.has(trackId))entry.items.get(trackId).available=false;}this.scheduleSave();}if(!this.nativePlayer.current||this.nativePlayer.current.id===track.id)this.active=null;throw error;});}
+    if(this.nativePlayer){return this.nativePlayer.play(track,{position}).then(result=>{this.active={...track};return{playing:result.playing};}).catch(error=>{if(error.kind==='unavailable'){this.metadataRevision=(this.metadataRevision||0)+1;error.unavailableIds=[];for(const [trackId,t] of this.tracks)if(t.key===track.key){t.available=false;error.unavailableIds.push(trackId);for(const entry of this.cache.entries.values())if(entry.items.has(trackId))entry.items.get(trackId).available=false;}this.scheduleSave();}if(!this.nativePlayer.current||this.nativePlayer.current.id===track.id)this.active=null;throw error;});}
     if(this.playPending&&this.playNavigating)this.playEngine.cancelNavigation?.();
     const request=++this.playRequest;++this.warmRequest;this.playPending=true;
     const cancelled=()=>request!==this.playRequest;
