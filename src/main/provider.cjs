@@ -80,6 +80,7 @@ class VkProvider {
         if(['add','remove','move','like','unlike'].includes(command.action)&&!context.track)throw Error('Песня больше не найдена. Обновите список');
         if(command.action==='move'&&command.beforeTrackId!==null&&!context.before)throw Error('Место песни изменилось. Обновите плейлист');
         operation.state='running';this.operationChanged();
+        if(this.network&&['like','unlike'].includes(command.action)){const library=this.cache.byPlaylist.get('library:'+accountRoot);if(library?.cacheState==='complete'&&!library.stale&&!library.refreshing&&Date.now()-library.createdAt<30000){const rows=[...library.items.keys()].map(id=>this.tracks.get(id)).filter(Boolean);if(rows.length===library.total)context.cachedLibrary={root:accountRoot,verifiedAt:library.createdAt,title:library.title,route:library.route,total:library.total,rows};}}
         const stage=state=>{operation.state=state;this.operationChanged();};
         const result=await (['like','unlike'].includes(command.action)?this.editor.own(command,context,stage):this.editor.edit(command,context,stage));
         if(this.root!==accountRoot)throw Object.assign(Error('Аккаунт изменился. Проверьте результат операции в VK'),{uncertain:true});
