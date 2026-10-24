@@ -8,7 +8,7 @@ if(!text.startsWith('# Wave '+version+'\n')&&!text.startsWith('# Wave '+version+
 const args=process.argv.slice(2);if(args.some(x=>!['--check','--draft'].includes(x)))throw Error('Usage: npm run release -- [--draft] | npm run release:check');
 // Bootstrap release installs the new reader once. Never advertise an unusable
 // V2 package to old clients that only understand the installer envelope.
-const names=['Wave-Setup-'+version+'.exe',...(pkg.updateMode==='bootstrap'?[]:['Wave-'+version+'.waveupdate']),'SHA256SUMS.txt'];
+const names=['Wave-Setup-'+version+'.exe',...(pkg.updateMode==='bootstrap'?[]:['Wave-'+version+'.waveupdate']),...(pkg.extraUpdateBase?['Wave-'+version+'-from-'+pkg.extraUpdateBase+'.waveupdate']:[]),'SHA256SUMS.txt'];
 const files=names.map(n=>path.join(root,'dist',n));
 if(args.includes('--check')){console.log('Release notes match Wave '+version);for(let i=0;i<files.length;i++)console.log((fs.existsSync(files[i])?'Present: ':'Missing artifact: ')+names[i]);process.exit(0);}
 for(const f of files)if(!fs.existsSync(f))throw Error('Missing release artifact: '+path.basename(f));
