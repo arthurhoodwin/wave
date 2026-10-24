@@ -1,0 +1,34 @@
+/* Shared roles for the main window and mini-player. Artwork keeps its colors. */
+:root {
+  color-scheme: dark;
+  --bg-page: #0b0c0d;
+  --bg-surface: #141617;
+  --bg-raised: #1d2021;
+  --bg-input: #101213;
+  --bg-hover: #222526;
+  --bg-selected: #282c2d;
+  --bg-button: #292d2f;
+  --bg-cover: #24292a;
+  --bg-hero: #1d2122;
+  --bg-playing: #202625;
+  --bg-accent-soft: #20372a;
+  --text-primary: #f5f6f5;
+  --text-secondary: #bec3c1;
+  --text-muted: #989f9c;
+  --text-accent: #9aefb3;
+  --accent-fill: #9aefb3;
+  --text-on-accent: #102a19;
+  --border-subtle: #343a38;
+  --border-control: #7c8681;
+  --focus-ring: #a6f7bd;
+  --danger-text: #e7b29a;
+  --range-track: #68716d;
+  --range-active: #bec3c1;
+  --range-position: #9aefb3;
+  --bg-backdrop: #0b0c0ded;
+  /* Mini-player aliases consume the same roles, never a second palette. */
+  --text-main: var(--text-primary);
+  --text-sub: var(--text-secondary);
+  --accent: var(--text-accent);
+  --surface: var(--bg-surface);
+}

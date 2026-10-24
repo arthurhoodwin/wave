@@ -24,7 +24,7 @@ function createVkWindow(){
  return w;
 }
 app.whenReady().then(async()=>{
-  main=new BrowserWindow({width:1440,height:950,minWidth:1100,minHeight:720,title:'Wave',titleBarStyle:'hidden',titleBarOverlay:{color:'#080a09',symbolColor:'#f5f6f5',height:32},icon:path.join(__dirname,'../../assets/icons/wave.ico'),backgroundColor:'#080a09',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'../preload/preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
+  main=new BrowserWindow({width:1440,height:950,minWidth:1100,minHeight:720,title:'Wave',titleBarStyle:'hidden',titleBarOverlay:{color:'#0b0c0d',symbolColor:'#f5f6f5',height:32},icon:path.join(__dirname,'../../assets/icons/wave.ico'),backgroundColor:'#0b0c0d',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'../preload/preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
   require('./mouse-navigation.cjs').attachMouseNavigation(main);
   main.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   main.webContents.on('will-navigate',e=>e.preventDefault());

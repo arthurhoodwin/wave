@@ -7,14 +7,17 @@ dialog.modal-overlay[open] .modal-card{animation:none!important}
 .shortcuts-list{margin:0}.shortcuts-list>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
 .shortcuts-list dt{font-size:var(--text-small);color:var(--text-secondary)}.shortcuts-list dd{margin:0;text-align:end;flex-shrink:0;font-size:12px}
 .shortcuts-list kbd{display:inline-block;min-width:24px;text-align:center;padding:3px 6px;background:var(--bg-input)}
-input[type="range"]:not(.eq-band input){--range-accent:var(--text-accent,var(--accent,#9feeb9));appearance:none;-webkit-appearance:none;background:transparent;min-height:24px;height:24px;margin-block:0;padding:0;cursor:pointer}
-input[type="range"]:not(.eq-band input)::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(to right,var(--range-accent) 0 var(--range-fill,0%),var(--border-control,#81988a) var(--range-fill,0%) 100%)}
+input[type="range"]:not(.eq-band input){--range-accent:var(--range-active);appearance:none;-webkit-appearance:none;background:transparent;min-height:24px;height:24px;margin-block:0;padding:0;cursor:pointer}
+input[type="range"]:not(.eq-band input)::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(to right,var(--range-accent) 0 var(--range-fill,0%),var(--range-track) var(--range-fill,0%) 100%)}
 input[type="range"]:not(.eq-band input)::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:12px;height:12px;border:0;border-radius:50%;background:var(--range-accent);margin-top:-4px}
 input[type="range"]:disabled{cursor:default;opacity:.42}
 .mini-window input[type="range"]{min-height:20px;height:20px}
 .mini-window button:not(:disabled):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#seek,#song-seek{--range-accent:var(--range-position)}
+@media(forced-colors:active){input[type="range"]:not(.eq-band input){--range-accent:Highlight;--range-track:GrayText}}
+@media(forced-colors:active){.primary,.primary span,.play-toggle,.mini-window #toggle{background:ButtonFace;color:ButtonText}.primary .wave-icon,.play-toggle .wave-icon{color:ButtonText}.lyric-line.is-current{color:CanvasText;border-inline-start-color:Highlight}}
 .mini-window .controls button{position:relative}.mini-window .mini-modes button.active::after{content:'';position:absolute;width:3px;height:3px;border-radius:50%;background:currentColor;bottom:1px}
-.window-caption{color:var(--text-primary,#f5f6f5)}
+.window-caption{color:var(--text-primary)}
 @media(hover:hover){input[type="range"]:not(:disabled)::-webkit-slider-thumb{box-shadow:0 0 0 3px transparent}input[type="range"]:not(:disabled):hover::-webkit-slider-thumb{box-shadow:0 0 0 3px #9feeb920}.collection-action:hover:not(:disabled),.song-modes button:hover:not(:disabled){background:var(--bg-hover)}.mini-window button:hover:not(:disabled){background:#ffffff15;color:var(--text-main)}}
 @media(prefers-reduced-motion:no-preference){.icon,.heart-button,.mode-button,.collection-action,.song-modes button,.mini-window button{transition:background-color 120ms ease-out,color 120ms ease-out,scale 150ms ease-out}.icon:not(:disabled):active,.heart-button:not(:disabled):active,.mini-window button:not(:disabled):active{scale:.96}input[type="range"]::-webkit-slider-thumb{transition:box-shadow 120ms ease-out}.album-card{transition:background-color 120ms ease-out,scale 150ms ease-out}}
 @media(forced-colors:active){input[type="range"]:not(.eq-band input){appearance:auto;-webkit-appearance:auto}input[type="range"]:not(.eq-band input)::-webkit-slider-runnable-track{background:CanvasText}input[type="range"]:not(.eq-band input)::-webkit-slider-thumb{background:Highlight;border:1px solid CanvasText}.modal-card{border-color:CanvasText}.mini-window .mini-modes button.active::after{background:Highlight}.window-caption{color:CanvasText}}

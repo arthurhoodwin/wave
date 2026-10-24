@@ -1,9 +1,9 @@
 <p align="center"><img src="assets/icons/wave.png" alt="" width="72"></p>
 <h1 align="center">Wave</h1>
 <p align="center">Клиент VK Музыки для Windows.</p>
-<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.5">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
+<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.6">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
 
-<img src="docs/images/alpha-player.png" alt="Плеер Wave: обложка, текст песни и управление воспроизведением" width="100%">
+<img src="docs/images/song.png" alt="Плеер Wave: обложка, текст песни и управление воспроизведением" width="100%">
 
 *На скриншотах — интерфейс Wave с вымышленными песнями и демо-аккаунтом.*
 
@@ -31,13 +31,13 @@
 | Выпуск | Что выбрать |
 |---|---|
 | [1.0.9.9.1 — обычный](https://github.com/arthurhoodwin/wave/releases/latest) | Если хотите пользоваться выпущенной версией. |
-| [1.1.0-beta.5 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.5) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
+| [1.1.0-beta.6 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.6) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
 
 Beta устанавливается вручную и использует тот же профиль. Вход и коллекция сохраняются. В настройках можно откатиться, если предыдущий установщик сохранён.
 
 **Ограничения Beta:** скачивание поддерживает прямые файлы и совместимые завершённые HLS-записи. HLS после паузы собирается заново; прямой файл продолжается, если сервер подтверждает его неизменность. После перезапуска очередь восстанавливается на паузе. Подборки VK зависят от доступности источника для вашего аккаунта. Метаданные сохраняются рядом с аудио в JSON; встроенные теги пока не записываются. [Что изменилось в текущем выпуске](releases/LATEST.md).
 
-**Переход на Beta 5 — через EXE один раз.** В ней добавлен загрузчик маленьких файловых обновлений для следующих выпусков.
+**Обновление с Beta 5:** выберите `.waveupdate` в настройках → «Приложение» → «Выбрать файл обновления». С более старой версии установите Beta 6 через EXE.
 
 ## Несколько полезных действий
 

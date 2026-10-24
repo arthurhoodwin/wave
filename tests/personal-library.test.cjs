@@ -1,6 +1,20 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {PersonalLibrary,trackData,normalize}=require('../src/main/personal-library.cjs'),{PersonalService}=require('../src/main/personal-service.cjs');
 const track={key:'12_34',title:'Song',artist:'Artist',duration:100,available:true,url:'https://private.example/secret',accessToken:'secret'};
+test('explicit feed retry bypasses the cached failure, shares an in-flight read and refuses offline requests',async()=>{
+ const f=await fixture();let reads=0,finish;const pending=new Promise(r=>finish=r);
+ const provider={root:'/audios12',online:true,tracks:new Map(),playlists:new Map(),playlistHandles:new Map(),network:{accountEpoch:1,homeFeed:()=>{reads++;return pending;}}};
+ const service=new PersonalService({library:f.library,provider,downloads:{public:()=>[],defaultDirectory:f.directory}});
+ try{
+  service.feed={key:'/audios12:1',until:Date.now()+300000,result:{state:'unavailable',sections:[]}};
+  await service.handle({action:'view',type:'home'});assert.equal(reads,0);
+  await service.handle({action:'refresh-recommendations'});assert.equal(reads,1);
+  await service.handle({action:'refresh-recommendations'});assert.equal(reads,1);
+  finish({state:'ready',sections:[]});await service.feed.pending;
+  assert.equal((await service.handle({action:'view',type:'home'})).recommendations.state,'ready');
+  provider.online=false;await assert.rejects(service.handle({action:'refresh-recommendations'}),/Подключитесь/);assert.equal(reads,1);
+ }finally{finish({state:'ready',sections:[]});await service.feed?.pending;await f.close();}
+});
 async function fixture(){const directory=await fs.mkdtemp(path.join(os.tmpdir(),'wave-personal-'));let now=100000;const options={directory,encrypt:s=>Buffer.from(s),decrypt:b=>b.toString(),now:()=>now};const library=new PersonalLibrary(options);return{library,options,directory,time:n=>now+=n,close:async()=>{await library.close();await fs.rm(directory,{recursive:true,force:true});}};}
 test('history persists musical metadata, is bounded and does not persist credentials or stream URLs',async()=>{const f=await fixture();try{await f.library.record('/audios12',track);const again=new PersonalLibrary(f.options),account=await again.account('/audios12');assert.equal(account.data.history[0].track.title,'Song');assert(!JSON.stringify(account.data).includes('secret'));assert.equal(trackData({...track,key:'../../x'}),null);assert.deepEqual(normalize({schema:1,history:{},pins:1,visits:'bad',downloads:{}}).history,[]);}finally{await f.close();}});
 test('recent listening appears after half a second, while seeking and a paused clock do not count',async()=>{const f=await fixture();try{const sample=(position,playing=true)=>f.library.samplePlayback('/audios12',track,{playing,currentTime:position});await sample(0);f.time(100);await sample(80);assert.equal((await f.library.account('/audios12')).data.history.length,0);f.time(250);await sample(80.25);assert.equal((await f.library.account('/audios12')).data.history.length,0);f.time(250);await sample(80.5);assert.equal((await f.library.account('/audios12')).data.history.length,1);}finally{await f.close();}});
