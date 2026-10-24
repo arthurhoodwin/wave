@@ -51,6 +51,12 @@ class VkProvider {
     if(result.title&&this.playlists.has(playlistId)){this.playlists.get(playlistId).title=result.title;const p=this.savedPlaylists.find(p=>p.id===playlistId);if(p)p.title=result.title;}
     if(playlistId&&this.playlists.has(playlistId))this.savedPlaylists=this.savedPlaylists.map(p=>p.id===playlistId?this.publicPlaylist(playlistId,this.playlists.get(playlistId)):p);
     let snapshot;
+    if(result.acknowledged){this.ownershipRevision=(this.ownershipRevision||0)+1;if(this.ownedAccount===this.root){if(result.owned){this.ownedKeys?.add(result.sourceKey);this.ownedKeys?.add(result.libraryKey);}else{this.ownedKeys?.delete(result.sourceKey);this.ownedKeys?.delete(result.libraryKey);}}
+      if(this.ownershipAliases?.root!==this.root)this.ownershipAliases={root:this.root,keys:new Map()};
+      if(result.owned)this.ownershipAliases.keys.set(result.sourceKey,result.libraryKey);else for(const [key,value] of this.ownershipAliases.keys)if(key===result.sourceKey||value===result.libraryKey)this.ownershipAliases.keys.delete(key);
+      const entry=this.cache.byPlaylist.get('library:'+this.root);if(entry?.cacheState==='complete'){entry.revision=(entry.revision||0)+1;entry.refreshing=false;entry.stale=true;if(result.owned){this.absorbRows({rows:[result.likedRow],route:result.route},entry);const added=[...entry.items].find(([id])=>this.tracks.get(id)?.key===result.libraryKey);if(added)entry.items=new Map([added,...[...entry.items].filter(([id])=>id!==added[0])]);}else for(const [id] of entry.items)if(this.tracks.get(id)?.key===result.libraryKey)entry.items.delete(id);entry.total=entry.items.size;snapshot=this.cache.snapshot(entry);}
+      clearTimeout(this.ownershipRefreshTimer);const root=this.root;this.ownershipRefreshTimer=setTimeout(()=>{if(this.root===root&&!this.closing){const target=this.cache.byPlaylist.get('library:'+root);if(target)this.refreshCollection(target);}},250);this.ownershipRefreshTimer.unref?.();
+    }
     if(result.rows){
       const library=playlistId==='library:'+this.root;let entry=this.cache.byPlaylist.get(playlistId);
       if(!entry)entry=this.cache.create(playlistId,library?'Моя музыка':result.title,library?'library':'playlist');
@@ -62,7 +68,7 @@ class VkProvider {
     }
     if(['like','unlike'].includes(command.action)){for(const t of this.tracks.values())if(t.key===context.track.key)t.owned=result.owned;for(const entry of this.cache.entries.values())for(const t of entry.items.values())if(this.tracks.get(t.id)?.key===context.track.key)t.owned=result.owned;}
     if(result.route)this.invalidatePlayback(result.route);
-    const ownership=['like','unlike'].includes(command.action)?require('./collection-batch.cjs').ownership(this,new Map([[context.track.key,result.owned]])):undefined;this.scheduleSave();return{playlistId,collection:snapshot,playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0,owned:result.owned,ownership,changed:result.changed};
+    const ownership=['like','unlike'].includes(command.action)?require('./collection-batch.cjs').ownership(this,new Map([[context.track.key,result.owned],...(result.libraryKey?[[result.libraryKey,result.owned]]:[])])):undefined;this.scheduleSave();return{playlistId,collection:snapshot,playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0,owned:result.owned,ownership,changed:result.changed};
   }
   batchPreview(input){return require('./collection-batch.cjs').preview(this,input);}
   batchExecute(input){return require('./collection-batch.cjs').execute(this,input);}
@@ -80,7 +86,7 @@ class VkProvider {
         if(['add','remove','move','like','unlike'].includes(command.action)&&!context.track)throw Error('Песня больше не найдена. Обновите список');
         if(command.action==='move'&&command.beforeTrackId!==null&&!context.before)throw Error('Место песни изменилось. Обновите плейлист');
         operation.state='running';this.operationChanged();
-        if(this.network&&['like','unlike'].includes(command.action)){const library=this.cache.byPlaylist.get('library:'+accountRoot);if(library?.cacheState==='complete'&&!library.stale&&!library.refreshing&&Date.now()-library.createdAt<30000){const rows=[...library.items.keys()].map(id=>this.tracks.get(id)).filter(Boolean);if(rows.length===library.total)context.cachedLibrary={root:accountRoot,verifiedAt:library.createdAt,title:library.title,route:library.route,total:library.total,rows};}}
+        if(this.network&&['like','unlike'].includes(command.action)){context.quickOwnership=true;const ownEntry=this.cache.byPlaylist.get('library:'+accountRoot);context.membershipRows=ownEntry?.cacheState==='complete'?[...ownEntry.items.keys()].map(id=>this.tracks.get(id)).filter(Boolean):[];context.membershipAlias=this.ownershipAliases?.root===accountRoot?this.ownershipAliases.keys.get(context.track.key):undefined;const library=this.cache.byPlaylist.get('library:'+accountRoot);if(library?.cacheState==='complete'&&!library.stale&&!library.refreshing&&Date.now()-library.createdAt<30000){const rows=[...library.items.keys()].map(id=>this.tracks.get(id)).filter(Boolean);if(rows.length===library.total)context.cachedLibrary={root:accountRoot,verifiedAt:library.createdAt,title:library.title,route:library.route,total:library.total,rows};}}
         const stage=state=>{operation.state=state;this.operationChanged();};
         const result=await (['like','unlike'].includes(command.action)?this.editor.own(command,context,stage):this.editor.edit(command,context,stage));
         if(this.root!==accountRoot)throw Object.assign(Error('Аккаунт изменился. Проверьте результат операции в VK'),{uncertain:true});
@@ -140,7 +146,7 @@ class VkProvider {
   async transitionTrack(input){if(!input||Object.keys(input).some(k=>!['id','fromId','seconds'].includes(k))||typeof input.id!=='string'||typeof input.fromId!=='string'||!Number.isFinite(input.seconds)||input.seconds<0||input.seconds>12)throw Error('Некорректный переход');const track=this.tracks.get(input.id);if(!this.online||!this.nativePlayer||!track||!track.available)throw Error('Выберите доступную песню');const result=await this.nativePlayer.transition(track,input.fromId,input.seconds);if(!result.prepared)return{prepared:false};this.active={...track};return result;}
   trackAlbum(id){return require('./track-album.cjs').trackAlbum(this,id);}
   cancelLyrics(){this.lyricsSources?.cancel();return true;}
-  reconcileOwnership(rows){this.ownedAccount=this.root;this.ownedKeys=new Set(rows.map(t=>t.key));return require('./collection-batch.cjs').ownership(this,new Map(rows.map(t=>[t.key,true])));}
+  reconcileOwnership(rows){this.ownedAccount=this.root;this.ownedKeys=new Set(rows.map(t=>t.key));if(this.ownershipAliases?.root===this.root)for(const [source,key] of this.ownershipAliases.keys)if(this.ownedKeys.has(key))this.ownedKeys.add(source);return require('./collection-batch.cjs').ownership(this,new Map([...this.tracks.values()].map(t=>[t.key,this.ownedKeys.has(t.key)])));}
   async lyrics(id){if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');this.lyricsSources??=new (require('./lyrics-sources.cjs').LyricsSources)();const root=this.root;const cached=this.lyricsSources.peek(track,root);if(cached){if(this.lyricsSources.job?.key!==this.lyricsSources.key(track))this.lyricsSources.cancel();return{...cached,cached:true};}if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');const result=await this.lyricsSources.get(track,root,()=>this.network.lyrics(track.key));if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}
   async account(){if(!this.network||!this.online)throw Error('Подключитесь к VK, чтобы получить профиль');return this.network.profile();}
   async status(){return this.session||this.checkSession();}
@@ -256,7 +262,7 @@ class VkProvider {
     const albums=[],contributions=[];for(const row of info?.albums||[]){if(!row.title)continue;const signature=JSON.stringify(['album',route,row.title,row.owner]);let key=this.playlistHandles.get(signature);if(!key){key=randomUUID();this.playlistHandles.set(signature,key);}this.playlists.set(key,{...row,kind:'album',route,cover:cover(row.cover)});(row.section==='contribution'?contributions:albums).push({id:key,title:row.title,owner:row.owner,cover:cover(row.cover)});}
     this.preparePlayback(route);this.scheduleSave();return {...result,title:artist.name,albums,contributions,cover:cover(track.cover)};
   });}
-  async close(){this.closing=true;this.lyricsSources?.clear();for(const c of this.searchPageControllers||[])c.abort();this.searchController?.abort();clearTimeout(this.reconnectTimer);if(this.editor!==this.network)await this.editor?.close();await this.mutationSerial;await this.nativePlayer?.close();this.network?.close();clearTimeout(this.saveTimer);await this.cache.close();if(this.store&&this.root)await this.store.save(this.exportMetadata());await this.store?.close();}
+  async close(){clearTimeout(this.ownershipRefreshTimer);this.closing=true;this.lyricsSources?.clear();for(const c of this.searchPageControllers||[])c.abort();this.searchController?.abort();clearTimeout(this.reconnectTimer);if(this.editor!==this.network)await this.editor?.close();await this.mutationSerial;await this.nativePlayer?.close();this.network?.close();clearTimeout(this.saveTimer);await this.cache.close();if(this.store&&this.root)await this.store.save(this.exportMetadata());await this.store?.close();}
   more(){return this.exclusive(async()=>{
     if(this.network)return networkProvider.more(this);
     if(!this.collection)throw Error('Сначала откройте медиатеку, поиск или плейлист');
