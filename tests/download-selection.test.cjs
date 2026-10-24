@@ -1,13 +1,16 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises');
-const {createFixture:fixture,track,root,waitForIdle}=require('./helpers/downloads.cjs');
+const {createFixture:fixture,track,root}=require('./helpers/downloads.cjs');
+const {waitUntil}=require('./helpers/async.cjs');
+// 150 real file commits take longer on Windows CI than single-file fixtures.
+const waitBulk=f=>waitUntil(()=>!f.manager.running,'all 150 downloads to finish',{timeout:12000});
 const tracks=n=>Array.from({length:n},(_,i)=>({...track,key:'12_'+(1000+i),title:'Selection '+i}));
 test('150 selected tracks are all saved and downloaded while at most 100 are admitted',async()=>{
  const f=await fixture();let maximum=0;const seen=new Set();f.manager.resolve=async key=>{seen.add(key);maximum=Math.max(maximum,f.manager.public(root).filter(j=>['queued','running'].includes(j.state)).length);return{format:'audio',url:'https://cs1.vkuseraudio.ru/audio'};};
- try{assert.deepEqual(await f.manager.add(root,tracks(150)),{added:150,skipped:0});await f.wait();assert.equal(seen.size,150);assert.ok(maximum<=100);assert.equal((await f.library.account(root)).data.downloads.length,150);assert.deepEqual(await f.manager.queue.load(root,[]),[]);}finally{await f.close();}
+ try{assert.deepEqual(await f.manager.add(root,tracks(150)),{added:150,skipped:0});await waitBulk(f);assert.equal(seen.size,150);assert.ok(maximum<=100);assert.equal((await f.library.account(root)).data.downloads.length,150);assert.deepEqual(await f.manager.queue.load(root,[]),[]);}finally{await f.close();}
 });
 test('the full pending selection survives restart and resumes beyond the first hundred',async()=>{
- const f=await fixture();try{f.manager.pump=()=>{};await f.manager.add(root,tracks(150));assert.equal(f.manager.public(root).filter(j=>j.state==='queued').length,100);assert.equal(f.manager.public(root).filter(j=>j.state==='waiting').length,50);await f.restart();assert.equal(f.manager.public(root).length,150);assert.ok(f.manager.public(root).every(j=>j.state==='paused'));await f.manager.controlAll(root,'resume');await f.wait();assert.equal((await f.library.account(root)).data.downloads.length,150);}finally{await f.close();}
+ const f=await fixture();try{f.manager.pump=()=>{};await f.manager.add(root,tracks(150));assert.equal(f.manager.public(root).filter(j=>j.state==='queued').length,100);assert.equal(f.manager.public(root).filter(j=>j.state==='waiting').length,50);await f.restart();assert.equal(f.manager.public(root).length,150);assert.ok(f.manager.public(root).every(j=>j.state==='paused'));await f.manager.controlAll(root,'resume');await waitBulk(f);assert.equal((await f.library.account(root)).data.downloads.length,150);}finally{await f.close();}
 });
 test('bulk pause/cancel covers waiting entries and does not touch a different account',async()=>{
  const f=await fixture();try{f.manager.pump=()=>{};await f.manager.add(root,tracks(150));await f.manager.controlAll(root,'pause');assert.ok(f.manager.public(root).every(j=>j.state==='paused'));f.setRoot('/audios13');f.manager.switchAccount();await assert.rejects(f.manager.controlAll(root,'cancel'),/Аккаунт/);assert.equal((await f.manager.queue.load(root,[])).length,150);f.setRoot(root);await f.manager.controlAll(root,'cancel');assert.ok(f.manager.public(root).every(j=>j.state==='cancelled'));await f.restart();assert.equal(f.manager.public(root).length,0);}finally{await f.close();}
