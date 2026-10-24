@@ -1,6 +1,6 @@
 {
   "name": "wave-vk-research-client",
-  "version": "1.1.0-beta.4",
+  "version": "1.1.0-beta.5",
   "private": false,
   "description": "Windows music client with an independent VK network adapter and local audio player",
   "main": "src/main/main.cjs",
@@ -10,7 +10,8 @@
     "test": "node --test --test-timeout=15000 tests/*.test.cjs",
     "dist": "node scripts/prepare.cjs && electron-builder --win nsis --x64 --publish never",
     "release": "node scripts/release.cjs",
-    "release:check": "node scripts/release.cjs --check"
+    "release:check": "node scripts/release.cjs --check",
+    "artifacts:clean": "node scripts/clean-artifacts.cjs --apply"
   },
   "devDependencies": {
     "@fontsource-variable/inter": "5.3.0",
@@ -49,7 +50,7 @@
         "nsis"
       ],
       "icon": "assets/icons/wave.ico",
-      "artifactName": "Wave-Setup-1.1.0-beta.4.${ext}"
+      "artifactName": "Wave-Setup-1.1.0-beta.5.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -70,7 +71,7 @@
     "asarUnpack": [
       "build/windows/apply-update.ps1"
     ],
-    "buildVersion": "1.1.0.104"
+    "buildVersion": "1.1.0.105"
   },
   "license": "GPL-3.0-only",
   "repository": {
@@ -81,6 +82,7 @@
   "bugs": {
     "url": "https://github.com/arthurhoodwin/wave/issues"
   },
-  "releaseVersion": "1.1.0-beta.4",
-  "releaseChannel": "beta"
+  "releaseVersion": "1.1.0-beta.5",
+  "releaseChannel": "beta",
+  "updateMode": "bootstrap"
 }
