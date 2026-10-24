@@ -1,6 +1,6 @@
 'use strict';
 const {app}=require('electron'),fs=require('node:fs'),raw=require('original-fs'),path=require('node:path'),assert=require('node:assert/strict');
-const {UpdateManager}=require('../../src/main/update-manager.cjs'),delta=require('../../src/main/file-update.cjs'),root=process.argv[2],phase=process.argv[3];
+const {UpdateManager}=require('../../src/main/updates/update-manager.cjs'),delta=require('../../src/main/updates/file-update.cjs'),root=process.argv[2],phase=process.argv[3];
 app.setPath('userData',path.join(root,'profile'));
 app.whenReady().then(async()=>{
  try{

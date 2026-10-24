@@ -1,5 +1,5 @@
 'use strict';
-const fs=require('node:fs/promises'),path=require('node:path'),{createHash,randomUUID}=require('node:crypto'),{trackData,validRoot}=require('./personal-library.cjs');
+const fs=require('node:fs/promises'),path=require('node:path'),{createHash,randomUUID}=require('node:crypto'),{trackData,validRoot}=require('../personal-library.cjs');
 // Separate journal keeps the complete selection across rollback to older apps,
 // whose personal-index reader only understands the first 100 queued entries.
 class DownloadQueue{

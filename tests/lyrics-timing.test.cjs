@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {parse,normalize,current}=require('../src/renderer/lyrics-timing.js'),{vkLyrics}=require('../src/main/vk-lyrics.cjs');
+const {parse,normalize,current}=require('../src/renderer/lyrics-timing.js'),{vkLyrics}=require('../src/main/lyrics/vk-lyrics.cjs');
 
 
 test('LRC preserves repeated timestamps, fractions, offset and Unicode while rejecting invalid seconds',()=>{const lines=parse('[ar:Fixture]\n[offset:500]\n[00:01.25][00:04.250]Первая\n[00:02.50]Вторая\n[00:04.25]Третья\n[00:99]Invalid');assert.deepEqual(lines,[{time:.75,text:'Первая'},{time:2,text:'Вторая'},{time:3.75,text:'Первая\nТретья'}]);assert.equal(current(lines,.1),-1);assert.equal(current(lines,2.2),1);assert.equal(current(lines,100),2);assert.deepEqual(parse('Plain text'),[]);assert.deepEqual(parse('x'.repeat(200001)),[]);});

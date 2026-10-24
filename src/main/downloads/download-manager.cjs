@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs/promises'),{createReadStream}=require('node:fs'),path=require('node:path'),{createHash,randomUUID}=require('node:crypto');
-const {mediaUrl}=require('./media-proxy.cjs'),{trackData}=require('./personal-library.cjs');
+const {mediaUrl}=require('../media-proxy.cjs'),{trackData}=require('../personal-library.cjs');
 const {requestAudio,retryRead}=require('./download-http.cjs');
 const MAX_FILE=512*1024**2;
 async function hashFile(file){const hash=createHash('sha256');for await(const bytes of createReadStream(file))hash.update(bytes);return hash.digest('hex');}

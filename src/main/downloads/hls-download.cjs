@@ -1,7 +1,7 @@
 'use strict';
 // Finite audio HLS (RFC 8216): packed AAC/MP3, AAC in TS, and fMP4.
 const {createDecipheriv}=require('node:crypto');
-const {mediaUrl}=require('./media-proxy.cjs');
+const {mediaUrl}=require('../media-proxy.cjs');
 const {retryRead,requestAudio}=require('./download-http.cjs');
 const fail=message=>{throw Error('HLS: '+message);};
 const attributes=text=>Object.fromEntries([...text.matchAll(/([A-Z0-9-]+)=("[^"]*"|[^,]*)/g)].map(m=>[m[1],m[2].replace(/^"|"$/g,'')]));

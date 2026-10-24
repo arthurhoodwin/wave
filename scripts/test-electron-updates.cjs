@@ -1,7 +1,7 @@
 'use strict';
 // Build actual ASAR files under Node, then exercise the real Electron fs shim.
 const fs=require('node:fs/promises'),path=require('node:path'),crypto=require('node:crypto'),{spawnSync}=require('node:child_process');
-const {createPatch,MAGIC,hash}=require('../src/main/file-update.cjs'),{PRODUCT}=require('../src/main/update-manager.cjs');
+const {createPatch,MAGIC,hash}=require('../src/main/updates/file-update.cjs'),{PRODUCT}=require('../src/main/updates/update-manager.cjs');
 (async()=>{
  const scratch=path.resolve(__dirname,'../work');await fs.mkdir(scratch,{recursive:true});const root=await fs.mkdtemp(path.join(scratch,'electron-updates-'));
  try{

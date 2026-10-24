@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs/promises'),path=require('node:path'),http=require('node:http'),{randomBytes,createHash}=require('node:crypto');
-const {cover}=require('./navigation-meta.cjs');
+const {cover}=require('../navigation-meta.cjs');
 function imageType(b){if(b.length>3&&b[0]===255&&b[1]===216&&b[2]===255)return'jpg';if(b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return'png';if(b.toString('ascii',0,4)==='RIFF'&&b.toString('ascii',8,12)==='WEBP')return'webp';return null;}
 async function saveArtwork({fetch,track,folder,id,signal}){const url=cover(track.cover);if(!url)return null;let response;try{response=await fetch(url,{signal:AbortSignal.any([signal,AbortSignal.timeout(8000)]),credentials:'omit',redirect:'error'});if(!response.ok||!response.body)return null;const chunks=[];let bytes=0;for await(const chunk of response.body){bytes+=chunk.length;if(bytes>2*1024**2)throw Error('Обложка слишком большая');chunks.push(Buffer.from(chunk));}const data=Buffer.concat(chunks),ext=imageType(data);if(!ext)return null;const file=path.join(folder,id+'.cover.'+ext);await fs.writeFile(file,data,{flag:'wx',mode:0o600});return{ext,bytes,sha256:createHash('sha256').update(data).digest('hex')};}catch{return null;}finally{await response?.body?.cancel().catch(()=>{});}}
 class OfflineArtwork{

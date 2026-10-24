@@ -38,7 +38,7 @@ GET-повторы ограничены и учитывают Retry-After; от�
 
 ## Модули
 
-[download-manager.cjs](../src/main/download-manager.cjs), [download-queue.cjs](../src/main/download-queue.cjs), [download-http.cjs](../src/main/download-http.cjs), [hls-download.cjs](../src/main/hls-download.cjs), [download-validator.cjs](../src/main/download-validator.cjs), [offline-artwork.cjs](../src/main/offline-artwork.cjs), [local-media.cjs](../src/main/local-media.cjs). Интерфейс — personal.js/personal.css и row-actions.js.
+[download-manager.cjs](../src/main/downloads/download-manager.cjs), [download-queue.cjs](../src/main/downloads/download-queue.cjs), [download-http.cjs](../src/main/downloads/download-http.cjs), [hls-download.cjs](../src/main/downloads/hls-download.cjs), [download-validator.cjs](../src/main/downloads/download-validator.cjs), [offline-artwork.cjs](../src/main/downloads/offline-artwork.cjs), [local-media.cjs](../src/main/local-media.cjs). Интерфейс — personal.js/personal.css и row-actions.js.
 
 Проверки 150 выбранных/скачанных песен, перезапуска, отмены, ошибок журнала, смены аккаунта, ETag/Range и HLS находятся в tests/download-selection.test.cjs, download-manager.test.cjs, hls-download.test.cjs, offline-playback.test.cjs. Искусственные данные не доказывают все варианты настоящего VK; дополнительные натурные проверки отложены владельцем.
 

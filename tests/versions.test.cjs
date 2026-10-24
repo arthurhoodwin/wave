@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {compare}=require('../src/main/update-manager.cjs');
+const {compare}=require('../src/main/updates/update-manager.cjs');
 test('release ordering supports installed historical versions, prereleases and invalid inputs',()=>{
   const ordered=[
     '0.8.9','0.8.10','1.0.5','1.0.6','1.0.61','1.0.62','1.0.7','1.0.8',

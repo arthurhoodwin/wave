@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {retryRead,requestAudio}=require('../src/main/download-http.cjs');
+const {retryRead,requestAudio}=require('../src/main/downloads/download-http.cjs');
 const {url}=require('./helpers/downloads.cjs');
 
 

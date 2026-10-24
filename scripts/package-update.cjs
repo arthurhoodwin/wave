@@ -1,6 +1,6 @@
 'use strict';
 const fs=require('node:fs/promises'),{createReadStream,createWriteStream}=require('node:fs'),path=require('node:path');
-const {sign,createPublicKey}=require('node:crypto'),{pipeline}=require('node:stream/promises');const {MAGIC,PRODUCT,digest,compare}=require('../src/main/update-manager.cjs');
+const {sign,createPublicKey}=require('node:crypto'),{pipeline}=require('node:stream/promises');const {MAGIC,PRODUCT,digest,compare}=require('../src/main/updates/update-manager.cjs');
 (async()=>{
  const [input,target,current,keyFile,base,baseVersion]=process.argv.slice(2);
  if(!input||!target||!current||!keyFile)throw Error('Usage: package-update.cjs target-directory output.waveupdate version private-key.pem base-directory base-version (EXE input: legacy format)');
@@ -11,7 +11,7 @@ const {sign,createPublicKey}=require('node:crypto'),{pipeline}=require('node:str
   if(!base||!baseVersion||compare(current,baseVersion)<=0)throw Error('A previous unpacked build and its exact older version are required');
   // The packaged ASAR is the authoritative version, not the caller-supplied label.
   const asar=require('@electron/asar');for(const [root,expected] of [[input,current],[base,baseVersion]]){const p=JSON.parse(asar.extractFile(path.join(root,'resources/app.asar'),'package.json'));if((p.releaseVersion||p.version)!==expected)throw Error('ASAR version differs from the requested version');}
-  const delta=require('../src/main/file-update.cjs'),patch=await delta.createPatch(base,input);body=patch.body;magic=delta.MAGIC;sha512=delta.hash(body);bytes=body.length;extra={kind:'files',baseVersion};console.log('Changed files:',patch.changed,'of',patch.total,'; new block bytes:',patch.newBytes,'; compressed bytes:',bytes);
+  const delta=require('../src/main/updates/file-update.cjs'),patch=await delta.createPatch(base,input);body=patch.body;magic=delta.MAGIC;sha512=delta.hash(body);bytes=body.length;extra={kind:'files',baseVersion};console.log('Changed files:',patch.changed,'of',patch.total,'; new block bytes:',patch.newBytes,'; compressed bytes:',bytes);
  }else{bytes=(await fs.stat(input)).size;sha512=await digest(input);}
  const payload=JSON.stringify({product:PRODUCT,arch:'x64',version:current,bytes,sha512,...extra}),envelope=Buffer.from(JSON.stringify({payload,signature:sign(null,Buffer.from(payload),key).toString('base64')})),length=Buffer.alloc(4);length.writeUInt32LE(envelope.length);
  const output=createWriteStream(target,{flags:'wx'});output.write(Buffer.concat([magic,length,envelope]));if(body)output.end(body);else await pipeline(createReadStream(input),output);

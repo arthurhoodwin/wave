@@ -24,3 +24,6 @@ Cookies*
 Local State
 Thumbs.db
 .DS_Store
+
+# Local code graph, cache and machine-specific runtime paths
+graphify-out/

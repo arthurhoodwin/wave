@@ -1,5 +1,5 @@
 'use strict';
-const {LocalMedia}=require('./local-media.cjs');
+const {LocalMedia}=require('../local-media.cjs');
 // Separate, non-persistent sandbox; no VK session, no autoplay and no renderer file paths.
 async function validateDownload({file,record,signal},{BrowserWindow}){
  let window;const media=new LocalMedia({locate:async()=>({file,record}),getRoot:()=>'/validation'});const abort=()=>window?.destroy();signal?.addEventListener('abort',abort,{once:true});
