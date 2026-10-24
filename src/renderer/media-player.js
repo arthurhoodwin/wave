@@ -37,5 +37,6 @@
  if(type==='volume'){if((Number(command.volumeRevision)||0)>=volumeRevision){volumeRevision=Number(command.volumeRevision)||0;volume=command.volume;for(const instance of [active,prepared,tail])if(instance)instance.audio.volume=volume;}report(active?.audio,gen,id);return;}
  const audio=active?.audio;if(type==='pause'&&!audio){desiredPlaying=false;report(null,gen,id);return;}if(!audio)throw Error('No media');if(type==='pause'){desiredPlaying=false;stopTail();audio.pause();}else if(type==='resume'){desiredPlaying=true;await window.waveAudio?.resume();await audio.play();}else if(type==='seek'){await seek(active,command,gen);return;}else throw Error('Unknown command');report(audio,gen,id);
  }catch{if(active)active.switching=false;if(gen===generation)report(active?.audio,gen,id,type==='prepare'?'prepare-error':'error');}});
+ window.WaveMediaClock={position:()=>active&&!active.destroyed&&!active.switching?Math.max(0,Number(active.audio.currentTime)||0):null};
  window.WaveMediaDebug={stats:()=>({active:!!active,prepared:!!prepared,tail:!!tail,connections:window.waveAudio?.info()?.connections||0})};
 })();

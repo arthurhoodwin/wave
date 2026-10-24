@@ -16,10 +16,17 @@
 .song-card{width:100%;max-width:none}.song-layout{grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:clamp(24px,3vw,64px)}
 .song-record{padding:4px 8px 12px;display:flex;flex-direction:column;align-items:center}.song-cover{width:min(100%,560px,54vh);flex-shrink:0}.song-record h2,.song-artists{width:min(100%,560px)}.song-record h2{margin-inline:auto}.song-album{align-self:flex-start;margin-inline-start:max(0px,calc((100% - 560px)/2))}.lyrics-panel{padding-inline-start:24px}
 .lyrics-attribution{display:block;margin-block-start:32px;padding-block:16px 8px;border-top:1px solid var(--border-subtle);font-size:12px;font-weight:400;line-height:1.6;white-space:pre-wrap;color:var(--text-muted)}.lyrics-attribution p{margin:8px 0 0}#lyrics-status:empty{display:none}
-@media(prefers-reduced-motion:no-preference){.lyric-line{transition:color 180ms ease-out,background-color 200ms ease-out,border-color 200ms ease-out,transform 220ms cubic-bezier(.2,0,0,1)}.lyric-line.is-current{transform:translateX(4px)}}
+@media(prefers-reduced-motion:no-preference){.lyric-line{transition:background-color 90ms ease-out,transform 100ms ease-out}.lyric-line.is-current{transform:translateX(4px)}}
 @media(min-width:1600px){#song-dialog{padding-inline:32px}.song-layout{grid-template-columns:minmax(360px,.85fr) minmax(0,1.15fr)}}
 @media(max-width:850px){.song-layout{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:20px}.song-cover{width:min(100%,320px,40vh)}.song-record h2,.song-artists{width:100%}.song-album{margin-inline-start:0}}
 @media(max-width:650px){.song-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(100px,.65fr) minmax(100px,1fr);gap:12px}.song-record{display:block}.song-cover{float:left;width:100px;margin:0 14px 8px 0}.song-record h2,.song-artists{width:auto}.lyrics-panel{padding-inline:0}.song-footer{width:100%}}
 @media(max-height:500px) and (max-width:650px){.song-layout{grid-template-columns:minmax(0,.7fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}.song-record{display:block}.song-cover{float:none;width:64px;margin:0 0 8px}.lyrics-panel{padding-inline-start:10px}}
 
 @media(min-width:851px){.song-record{--record-width:min(100%,560px,54vh)}.song-cover,.song-record h2,.song-record .song-artists{width:var(--record-width)}.song-record .song-artists{justify-content:flex-start;margin-inline:auto}.song-album{margin-inline-start:max(0px,calc((100% - min(560px,54vh))/2))}}
+
+/* One metadata container shares the cover edge; nested artist links fill it. */
+#song-artists{width:var(--record-width,100%);min-width:0}#song-artists>.artist-links{width:100%;justify-content:flex-start;margin:0}
+.lyric-line{display:block;width:100%;font:inherit;text-align:start;background:transparent;border:0;border-inline-start:3px solid transparent;border-radius:4px;cursor:pointer}.lyric-line:hover{background:var(--bg-surface)}.lyric-line:focus-visible{outline:2px solid var(--text-accent);outline-offset:2px}
+.song-footer-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);flex-wrap:initial}.song-transport{justify-content:center}.song-volume{justify-self:end}#song-state{overflow-wrap:anywhere}
+@media(max-width:700px){.song-footer-top{grid-template-columns:minmax(0,1fr) auto}.song-transport{grid-column:2}.song-volume{grid-column:1/-1;justify-self:end}.song-volume input{width:120px}}
+@media(max-width:380px){.song-footer-top{grid-template-columns:minmax(0,1fr)}.song-transport,.song-volume{grid-column:auto;justify-self:center}#song-state{margin:0}}
