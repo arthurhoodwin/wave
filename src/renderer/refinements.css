@@ -37,6 +37,7 @@ body:not(.mini-window){grid-template-rows:32px 76px minmax(0,1fr) auto}.window-t
 .track.current .track-index{color:var(--text-accent)}
 .playlist-item.active,.personal-nav-button.active{background:var(--bg-selected);color:var(--text-primary)}
 .library-item:not(.active){background:transparent}
+.top #login{margin-inline-start:auto}
 @media(max-width:850px){.player-right{display:flex;grid-column:1/-1;justify-content:flex-end;gap:8px}.player-right .volume-control{min-width:0}.player-right input[type="range"]{width:clamp(64px,24vw,172px);min-width:48px}}
 .modal-card{box-shadow:0 0 0 1px var(--border-subtle),0 20px 80px #0008}
 .mini-window{background:var(--bg-surface)}
