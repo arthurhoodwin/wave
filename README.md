@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/icons/wave.png" alt="" width="72"></p>
 <h1 align="center">Wave</h1>
 <p align="center">Клиент VK Музыки для Windows.</p>
-<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.6">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
+<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.7">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
 
 <img src="docs/images/song.png" alt="Плеер Wave: обложка, текст песни и управление воспроизведением" width="100%">
 
@@ -31,13 +31,13 @@
 | Выпуск | Что выбрать |
 |---|---|
 | [1.0.9.9.1 — обычный](https://github.com/arthurhoodwin/wave/releases/latest) | Если хотите пользоваться выпущенной версией. |
-| [1.1.0-beta.6 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.6) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
+| [1.1.0-beta.7 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.7) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
 
 Beta устанавливается вручную и использует тот же профиль. Вход и коллекция сохраняются. В настройках можно откатиться, если предыдущий установщик сохранён.
 
 **Ограничения Beta:** скачивание поддерживает прямые файлы и совместимые завершённые HLS-записи. HLS после паузы собирается заново; прямой файл продолжается, если сервер подтверждает его неизменность. После перезапуска очередь восстанавливается на паузе. Подборки VK зависят от доступности источника для вашего аккаунта. Метаданные сохраняются рядом с аудио в JSON; встроенные теги пока не записываются. [Что изменилось в текущем выпуске](releases/LATEST.md).
 
-**Обновление с Beta 5:** выберите `.waveupdate` в настройках → «Приложение» → «Выбрать файл обновления». С более старой версии установите Beta 6 через EXE.
+**Исправление обновлятора в Beta 7:** используйте EXE или полный подписанный `.waveupdate`. Файловый патч Beta 6 ошибочно отклонял исправную Beta 5 из-за особенностей ASAR в Electron. Для перехода Beta 5/6 → Beta 7 нужен полный пакет один раз; после установки исправленного загрузчика маленькие патчи снова поддерживаются.
 
 ## Несколько полезных действий
 

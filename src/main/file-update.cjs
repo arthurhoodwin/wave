@@ -1,6 +1,6 @@
 'use strict';
 // Signed file patches reuse unchanged blocks; they never contain or execute scripts.
-const fs=require('node:fs/promises'),path=require('node:path'),{createHash}=require('node:crypto'),{brotliCompressSync,brotliDecompressSync,constants}=require('node:zlib');
+const fs=require('./disk-fs.cjs').promises,path=require('node:path'),{createHash}=require('node:crypto'),{brotliCompressSync,brotliDecompressSync,constants}=require('node:zlib');
 const MAGIC=Buffer.from('WAVEUPD2\n'),LIMIT=512*1024*1024;
 const hash=b=>createHash('sha512').update(b).digest('hex');
 // Content-defined boundaries survive insertions in ASAR headers and source files.
@@ -30,7 +30,7 @@ function decode(body){let raw;try{raw=brotliDecompressSync(body,{maxOutputLength
  for(const name of new Set([...base.keys(),...target.keys()]))if(base.get(name)?.sha512!==target.get(name)?.sha512&&!changed.has(name))throw Error('Неполный пакет обновления');
  return {...index,data};
 }
-async function verifyBase(root,rows){for(const r of rows){const file=await filePath(root,r.path);try{const stat=await fs.stat(file);if(!stat.isFile()||stat.size!==r.size||hash(await fs.readFile(file))!==r.sha512)throw Error();}catch{throw Error('Файлы Wave отличаются от основы обновления. Используйте полный установщик.');}}}
+async function verifyBase(root,rows){for(const r of rows){const file=await filePath(root,r.path);try{const stat=await fs.stat(file);if(!stat.isFile()||stat.size!==r.size||hash(await fs.readFile(file))!==r.sha512)throw Error();}catch{throw Error('Файл Wave «'+r.path+'» недоступен или отличается от основы обновления. Используйте полный установщик.');}}}
 async function prepare({body,installRoot,directory,version,current}){const p=decode(body);await verifyBase(installRoot,p.base);const forward={base:p.base,files:[]},reverse={base:p.target,files:[]};await fs.mkdir(path.join(directory,'files'),{recursive:true});await fs.mkdir(path.join(directory,'rollback','files'),{recursive:true});
  for(let i=0;i<p.files.length;i++){const f=p.files[i],name=await filePath(installRoot,f.path);let original=Buffer.alloc(0);if(f.before)original=await fs.readFile(name);else{try{await fs.lstat(name);throw Error('Новый файл уже существует');}catch(e){if(e.code!=='ENOENT')throw e;}}
   const source='files/'+i;forward.files.push({path:f.path,before:f.before,after:f.after,source:f.after?source:null});reverse.files.push({path:f.path,before:f.after,after:f.before,source:f.before?source:null});
