@@ -10,3 +10,5 @@ test('startup health records an unclean same-version session and clears it after
 test('download rejects incomplete content and does not report a ready update',async()=>{const f=await fixture();try{await f.updater.check();f.updater.fetch=async()=>new Response(f.file.subarray(0,100));assert.equal((await f.updater.download()).phase,'error');assert.equal(f.manager.staged,null);assert.deepEqual(await fs.readdir(f.directory),[]);}finally{await f.close();}});
 
 test('four-part hotfix is discovered, signature-checked and staged',async()=>{const f=await fixture('1.0.9.5');try{assert.equal((await f.updater.check()).phase,'available');assert.equal((await f.updater.download()).phase,'ready');assert.equal(f.manager.staged.version,'1.0.9.5');}finally{await f.close();}});
+
+test('five-part hotfix is discovered and signature-checked',async()=>{const f=await fixture('1.0.9.9.1');try{assert.equal((await f.updater.check()).phase,'available');assert.equal((await f.updater.download()).phase,'ready');assert.equal(f.manager.staged.version,'1.0.9.9.1');}finally{await f.close();}});
