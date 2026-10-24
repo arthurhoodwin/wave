@@ -1,7 +1,7 @@
 'use strict';
 const {cover,artistRoute}=require('./navigation-meta.cjs');
 const CLIENT='6287487',VERSION='5.269';
-const METHODS=new Set(['audio.get','audio.getPlaylists','audio.getPlaylistById','audio.getById','audio.getLyrics','audio.search','audio.getAudiosByArtist','catalog.getAudio','catalog.getSection','catalog.getAudioArtist','catalog.getAudioSearch','catalog.getBlockItems','users.get','audio.createPlaylist','audio.editPlaylist','audio.deletePlaylist','audio.add','audio.delete']);
+const METHODS=new Set(['audio.get','audio.getPlaylists','audio.getPlaylistById','audio.getById','audio.getLyrics','audio.search','audio.getAudiosByArtist','catalog.getAudio','catalog.getSection','catalog.getAudioArtist','catalog.getAudioSearch','catalog.getBlockItems','users.get','audio.createPlaylist','audio.editPlaylist','audio.deletePlaylist','audio.add','audio.delete','audio.restore']);
 class VkError extends Error{constructor(kind,message,{code,uncertain=false}={}){super(message);this.name='VkError';this.kind=kind;this.code=code;this.uncertain=uncertain;}}
 const keyOf=a=>Number.isSafeInteger(Number(a?.owner_id))&&Number(a.owner_id)!==0&&Number.isSafeInteger(Number(a?.id))&&Number(a.id)>0?String(a.owner_id)+'_'+a.id:null;
 const seconds=n=>{n=Math.max(0,Math.floor(Number(n)||0));return Math.floor(n/60)+':'+String(n%60).padStart(2,'0');};
@@ -104,7 +104,7 @@ class VkHttpClient{
   if(matches.length>1&&!matches.some(r=>r.key===track.key))throw new VkError('changed','В медиатеке несколько версий песни. Выберите точную запись из «Мне нравится».');
   if(fresh&&(matches.length>0)===desired){before=await this.library();matches=before.rows.filter(r=>r.key===track.key||r.title===track.title&&r.artist===track.artist&&r.duration===track.duration);if(matches.length>1&&!matches.some(r=>r.key===track.key))throw new VkError('changed','В медиатеке несколько версий песни. Выберите точную запись из «Мне нравится».');}
   if((matches.length>0)===desired)return{...before,owned:desired,changed:false};
-  if(context.root!=='/audios'+this.accountId)throw new VkError('cancelled','Аккаунт изменился. Повторите действие.');const target=desired?track:matches.find(r=>r.key===track.key)||matches[0];const ref=this.audioRefs.get(target.key)||this.parseIdentity(target.key);onStage('syncing');await this.call(desired?'audio.add':'audio.delete',{owner_id:ref.owner,audio_id:ref.id,access_key:ref.accessKey},{write:true});
+  if(context.root!=='/audios'+this.accountId)throw new VkError('cancelled','Аккаунт изменился. Повторите действие.');const target=desired?track:matches.find(r=>r.key===track.key)||matches[0];const ref=this.audioRefs.get(target.key)||this.parseIdentity(target.key);onStage('syncing');await this.call(desired?(ref.owner===this.accountId?'audio.restore':'audio.add'):'audio.delete',{owner_id:ref.owner,audio_id:ref.id,access_key:ref.accessKey},{write:true});
   let library;try{library=await this.library();}catch(e){e.uncertain=true;throw e;}const match=library.rows.filter(r=>r.key===track.key||r.title===track.title&&r.artist===track.artist&&r.duration===track.duration);if((match.length>0)!==desired)throw new VkError('changed','VK не подтвердил изменение «Мне нравится». Обновите список.',{uncertain:true});return{...library,owned:desired,changed:true};
  }
 
