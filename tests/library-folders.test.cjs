@@ -1,0 +1,11 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {folderData,folderRequest}=require('../src/main/library-folders.cjs');
+function folderFixture(){let stored;const provider={root:'/audios123',playlists:new Map([['opaque',{vkId:'123_7'}]]),savedPlaylists:[{id:'opaque'}]},store={load:async()=>stored,save:async(_,data)=>{stored=folderData(data);}};return{provider,store,get:()=>stored};}
+
+
+test('folders create, rename, move and delete without invoking VK writes',async()=>{const f=folderFixture();let r=await folderRequest(f.store,f.provider,{action:'create',name:'В дороге'});const id=r.folders[0].id;r=await folderRequest(f.store,f.provider,{action:'move',playlistId:'opaque',folderId:id});assert.deepEqual(r.folders[0].playlistIds,['opaque']);assert(!JSON.stringify(r).includes('123_7'));await folderRequest(f.store,f.provider,{action:'rename',id,name:'Вечер'});await folderRequest(f.store,f.provider,{action:'collapse',id,collapsed:true});assert.equal(f.get().folders[0].name,'Вечер');assert.equal(f.get().folders[0].collapsed,true);await folderRequest(f.store,f.provider,{action:'remove',id});assert.deepEqual(f.get().folders,[]);assert.equal(f.provider.savedPlaylists.length,1);});
+
+test('folder assignments survive opaque handle changes and isolate accounts',async()=>{const f=folderFixture();const created=await folderRequest(f.store,f.provider,{action:'create',name:'A'}),id=created.folders[0].id;await folderRequest(f.store,f.provider,{action:'move',playlistId:'opaque',folderId:id});f.provider.playlists=new Map([['new-opaque',{vkId:'123_7'}]]);f.provider.savedPlaylists=[{id:'new-opaque'}];assert.deepEqual((await folderRequest(f.store,f.provider,{action:'list'})).folders[0].playlistIds,['new-opaque']);f.provider.root='/audios456';assert.deepEqual((await folderRequest(f.store,f.provider,{action:'list'})).folders,[]);});
+
+test('folders reject foreign playlist handles and malformed commands',async()=>{const f=folderFixture();await assert.rejects(folderRequest(f.store,f.provider,{action:'move',playlistId:'foreign',folderId:null}));await assert.rejects(folderRequest(f.store,f.provider,{action:'create',name:' '}));await assert.rejects(folderRequest(f.store,f.provider,{action:'create',name:'A',path:'../../'}));});

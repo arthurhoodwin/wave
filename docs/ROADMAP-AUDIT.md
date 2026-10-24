@@ -31,11 +31,11 @@
 
 ## Доказательства в коде и тестах
 
-- `src/main/native-player.cjs`: play/cancel/recover; `tests/native-player.test.cjs`, `tests/playback-081.test.cjs` — восстановление, истечение, ошибки, поколения.
+- `src/main/native-player.cjs`: play/cancel/recover; `tests/native-player.test.cjs`, `tests/provider-regression.test.cjs` — восстановление, истечение, ошибки, поколения.
 - `src/main/media-proxy.cjs`, `tests/media-proxy.test.cjs` — разрешённые CDN, Range, HLS, таймауты.
 - `src/main/network-provider.cjs`: loadLibrary/loadPlaylist/search; `src/main/playlist-cache.cjs`: pump; `src/main/vk-http.cjs`: search/artist/lyrics.
 - `src/renderer/app.js`: controls/playTrack, trackNodes, visibleLimit/reveal, navigation, synchronise; `tests/ui-playback.test.cjs` — сортировка, контекст, неизменные строки и старый sidebar.
-- `src/main/provider.cjs`: mutate/applyCollectionMutation; `tests/collection.test.cjs`, `tests/fix-061.test.cjs`, `tests/lyrics.test.cjs` — подтверждение записей и удаление своей копии.
+- `src/main/provider.cjs`: mutate/applyCollectionMutation; `tests/collection.test.cjs`, `tests/collection-ownership.test.cjs` — подтверждение записей и удаление своей копии.
 - `src/renderer/song-view.js`, `src/main/update-manager.cjs`, `src/main/windows-integration.cjs`; `tests/desktop.test.cjs`, `tests/update-manager.test.cjs`.
 - `.github/workflows/`, `scripts/release.cjs`, `releases/LATEST.md` — инфраструктура публикации. Перенос папок и единый файл заметок сделаны сейчас, отдельную версию приложения для этого не выпускаем.
 

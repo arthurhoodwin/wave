@@ -40,3 +40,15 @@ test('catalogue extracts every author and classifies collaborations separately',
 test('playback locates a multi-artist song by its exact identity and title',()=>{
  const {findAndPlay}=require('../src/main/catalog.cjs'),vm=require('node:vm');let clicks=0;const tap={getAttribute:()=> 'Начать прослушивание',click:()=>clicks++};const row={closest:()=>({getAttribute:()=> '123_1'}),querySelector:s=>s.includes('_Title')?{textContent:'Song'}:s.includes('tappable')?tap:null};const context=vm.createContext({document:{querySelector:()=>({querySelectorAll:()=>[row]})}});assert.equal(vm.runInContext(`(${findAndPlay.toString()})({scope:'body',key:'123_1',title:'Song',artist:'First, Second'})`,context),true);assert.equal(clicks,1);assert.equal(vm.runInContext(`(${findAndPlay.toString()})({scope:'body',key:'123_2',title:'Song',artist:'First, Second'})`,context),false);assert.equal(clicks,1);
 });
+
+const {normalizePayload}=require('../src/main/metadata-store.cjs');
+const route='https://vk.ru/audios123?section=all&z=audio_playlist123_2';
+
+
+test('a partial or stale carousel cannot remove a confirmed new playlist or revert its name',()=>{
+ const p=new VkProvider({});p.root='/audios123';p.absorbPlaylists([{vkId:'123_1',title:'Old',owner:'User',index:0,editable:true}],'https://vk.ru/audios123?section=all');
+ const r=p.applyCollectionMutation({action:'create'},{vkId:'123_2',title:'New',owner:'User',rows:[],route,playlists:[]},{});const id=r.playlistId;assert(p.savedPlaylists.some(x=>x.id===id));
+ p.absorbPlaylists([{vkId:'123_1',title:'Old',owner:'User',index:0,editable:true}],'https://vk.ru/audios123?section=all',{revision:0});assert(p.savedPlaylists.some(x=>x.id===id));
+ p.applyCollectionMutation({action:'rename',playlistId:id},{vkId:'123_2',title:'Renamed',rows:[],route},{});p.absorbPlaylists([{vkId:'123_2',title:'New',owner:'User',index:0,editable:true}],'https://vk.ru/audios123?section=all',{revision:0});assert.equal(p.playlists.get(id).title,'Renamed');
+ p.absorbPlaylists([],'https://vk.ru/audios123?section=all');assert(p.savedPlaylists.some(x=>x.id===id));const payload=normalizePayload(p.exportMetadata());assert(payload);assert(payload.playlists.some(x=>x.id===id&&x.title==='Renamed'));
+});

@@ -28,7 +28,7 @@ test('rejects foreign origins, credentials, tokens and invalid account roots',()
 test('partial collections are omitted while playlist metadata survives',()=>{
  const p=payload();p.collections[0].total=1000;const result=normalizePayload(p);assert.deepEqual(result.collections,[]);assert.equal(result.playlists.length,1);
 });
-test('encrypted disk roundtrip without plaintext metadata',async t=>{
+test('disk roundtrip invokes the encoding adapter without persisting plaintext metadata',async t=>{
  const {store}=await fixture(t);const p=payload();assert.equal(await store.save(p),true);const bytes=await fs.readFile(store.file);assert(!bytes.includes(Buffer.from('Песня')));assert(bytes.subarray(0,10).equals(Buffer.from('WAVEMETA1\n')));assert.deepEqual(await store.load(),normalizePayload(p));await store.close();assert.equal(await store.save(p),false);
 });
 test('corruption and decryption failure return null',async t=>{
@@ -41,6 +41,6 @@ test('write failure preserves previous file and cleans temporary file',async t=>
  const {store,directory}=await fixture(t);await store.save(payload());const prior=await fs.readFile(store.file);const open=fs.open;fs.open=async()=>{throw Error('disk full');};try{assert.equal(await store.save(payload()),false);}finally{fs.open=open;}assert.deepEqual(await fs.readFile(store.file),prior);assert.deepEqual(await fs.readdir(directory),['cache.dat']);
 });
 test('queued writes preserve invocation order and snapshot mutable payloads',async t=>{
- const {directory}=await fixture(t);let first=true;const store=new MetadataStore({directory,decrypt,encrypt:async bytes=>{if(first){first=false;await new Promise(r=>setTimeout(r,20));}return encrypt(bytes);}});
- const p=payload();const one=store.save(p);p.savedAt=123;const two=store.save(p);p.savedAt=999;await store.close();assert.deepEqual(await Promise.all([one,two]),[true,true]);assert.equal((await store.load()).savedAt,123);
+ const {directory}=await fixture(t);let first=true,release;const gate=new Promise(resolve=>release=resolve);const store=new MetadataStore({directory,decrypt,encrypt:async bytes=>{if(first){first=false;await gate;}return encrypt(bytes);}});
+ const p=payload();const one=store.save(p);p.savedAt=123;const two=store.save(p);p.savedAt=999;const closing=store.close();release();await closing;assert.deepEqual(await Promise.all([one,two]),[true,true]);assert.equal((await store.load()).savedAt,123);
 });

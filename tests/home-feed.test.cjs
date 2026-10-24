@@ -1,0 +1,15 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {collectFeed,readFeed}=require('../src/main/home-feed.cjs'),{keyOf,playlistRow}=require('../src/main/vk-http.cjs');
+const helpers={keyOf,playlistRow,rememberPlaylist:()=>{}};
+const mix={owner_id:12,id:99,title:'Mix'},album={owner_id:12,id:100,title:'Album',type:'album'};
+
+
+test('home feed uses returned playlist identities, ignores unrelated blocks, and discards account changes',async()=>{const p={owner_id:12,id:99,title:'Daily mix'},helpers={keyOf,playlistRow,rememberPlaylist:()=>{}};const data={playlists:[p],catalog:{sections:[{title:'Рекомендации',blocks:[{title:'Плейлисты дня',data_type:'music_playlists',playlists_ids:['12_99','12_99','99_1']},{title:'Мои плейлисты',data_type:'music_playlists',playlists_ids:['12_99']}]}]}};const result=collectFeed(data,helpers);assert.equal(result.length,1);assert.equal(result[0].items.length,1);assert.equal(result[0].id,'daily');const client={accountEpoch:1,connect:async()=>{},call:async()=>{client.accountEpoch++;return data;}};await assert.rejects(readFeed(client,helpers),/Аккаунт/);});
+
+
+test('home feed preserves working sections when another optional section fails',async()=>{const client={accountEpoch:1,connect:async()=>{},call:async method=>{if(method==='catalog.getAudio')return{playlists:[mix],catalog:{sections:[{title:'Плейлисты дня',blocks:[{data_type:'music_playlists',playlists_ids:['12_99']}]},{id:'new',title:'Новые релизы'}]}};throw Error('optional section unavailable');}};const result=await readFeed(client,helpers);assert.equal(result.state,'ready');assert(result.partial);assert.equal(result.sections[0].items[0].vkId,'12_99');});
+
+test('home block continuation merges real identities and preserves album kind',async()=>{let calls=0;const client={accountEpoch:1,connect:async()=>{},call:async method=>{calls++;if(method==='catalog.getAudio')return{playlists:[mix],catalog:{sections:[{title:'Новые релизы',blocks:[{id:'b',data_type:'music_playlists',playlists_ids:['12_99'],next_from:'next'}]}]}};return{playlists:[album],block:{id:'b',playlists_ids:['12_99','12_100']}};}};const result=await readFeed(client,helpers);assert.equal(calls,2);assert.deepEqual(result.sections[0].items.map(p=>p.vkId),['12_99','12_100']);assert.equal(result.sections[0].items[1].kind,'album');});
+
+test('a repeating home continuation stops and account changes discard all old results',async()=>{let calls=0;const initial={playlists:[mix],catalog:{sections:[{title:'Для вас',blocks:[{id:'b',data_type:'music_playlists',playlists_ids:['12_99'],next_from:'same'}]}]}};const client={accountEpoch:1,connect:async()=>{},call:async method=>{calls++;return method==='catalog.getAudio'?initial:{block:{id:'b',playlists_ids:['12_99'],next_from:'same'}};}};const result=await readFeed(client,helpers);assert.equal(calls,2);assert(result.partial);client.call=async method=>{if(method==='catalog.getAudio')return initial;client.accountEpoch++;return{block:{playlists_ids:[]}};};await assert.rejects(readFeed(client,helpers),/Аккаунт/);});

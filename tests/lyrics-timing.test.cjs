@@ -1,0 +1,10 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {parse,normalize,current}=require('../src/renderer/lyrics-timing.js'),{vkLyrics}=require('../src/main/vk-lyrics.cjs');
+
+
+test('LRC preserves repeated timestamps, fractions, offset and Unicode while rejecting invalid seconds',()=>{const lines=parse('[ar:Fixture]\n[offset:500]\n[00:01.25][00:04.250]Первая\n[00:02.50]Вторая\n[00:04.25]Третья\n[00:99]Invalid');assert.deepEqual(lines,[{time:.75,text:'Первая'},{time:2,text:'Вторая'},{time:3.75,text:'Первая\nТретья'}]);assert.equal(current(lines,.1),-1);assert.equal(current(lines,2.2),1);assert.equal(current(lines,100),2);assert.deepEqual(parse('Plain text'),[]);assert.deepEqual(parse('x'.repeat(200001)),[]);});
+
+test('VK observed timestamps convert milliseconds and preserve line end gaps without inventing timing',()=>{const r=vkLyrics({lyrics:{timestamps:[{begin:10928,end:14442,line:'Fixture one'},{begin:14586,end:17551,line:'Fixture two'}]},credits:'Fixture'});assert.equal(r.text,'Fixture one\nFixture two');assert.deepEqual(r.timings,[{time:10.928,end:14.442,text:'Fixture one'},{time:14.586,end:17.551,text:'Fixture two'}]);assert.equal(current(r.timings,11),0);assert.equal(current(r.timings,14.5),-1);assert.equal(current(r.timings,15),1);assert.equal(current(r.timings,18),-1);assert.equal(vkLyrics({lyrics:{text:['Legacy','Verse']}}).text,'Legacy\nVerse');assert.equal(vkLyrics({lyrics:{timestamps:[{begin:'10',end:20,line:'Static fixture'}]}}).timings,undefined);});
+
+test('timing normalization ignores corrupt rows and does not highlight empty instrumental markers',()=>{const lines=normalize([{time:2,text:'Second'},{time:0,text:''},{time:1,end:1.5,text:'First'},{time:-1,text:'Invalid'},{time:NaN,text:'Invalid'}]);assert.equal(current(lines,.1),-1);assert.equal(current(lines,1.4),1);assert.equal(current(lines,1.8),-1);assert.equal(current(lines,2),2);assert.deepEqual(normalize(Array(6001).fill({time:1,text:'x'})),[]);assert.deepEqual(normalize(Array.from({length:1000},(_,i)=>({time:i,text:'x'.repeat(300)}))),[]);});

@@ -15,9 +15,10 @@ test('a complete server playlist list prunes deleted playlists',async()=>{
  const p=setup({accountId:123,playlists:async()=>[{vkId:'123_1',title:'Keep',editable:true,index:0}],library:async({onPage})=>{onPage([],0);return{rows:[],total:0,route:'https://vk.ru/audios123?section=all'};}});
  p.absorbPlaylists([{vkId:'123_1',title:'Keep'},{vkId:'123_2',title:'Deleted'}],'https://vk.ru/audios123');await p.library(true);assert.deepEqual(p.savedPlaylists.map(p=>p.title),['Keep']);await p.cache.close();
 });
-test('offline reconnect restores the verified session automatically without browser interaction',async()=>{
+test('offline reconnect restores the verified session automatically without browser interaction',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
  let calls=0;const network={accountId:123,connect:async()=>{calls++;return{userId:123};}};const p=setup(network);
- try{p.transportState({kind:'offline'});assert.equal(p.online,false);assert.equal((await p.status()).reason,'offline');await new Promise(r=>setTimeout(r,3100));assert.equal(calls,1);assert.equal(p.online,true);assert.equal((await p.status()).state,'ready');}finally{p.closing=true;clearTimeout(p.reconnectTimer);await p.cache.close();}
+ try{p.transportState({kind:'offline'});assert.equal(p.online,false);assert.equal((await p.status()).reason,'offline');t.mock.timers.tick(2999);assert.equal(calls,0);t.mock.timers.tick(1);await new Promise(r=>setImmediate(r));assert.equal(calls,1);assert.equal(p.online,true);assert.equal((await p.status()).state,'ready');}finally{p.closing=true;clearTimeout(p.reconnectTimer);await p.cache.close();}
 });
 test('expired authorization stops playback and waits for explicit login instead of reconnecting endlessly',async()=>{
  const p=setup({accountId:123});let stopped=0;p.nativePlayer={stop:async()=>{stopped++;}};p.transportState({kind:'auth'});assert.equal(stopped,1);assert.equal(p.online,false);assert.equal((await p.status()).reason,'auth');assert.equal(p.reconnectTimer,undefined);await p.cache.close();

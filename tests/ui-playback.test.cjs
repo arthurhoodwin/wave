@@ -1,4 +1,5 @@
 // Actual renderer code, simulated DOM and deferred transport; no network or account.
+const testRunner = require('node:test');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
@@ -19,7 +20,7 @@ const context=vm.createContext({window:{music:{play(id){calls.push(id);return ne
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/renderer/app.js'),'utf8'),context);
 const run=code=>vm.runInContext(code,context);
 async function accept(promise) {pending.at(-1).resolve({playing:true});await promise;}
-async function test() {
+async function playbackFlow() {
   run("state.ready=true;state.online=true;state.allTracks=[{id:'zero',duration:0},{id:'a',duration:90},{id:'b',duration:120}];state.tracks=state.allTracks;trackList()");
   const row=run('renderedRows[0].row');assert.equal(row.tabIndex,-1);assert.equal(row.onclick,undefined);assert.equal(row.onkeydown,undefined);
   await run('playSelection(0)');assert.equal(calls.length,0);
@@ -77,6 +78,5 @@ async function test() {
   titleButton.onclick({stopPropagation(){}});await new Promise(r=>setImmediate(r));assert.equal(calls.at(-1),'clickable');pending.at(-1).resolve({playing:true});await new Promise(r=>setImmediate(r));assert.equal(run('state.current.id'),'clickable');
   // Transport remains usable while the current track is still loading.
   run("state.online=true;state.nativePlayback=true;state.loading=false;state.current={id:'busy-a',duration:120,contextOrder:0};state.loop=[state.current,{id:'busy-b',duration:120,contextOrder:1}];state.busy=true;state.playContext=null;controls()");assert.equal(get('next').disabled,false);const interrupted=run('next()');assert.equal(calls.at(-1),'busy-b');await accept(interrupted);assert.equal(run('state.current.id'),'busy-b');
-  console.log('PASS: playback/regressions; filtered and sorted playback order; route positions; stale sidebar rejected; failed selection retained; availability updated; sleep end; restored position; native song buttons; isolated row menu; unchanged renders = 0 DOM rebuilds');
 }
-test().catch(error=>{console.error(error);process.exitCode=1;});
+testRunner('renderer playback/navigation flow on a simulated DOM', {timeout:5000}, playbackFlow);

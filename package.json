@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "research": "electron . --research-session",
-    "test": "node --test tests/*.test.cjs",
+    "test": "node --test --test-timeout=15000 tests/*.test.cjs",
     "dist": "node scripts/prepare.cjs && electron-builder --win nsis --x64 --publish never",
     "release": "node scripts/release.cjs",
     "release:check": "node scripts/release.cjs --check"
