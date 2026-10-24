@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/icons/wave.png" alt="" width="72"></p>
 <h1 align="center">Wave</h1>
 <p align="center">Клиент VK Музыки для Windows.</p>
-<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.7">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
+<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-rc.1">Попробовать 1.1 RC</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
 
 <img src="docs/images/song.png" alt="Плеер Wave: обложка, текст песни и управление воспроизведением" width="100%">
 
@@ -26,18 +26,18 @@
 
 Нужны **Windows x64**, подключение к интернету и аккаунт VK. Установщик пока без цифровой подписи Windows.
 
-## Обычный выпуск или Beta?
+## Обычный выпуск или RC?
 
 | Выпуск | Что выбрать |
 |---|---|
 | [1.0.9.9.1 — обычный](https://github.com/arthurhoodwin/wave/releases/latest) | Если хотите пользоваться выпущенной версией. |
-| [1.1.0-beta.7 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.7) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
+| [1.1.0-rc.1 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-rc.1) | Кандидат в стабильный выпуск 1.1; для проверки перед финальным релизом. |
 
 Beta устанавливается вручную и использует тот же профиль. Вход и коллекция сохраняются. В настройках можно откатиться, если предыдущий установщик сохранён.
 
 **Ограничения Beta:** скачивание поддерживает прямые файлы и совместимые завершённые HLS-записи. HLS после паузы собирается заново; прямой файл продолжается, если сервер подтверждает его неизменность. После перезапуска очередь восстанавливается на паузе. Подборки VK зависят от доступности источника для вашего аккаунта. Метаданные сохраняются рядом с аудио в JSON; встроенные теги пока не записываются. [Что изменилось в текущем выпуске](releases/LATEST.md).
 
-**Исправление обновлятора в Beta 7:** используйте EXE или полный подписанный `.waveupdate`. Файловый патч Beta 6 ошибочно отклонял исправную Beta 5 из-за особенностей ASAR в Electron. Для перехода Beta 5/6 → Beta 7 нужен полный пакет один раз; после установки исправленного загрузчика маленькие патчи снова поддерживаются.
+**С Beta 7 на RC 1:** выберите небольшой `.waveupdate` в настройках → «Приложение». С более старой версии или для первой установки используйте EXE. В RC 1 больше нет обрезания большого выделения до 100 песен; в «Скачанном» выделение убрано.
 
 ## Несколько полезных действий
 

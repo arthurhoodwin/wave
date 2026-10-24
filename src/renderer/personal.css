@@ -14,6 +14,7 @@
 
 .recommendation-status{grid-column:1/-1;margin:0}.recommendation-section[data-empty=true]{min-height:96px}.recommendation-section[data-empty=true] h2{margin:0}
 .recommendation-retry{justify-self:start}
+.download-queue-controls{display:flex;gap:8px;flex-wrap:wrap;margin-block:12px}
 
 .table-head .row-action-heading .wave-icon{margin-inline:0;justify-self:center}
 .row-download.is-downloaded{color:var(--text-secondary)}
