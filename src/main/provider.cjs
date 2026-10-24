@@ -55,7 +55,7 @@ class VkProvider {
       if(this.ownershipAliases?.root!==this.root)this.ownershipAliases={root:this.root,keys:new Map()};
       if(result.owned)this.ownershipAliases.keys.set(result.sourceKey,result.libraryKey);else for(const [key,value] of this.ownershipAliases.keys)if(key===result.sourceKey||value===result.libraryKey)this.ownershipAliases.keys.delete(key);
       const entry=this.cache.byPlaylist.get('library:'+this.root);if(entry?.cacheState==='complete'){entry.revision=(entry.revision||0)+1;entry.refreshing=false;entry.stale=true;if(result.owned){this.absorbRows({rows:[result.likedRow],route:result.route},entry);const added=[...entry.items].find(([id])=>this.tracks.get(id)?.key===result.libraryKey);if(added)entry.items=new Map([added,...[...entry.items].filter(([id])=>id!==added[0])]);}else for(const [id] of entry.items)if(this.tracks.get(id)?.key===result.libraryKey)entry.items.delete(id);entry.total=entry.items.size;snapshot=this.cache.snapshot(entry);}
-      clearTimeout(this.ownershipRefreshTimer);const root=this.root;this.ownershipRefreshTimer=setTimeout(()=>{if(this.root===root&&!this.closing){const target=this.cache.byPlaylist.get('library:'+root);if(target)this.refreshCollection(target);}},250);this.ownershipRefreshTimer.unref?.();
+      clearTimeout(this.ownershipRefreshTimer);const root=this.root;if(!result.verifiedFromLibrary)this.ownershipRefreshTimer=setTimeout(()=>{if(this.root===root&&!this.closing){const target=this.cache.byPlaylist.get('library:'+root);if(target)this.refreshCollection(target);}},250);this.ownershipRefreshTimer?.unref?.();
     }
     if(result.rows){
       const library=playlistId==='library:'+this.root;let entry=this.cache.byPlaylist.get(playlistId);
