@@ -3,9 +3,9 @@ const fs=require('node:fs/promises'),{createReadStream}=require('node:fs'),path=
 const {createHash,verify,randomUUID}=require('node:crypto');
 const {pipeline}=require('node:stream/promises'),{Transform}=require('node:stream');
 const MAGIC=Buffer.from('WAVEUPD1\n'),MAX=1024*1024*1024,PRODUCT='app.wave.vk';
-const version=s=>typeof s==='string'&&/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*)){0,2}$/.test(s);
+const version=s=>typeof s==='string'&&s.length<80&&/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*)){0,2}(?:-(?:alpha|beta|rc)\.(?:[1-9]\d*))?$/.test(s);
 // Historical 1.0.61/62 are hotfixes of 1.0.6, followed by 1.0.7.
-function compare(a,b){if(!version(a)||!version(b))throw Error('Некорректная версия обновления');const order=s=>s==='1.0.61'?[1,0,6,1,0]:s==='1.0.62'?[1,0,6,2,0]:[...s.split('.').map(Number),0,0].slice(0,5);const x=order(a),y=order(b);for(let i=0;i<5;i++)if(x[i]!==y[i])return Math.sign(x[i]-y[i]);return 0;}
+function compare(a,b){if(!version(a)||!version(b))throw Error('Некорректная версия обновления');const order=s=>{const [base,pre]=s.split('-');const numbers=base==='1.0.61'?[1,0,6,1,0]:base==='1.0.62'?[1,0,6,2,0]:[...base.split('.').map(Number),0,0].slice(0,5);if(numbers.some(n=>!Number.isSafeInteger(n)||n>2147483647))throw Error('Некорректная версия обновления');const [channel,n]=pre?pre.split('.'):['stable','0'];if(!Number.isSafeInteger(Number(n))||Number(n)>2147483647)throw Error('Некорректная версия обновления');return[...numbers,{alpha:0,beta:1,rc:2,stable:3}[channel],Number(n)];};const x=order(a),y=order(b);for(let i=0;i<7;i++)if(x[i]!==y[i])return Math.sign(x[i]-y[i]);return 0;}
 
 async function digest(file){const hash=createHash('sha512');for await(const chunk of createReadStream(file))hash.update(chunk);return hash.digest('hex');}
 function manifest(envelope,key){try{const {payload,signature}=envelope;if(typeof payload!=='string'||payload.length>8192||typeof signature!=='string'||!verify(null,Buffer.from(payload),key,Buffer.from(signature,'base64')))throw Error();const p=JSON.parse(payload);if(p.product!==PRODUCT||p.arch!=='x64'||!version(p.version)||!Number.isSafeInteger(p.bytes)||p.bytes<1024||p.bytes>MAX||!/^[a-f0-9]{128}$/.test(p.sha512))throw Error();return p;}catch{throw Error('Подпись или формат обновления Wave не прошли проверку');}}

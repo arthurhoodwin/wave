@@ -10,5 +10,5 @@ const names=['Wave-Setup-'+version+'.exe','Wave-'+version+'.waveupdate','SHA256S
 const files=names.map(n=>path.join(root,'dist',n));
 if(args.includes('--check')){console.log('Release notes match Wave '+version);for(let i=0;i<files.length;i++)console.log((fs.existsSync(files[i])?'Present: ':'Missing artifact: ')+names[i]);process.exit(0);}
 for(const f of files)if(!fs.existsSync(f))throw Error('Missing release artifact: '+path.basename(f));
-const result=spawnSync('gh',['release','create','v'+version,...files,'--repo','arthurhoodwin/wave','--verify-tag','--title','Wave '+version,'--notes-file',notes,...(args.includes('--draft')?['--draft']:[])],{cwd:root,stdio:'inherit',shell:false});
+const result=spawnSync('gh',['release','create','v'+version,...files,'--repo','arthurhoodwin/wave','--verify-tag','--title','Wave '+version,'--notes-file',notes,...(args.includes('--draft')?['--draft']:[]),...(pkg.releaseChannel==='alpha'?['--prerelease','--latest=false']:[])],{cwd:root,stdio:'inherit',shell:false});
 if(result.error)throw result.error;process.exit(result.status??1);

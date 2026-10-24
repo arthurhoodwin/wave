@@ -7,12 +7,12 @@ const {CdpEngine,ElectronEngine}=require('./engines.cjs');
 const {VkProvider}=require('./provider.cjs');
 const {MetadataStore}=require('./metadata-store.cjs');
 const {VkHttpClient}=require('./vk-http.cjs');
-const {MediaProxy}=require('./media-proxy.cjs');
+const {HybridProxy}=require('./local-media.cjs');
 const {NativePlayer}=require('./native-player.cjs');
 const {UpdateManager}=require('./update-manager.cjs');
 app.setPath('userData',path.join(app.getPath('appData'),'wave-vk-research-client'));
 app.setAppUserModelId('app.wave.vk');
-let engine,playEngine,provider,main,vkWindow,windows,updater,health;
+let engine,playEngine,provider,main,vkWindow,windows,updater,health,personal,downloads,personalService;
 const diagnostics=new (require('./diagnostics.cjs').Diagnostics)();
 if(!app.requestSingleInstanceLock())app.exit(0);
 app.on('second-instance',()=>{if(main&&!main.isDestroyed()){if(main.isMinimized())main.restore();main.show();main.focus();}});
@@ -33,15 +33,23 @@ app.whenReady().then(async()=>{
     vkWindow=createVkWindow();engine=new ElectronEngine(vkWindow,createVkWindow);
   }
   let network,player;
-  if(vkWindow){const request=(url,options)=>vkWindow.webContents.session.fetch(url,options);network=new VkHttpClient({fetch:request,onState:state=>provider?.transportState(state)});const proxy=new MediaProxy({fetch:request});player=new NativePlayer({api:network,proxy,proxyFactory:()=>new MediaProxy({fetch:request}),send:command=>{if(!main||main.isDestroyed())return false;main.webContents.send('music:playback-command',command);return true;},onState:state=>{if(state.error)diagnostics.record({kind:player?.streamFailure||'media'});if(main&&!main.isDestroyed())main.webContents.send('music:player-state',state);}});playEngine=engine;}else playEngine=await engine.fork();
+  if(vkWindow){const request=(url,options)=>vkWindow.webContents.session.fetch(url,options);network=new VkHttpClient({fetch:request,onState:state=>provider?.transportState(state)});const proxy=new HybridProxy({fetch:request,locate:(root,key)=>downloads.locate(root,key),getRoot:()=>provider?.root});player=new NativePlayer({api:network,proxy,proxyFactory:()=>new HybridProxy({fetch:request,locate:(root,key)=>downloads.locate(root,key),getRoot:()=>provider?.root}),send:command=>{if(!main||main.isDestroyed())return false;main.webContents.send('music:playback-command',command);return true;},onState:state=>{if(provider?.root&&player?.current)personal?.samplePlayback(provider.root,player.current,state).catch(()=>{});if(state.error)diagnostics.record({kind:player?.streamFailure||'media'});if(main&&!main.isDestroyed())main.webContents.send('music:player-state',state);}});playEngine=engine;}else playEngine=await engine.fork();
   const store=new MetadataStore({directory:path.join(app.getPath('userData'),'metadata-v1'),encrypt:bytes=>{if(!safeStorage.isEncryptionAvailable())throw Error('Encryption unavailable');return safeStorage.encryptString(bytes.toString('utf8'));},decrypt:bytes=>Buffer.from(safeStorage.decryptString(bytes),'utf8')});
-  provider=new VkProvider(engine,playEngine,{store,network,player,onOperations:operations=>{if(main&&!main.isDestroyed())main.webContents.send('music:operations',operations);},onSession:state=>{if(state.accountChanged)windows?.clear().catch(()=>{});if(main&&!main.isDestroyed())main.webContents.send('music:session',state);}});
+  provider=new VkProvider(engine,playEngine,{store,network,player,onOperations:operations=>{if(main&&!main.isDestroyed())main.webContents.send('music:operations',operations);},onSession:state=>{if(state.accountChanged||state.state==='signedOut'){downloads?.switchAccount();if(personal)personal.sample=null;}if(state.accountChanged)windows?.clear().catch(()=>{});if(main&&!main.isDestroyed())main.webContents.send('music:session',state);}});
   provider.clearSession=async()=>{if(!vkWindow)throw Error('Выход недоступен в исследовательском режиме');vkWindow.hide();await vkWindow.loadURL('about:blank');await vkWindow.webContents.session.clearStorageData();await vkWindow.webContents.session.clearCache();};
   const fs=require('node:fs/promises'),logoutMarker=path.join(app.getPath('userData'),'signed-out');
-  provider.beforeLogout=async()=>{await fs.mkdir(app.getPath('userData'),{recursive:true});await fs.writeFile(logoutMarker,'signed-out\n');await windows?.clear();};
+  provider.beforeLogout=async()=>{downloads?.switchAccount();if(personal)personal.sample=null;await fs.mkdir(app.getPath('userData'),{recursive:true});await fs.writeFile(logoutMarker,'signed-out\n');await windows?.clear();};
   provider.afterLogin=()=>fs.rm(logoutMarker,{force:true});
   const signedOut=!!vkWindow&&await fs.stat(logoutMarker).then(()=>true,()=>false);
   if(signedOut){await network.suspend();provider.setSession({state:'signedOut',cached:false,verifying:false,nativePlayback:true});}else await provider.restore();
+  const announce=root=>{if(root===provider.root&&!main.isDestroyed())main.webContents.send('personal:changed',{});};
+  personal=new (require('./personal-library.cjs').PersonalLibrary)({directory:path.join(app.getPath('userData'),'personal-v1'),encrypt:text=>{if(!safeStorage.isEncryptionAvailable())throw Error('Хранилище Windows недоступно');return safeStorage.encryptString(text);},decrypt:bytes=>safeStorage.decryptString(bytes),onChange:announce});
+  if(network){downloads=new (require('./download-manager.cjs').DownloadManager)({library:personal,resolve:(key,options)=>network.resolveAudio(key,options),fetch:(url,options)=>vkWindow.webContents.session.fetch(url,options),getRoot:()=>provider.root,defaultDirectory:path.join(app.getPath('music'),'Wave'),validate:input=>require('./download-validator.cjs').validateDownload(input,electron),onChange:announce});
+   player.api={resolveAudio:async(key,options)=>{const root=provider.root,local=await downloads.locate(root,key);if(root!==provider.root)throw Error('Аккаунт изменился');if(local)return{format:'audio',url:'wave-local:'+key};return network.resolveAudio(key,options);}};
+   provider.hasLocal=async key=>(await downloads.locate(provider.root,key))?.record;
+   personalService=new (require('./personal-service.cjs').PersonalService)({library:personal,downloads,provider,chooseFolder:async()=>{const picked=await dialog.showOpenDialog(main,{title:'Папка для новых загрузок Wave',properties:['openDirectory','createDirectory']});return picked.canceled?null:picked.filePaths[0];}});
+   ipcMain.handle('personal:request',async(event,command)=>{if(event.sender!==main.webContents||event.senderFrame!==main.webContents.mainFrame)throw Error('Недопустимый источник');try{return await personalService.handle(command);}catch(error){return{ok:false,error:{message:/token|cookie|https?:/i.test(error.message)?'Не удалось обновить личную медиатеку. Повторите действие.':String(error.message)}};}});
+  }
   const allowed=['prepareTrack','transitionTrack','discardPrepared','trackAlbum','batchPreview','batchExecute','batchCancel','cancelLyrics','searchPage','cancelSearch','status','lyrics','account','login','logout','switchAccount','library','playlist','playlistCache','artist','mutate','operations','more','search','play','pause','resume','seek','player','volume'];
   for(const method of allowed)ipcMain.handle(`music:${method}`,async(e,...args)=>{
     if(e.sender!==main.webContents||e.senderFrame!==main.webContents.mainFrame)throw Error('Недопустимый источник команды');
@@ -62,7 +70,7 @@ app.whenReady().then(async()=>{
   const mainSender=event=>event.sender===main.webContents&&event.senderFrame===main.webContents.mainFrame;
   const desktopSender=event=>mainSender(event)||(windows.mini&&!windows.mini.isDestroyed()&&event.sender===windows.mini.webContents&&event.senderFrame===windows.mini.webContents.mainFrame);
   ipcMain.on('desktop:state',(event,data)=>{if(mainSender(event))windows.update(data);});
-  ipcMain.handle('desktop:request',async(event,method,data)=>{if(!desktopSender(event))throw Error('Недопустимый источник команды');try{if(method==='status')return windows.public();if(method==='fullscreen'){if(!mainSender(event)||typeof data!=='boolean')throw Error('Некорректная команда экрана');main.setFullScreen(data);return windows.public();}if(method==='volume')return windows.volume(data);if(method==='fitMini'){if(!windows.mini||event.sender!==windows.mini.webContents)throw Error('Недопустимый источник');windows.fitMini(data);return true;}if(method==='action'){if(!data||typeof data.type!=='string')throw Error('Некорректная команда');await windows.action(data.type,{time:data.time});return windows.public();}if(!mainSender(event))throw Error('Недопустимая команда мини-плеера');if(method==='configure')return windows.configure(data);if(method==='sleep'){if(data==='end'&&!windows.view.current)throw Error('Сначала выберите песню');await windows.sleep.set(data);return windows.public();}if(method==='ended'){await windows.sleep.ended();return windows.public();}if(method==='restore')return windows.restore();throw Error('Недопустимая команда');}catch(error){return{ok:false,error:{message:String(error.message||'Ошибка Windows')}};}});
+  ipcMain.handle('desktop:request',async(event,method,data)=>{if(!desktopSender(event))throw Error('Недопустимый источник команды');try{if(method==='status')return windows.public();if(method==='fullscreen'){if(!mainSender(event)||typeof data!=='boolean')throw Error('Некорректная команда экрана');main.setFullScreen(data);return windows.public();}if(method==='volume')return windows.volume(data);if(method==='fitMini'){if(!windows.mini||event.sender!==windows.mini.webContents)throw Error('Недопустимый источник');windows.fitMini(data);return true;}if(method==='action'){if(!data||typeof data.type!=='string')throw Error('Некорректная команда');await windows.action(data.type,{time:data.time});return windows.public();}if(method==='sleep'){if(data==='end'&&!windows.view.current)throw Error('Сначала выберите песню');await windows.sleep.set(data);return windows.public();}if(!mainSender(event))throw Error('Недопустимая команда мини-плеера');if(method==='configure')return windows.configure(data);if(method==='ended'){await windows.sleep.ended();return windows.public();}if(method==='restore')return windows.restore();throw Error('Недопустимая команда');}catch(error){return{ok:false,error:{message:String(error.message||'Ошибка Windows')}};}});
   await main.loadFile(path.join(__dirname,'../renderer/index.html'));main.show();
   if(!signedOut)provider.startSession(network?network.connect():engine.init());
   main.on('closed',()=>app.quit());
@@ -72,6 +80,6 @@ let cleanedUp=false;
 app.on('before-quit',event=>{
  if(cleanedUp)return;
  event.preventDefault();if(app.isQuitting)return;app.isQuitting=true;
- (async()=>{try{if(provider?.active)await provider.pause();}catch{}updater?.cancel();await windows?.close();await provider?.close();await health?.clean().catch(()=>{});await Promise.allSettled([engine?.close(),playEngine?.close()]);cleanedUp=true;app.quit();})();
+ (async()=>{try{if(provider?.active)await provider.pause();}catch{}updater?.cancel();await downloads?.close();await personalService?.serial;await personal?.close();await windows?.close();await provider?.close();await health?.clean().catch(()=>{});await Promise.allSettled([engine?.close(),playEngine?.close()]);cleanedUp=true;app.quit();})();
 });
 

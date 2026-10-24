@@ -270,12 +270,13 @@ class VkProvider {
     if(this.network)return networkProvider.search(this,typeof input==='object'?{query:query.trim(),type:input.type||'tracks',refresh:input.refresh===true}:query.trim());
     await this.route(`https://vk.ru/audio?q=${encodeURIComponent(query.trim())}`);await this.readyRows();this.collection={kind:'search',scope:'body',items:new Map()};const result=await this.readRows();this.preparePlayback(await this.engine.evaluate('location.href'));return result;
   });}
-  play(id){
+  async play(id){
     let position=0;if(id&&typeof id==='object'){if(Object.keys(id).some(k=>!['id','position'].includes(k))||typeof id.id!=='string'||!Number.isFinite(id.position)||id.position<0||id.position>604800)return Promise.reject(Error('Некорректная позиция песни'));position=id.position;id=id.id;}
-    const track=this.tracks.get(id);
+    let track=this.tracks.get(id);
     if(!track)return Promise.reject(Error('Список устарел. Обновите его.'));
+    const local=await this.hasLocal?.(track.key);if(local){track={...track,available:true,local:true,duration:track.duration>0?track.duration:local.track?.duration||0};this.tracks.set(track.id,track);}
     if(track.available===false||!(track.duration>0))return Promise.reject(Error('Запись недоступна в VK'));
-    if(this.session&&!this.online)return Promise.reject(Error('Подключитесь к VK для воспроизведения'));
+    if(this.session&&!this.online&&!local)throw Error('Подключитесь к VK для воспроизведения или выберите скачанную песню');
     if(this.nativePlayer){return this.nativePlayer.play(track,{position}).then(result=>{this.active={...track};return{playing:result.playing};}).catch(error=>{if(error.kind==='unavailable'){this.metadataRevision=(this.metadataRevision||0)+1;error.unavailableIds=[];for(const [trackId,t] of this.tracks)if(t.key===track.key){t.available=false;error.unavailableIds.push(trackId);for(const entry of this.cache.entries.values())if(entry.items.has(trackId))entry.items.get(trackId).available=false;}this.scheduleSave();}if(!this.nativePlayer.current||this.nativePlayer.current.id===track.id)this.active=null;throw error;});}
     if(this.playPending&&this.playNavigating)this.playEngine.cancelNavigation?.();
     const request=++this.playRequest;++this.warmRequest;this.playPending=true;
