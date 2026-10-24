@@ -13,3 +13,5 @@
 @media(forced-colors:active){.row-like.is-liked,.row-download.is-downloaded{color:Highlight}.track-popover{border-color:CanvasText}}
 
 .recommendation-status{grid-column:1/-1;margin:0}.recommendation-section[data-empty=true]{min-height:96px}.recommendation-section[data-empty=true] h2{margin:0}
+
+.table-head .row-action-heading .wave-icon{margin-inline:0;justify-self:center}
