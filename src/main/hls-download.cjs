@@ -2,13 +2,14 @@
 // Finite audio HLS (RFC 8216): packed AAC/MP3, AAC in TS, and fMP4.
 const {createDecipheriv}=require('node:crypto');
 const {mediaUrl}=require('./media-proxy.cjs');
+const {retryRead,requestAudio}=require('./download-http.cjs');
 const fail=message=>{throw Error('HLS: '+message);};
 const attributes=text=>Object.fromEntries([...text.matchAll(/([A-Z0-9-]+)=("[^"]*"|[^,]*)/g)].map(m=>[m[1],m[2].replace(/^"|"$/g,'')]));
 function parseManifest(text,base){
  if(text.length>1024*1024||!text.trimStart().startsWith('#EXTM3U'))fail('некорректный плейлист');
- const lines=text.trim().split(/\r?\n/).map(s=>s.trim()),segments=[],variants=[];let sequence=0,key=null,map=null,duration=null,stream=null;
+ const lines=text.trim().split(/\r?\n/).map(s=>s.trim()),segments=[],variants=[],renditions=[];let sequence=0,key=null,map=null,duration=null,stream=null;
  for(const line of lines){
-  if(line.startsWith('#EXT-X-MEDIA:')){const a=attributes(line);if(a.TYPE==='AUDIO'&&a.URI)variants.unshift(mediaUrl(new URL(a.URI,base).href).href);}
+  if(line.startsWith('#EXT-X-MEDIA:')){const a=attributes(line);if(a.TYPE==='AUDIO'&&a.URI)renditions.push({url:mediaUrl(new URL(a.URI,base).href).href,preferred:a.DEFAULT==='YES',auto:a.AUTOSELECT==='YES'});}
   else if(line.startsWith('#EXT-X-STREAM-INF:'))stream=attributes(line);
   else if(line.startsWith('#EXT-X-MEDIA-SEQUENCE:')){sequence=Number(line.split(':')[1]);if(!Number.isSafeInteger(sequence)||sequence<0)fail('некорректный номер сегмента');}
   else if(line.startsWith('#EXTINF:')){duration=Number(line.slice(8).split(',')[0]);if(!Number.isFinite(duration)||duration<=0)fail('некорректная длительность');}
@@ -17,6 +18,7 @@ function parseManifest(text,base){
   else if(line.startsWith('#EXT-X-MAP:')){const a=attributes(line);if(!a.URI||a.BYTERANGE||map)fail('инициализация потока не поддерживается');if(key&&!key.iv)fail('для шифрованной инициализации нужен IV');map={url:mediaUrl(new URL(a.URI,base).href).href,key};}
   else if(line&&!line.startsWith('#')){const url=mediaUrl(new URL(line,base).href).href;if(stream){if(!variants.length)variants.push(url);stream=null;}else{if(duration===null)fail('у сегмента нет длительности');segments.push({url,key,sequence:sequence++,duration});duration=null;if(segments.length>20000)fail('слишком много сегментов');}}
  }
+ if(renditions.length)variants.unshift(...renditions.sort((a,b)=>Number(b.preferred)-Number(a.preferred)||Number(b.auto)-Number(a.auto)).map(r=>r.url));
  if(variants.length)return{variants};
  if(!lines.includes('#EXT-X-ENDLIST')||!segments.length)fail('скачивание доступно только для завершённой записи');
  return{segments,map};
@@ -33,7 +35,7 @@ function tsAudio(bytes){
 }
 function validateAdts(bytes){let at=0,frames=0;while(at<bytes.length){if(at+7>bytes.length||bytes[at]!==255||(bytes[at+1]&246)!==240)fail('повреждённые AAC-кадры');const size=((bytes[at+3]&3)<<11)|(bytes[at+4]<<3)|(bytes[at+5]>>5);if(size<7||at+size>bytes.length)fail('обрезанный AAC-кадр');at+=size;frames++;}if(!frames)fail('пустое аудио');return bytes;}
 async function* hlsAudio(url,{fetch,signal,maxBytes=512*1024**2}){
- let transferred=0;const get=async(url,max)=>{const r=await fetch(mediaUrl(url).href,{signal,redirect:'error',credentials:'include',headers:{Referer:'https://vk.ru/'}});if(!r.ok||!r.body){await r.body?.cancel();fail('сервер не отдал сегмент');}const parts=[];let count=0;try{for await(const chunk of r.body){count+=chunk.length;transferred+=chunk.length;if(count>max||transferred>maxBytes+16*1024**2)fail('превышен лимит размера');parts.push(Buffer.from(chunk));}}catch(e){await r.body.cancel().catch(()=>{});throw e;}return Buffer.concat(parts);};
+ let transferred=0;const get=(url,max)=>retryRead(async()=>{const r=await requestAudio(fetch,url,{signal}),parts=[];let count=0;try{for await(const chunk of r.body){count+=chunk.length;transferred+=chunk.length;if(count>max||transferred>3*maxBytes+16*1024**2)throw Object.assign(Error('HLS: превышен лимит размера'),{kind:'download-limit'});parts.push(Buffer.from(chunk));}}catch(e){await r.body.cancel().catch(()=>{});if(signal?.aborted||e.kind==='download-limit')throw e;throw Object.assign(Error('HLS: сегмент загружен не полностью'),{retryable:true});}const expected=r.headers.has('content-encoding')?0:Number(r.headers.get('content-length'))||0;if(expected&&expected!==count)throw Object.assign(Error('HLS: сегмент загружен не полностью'),{retryable:true});return Buffer.concat(parts);},{signal});
  let manifest;for(let level=0;level<4;level++){manifest=parseManifest((await get(url,1024*1024)).toString('utf8'),url);if(!manifest.variants)break;url=manifest.variants[0];}if(!manifest?.segments)fail('слишком много вложенных плейлистов');
  const keys=new Map(),decrypt=async(bytes,item)=>{if(!item.key)return bytes;let key=keys.get(item.key.url);if(!key){key=await get(item.key.url,16);if(key.length!==16)fail('некорректный ключ AES-128');keys.set(item.key.url,key);}const iv=item.key.iv?Buffer.from(item.key.iv,'hex'):Buffer.alloc(16);if(!item.key.iv)iv.writeBigUInt64BE(BigInt(item.sequence),8);try{const d=createDecipheriv('aes-128-cbc',key,iv);return Buffer.concat([d.update(bytes),d.final()]);}catch{fail('не удалось прочитать AES-128 сегмент');}};
  let type=null;if(manifest.map){const init=await decrypt(await get(manifest.map.url,8*1024**2),manifest.map);if(init.length<12||init.toString('ascii',4,8)!=='ftyp'||!init.includes(Buffer.from('moov'))||init.includes(Buffer.from('encv'))||init.includes(Buffer.from('enca')))fail('инициализация fMP4 не поддерживается');type='m4a';yield init;}

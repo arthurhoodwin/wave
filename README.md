@@ -1,7 +1,7 @@
 <p align="center"><img src="assets/icons/wave.png" alt="" width="72"></p>
 <h1 align="center">Wave</h1>
 <p align="center">Клиент VK Музыки для Windows.</p>
-<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.2">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
+<p align="center"><a href="https://github.com/arthurhoodwin/wave/releases/latest"><strong>Скачать для Windows</strong></a> · <a href="https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.3">Попробовать 1.1 Beta</a> · <a href="https://github.com/arthurhoodwin/wave/issues/new/choose">Сообщить об ошибке</a></p>
 
 <img src="docs/images/alpha-player.png" alt="Плеер Wave: обложка, текст песни и управление воспроизведением" width="100%">
 
@@ -31,7 +31,7 @@
 | Выпуск | Что выбрать |
 |---|---|
 | [1.0.9.9.1 — обычный](https://github.com/arthurhoodwin/wave/releases/latest) | Если хотите пользоваться выпущенной версией. |
-| [1.1.0-beta.2 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.2) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
+| [1.1.0-beta.3 — предварительный](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0-beta.3) | Если хотите попробовать новые функции 1.1 и помочь найти ошибки. |
 
 Beta устанавливается вручную и использует тот же профиль. Вход и коллекция сохраняются. В настройках можно откатиться, если предыдущий установщик сохранён.
 
