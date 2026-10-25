@@ -4,7 +4,7 @@
 
 ## Текущий результат
 
-**Wave 1.1.1 Stable** опубликована как [Latest](https://github.com/arthurhoodwin/wave/releases/latest) и установлена на основном ПК; факты и границы проверок — в [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
+**Wave 1.1.1.1 Stable** опубликована как [Latest](https://github.com/arthurhoodwin/wave/releases/latest) и установлена на основном ПК; факты и границы проверок — в [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
 
 ## Запуск
 
