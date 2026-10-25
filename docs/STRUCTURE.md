@@ -9,6 +9,7 @@
 | Установить и пользоваться | [README.md](../README.md) |
 | Запустить/изменить/собрать форк | [DEVELOPMENT.md](../DEVELOPMENT.md) |
 | Сохранить текущий внешний вид | [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) |
+| Проверить анимации и план визуальной полировки | [MOTION-AUDIT.md](MOTION-AUDIT.md) |
 | Понять модули и форматы данных | [TECHNICAL.md](TECHNICAL.md) |
 | Собрать, подписать, выпустить или откатить обновление | [UPDATES.md](UPDATES.md) |
 | Понять скачивание и его ограничения | [DOWNLOADS-PLAN.md](DOWNLOADS-PLAN.md) |

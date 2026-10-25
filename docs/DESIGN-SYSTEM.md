@@ -109,3 +109,7 @@ Native dialog/showModal, Escape, удержание/возврат фокуса;
 - [motion.js](../src/renderer/motion.js), [dialog-manager.js](../src/renderer/dialog-manager.js), [polish.css](../src/renderer/polish.css) — движения, фокус, диапазоны.
 
 Проверять фактический каскад из index.html/mini.html. Снимки и история решений — [DESIGN-AUDIT.md](DESIGN-AUDIT.md); реальные результаты/непроверенные сценарии — [VALIDATION.md](VALIDATION.md). Правила сформированы с better-interface и шестью better-* навыками. Старую палитру из ранних Alpha/Beta не считать действующей спецификацией.
+
+## План развития движения после 1.1.0
+
+Действующее поведение выше не следует путать с намеченными улучшениями. [MOTION-AUDIT.md](MOTION-AUDIT.md) фиксирует срез исходников, статичную волну текущего трека, мгновенные icon swaps и план последовательной полировки; [ROADMAP.md](ROADMAP.md) распределяет работу по 1.1.x–1.2. Новый motion-сценарий проектируется вместе с функцией, включая pause/error/disabled/reduced-motion и отмену. Живые полоски обозначают состояние воспроизведения, не измеренный спектр звука. До реализации и runtime-проверки эти эффекты не считаются частью Stable.
