@@ -104,10 +104,11 @@ async function owningButton(track){
 }
 function validateCommand(input){
  if(!input||typeof input!=='object'||Array.isArray(input)||!['create','rename','add','remove','move','like','unlike'].includes(input.action))throw Error('Неизвестная операция');
- const allowed=new Set(['action','title','playlistId','trackId','beforeTrackId']);if(Object.keys(input).some(k=>!allowed.has(k)))throw Error('Некорректные параметры операции');
+ const allowed=new Set(['action','title','description','playlistId','trackId','beforeTrackId']);if(Object.keys(input).some(k=>!allowed.has(k)))throw Error('Некорректные параметры операции');
  const command={action:input.action};
  for(const key of ['playlistId','trackId','beforeTrackId'])if(input[key]!==undefined){if(input[key]!==null&&(typeof input[key]!=='string'||input[key].length>512))throw Error('Некорректный идентификатор');command[key]=input[key];}
  if(['create','rename'].includes(command.action)){if(typeof input.title!=='string'||!input.title.trim()||input.title.trim().length>100||/[\u0000-\u001f\u200b-\u200d\ufeff]/.test(input.title))throw Error('Название должно содержать от 1 до 100 символов');command.title=input.title.trim();}
+ if(input.description!==undefined){if(command.action!=='rename'||typeof input.description!=='string'||input.description.length>2000||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(input.description))throw Error('Описание должно содержать до 2000 символов');command.description=input.description;}
  if(['rename','add','remove','move'].includes(command.action)&&!command.playlistId)throw Error('Выберите плейлист');
  if(['add','remove','move','like','unlike'].includes(command.action)&&!command.trackId)throw Error('Выберите песню');
  if(command.action==='move'&&!Object.hasOwn(command,'beforeTrackId'))throw Error('Укажите место песни');return command;

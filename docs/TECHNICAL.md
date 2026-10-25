@@ -84,3 +84,9 @@ Stable опубликована как Latest и установлена на о�
 music-links.cjs проверяет host/path/идентичность и создаёт непрозрачный route; renderer не получает key доступа. Ссылки на трек разрешаются через audio.getById и регистрируются обычным absorbRows без запуска плеера. Смена аккаунта/контекста делает запоздалый результат неактивным. Копирование пишет в clipboard только сгенерированный канонический VK URL известной песни/списка; ключи и stream URL исключены. История поиска отбрасывает новые и прежние URL-похожие записи.
 
 renderer/track-wave.js управляет только индикатором строки: IntersectionObserver/visibilitychange и CSS transform; анимация не является спектральным анализом. Обычная EQ-иконка остаётся статичной. Подключение, пауза и playing различимы; prefers-reduced-motion отключает цикл.
+
+## 1.1.2 · Медиатека и описание
+
+library-panel.js управляет только геометрией, library-menus.js — anchored popover с клавиатурой, library-view.js — density; library-folders.js сохраняет локальную структуру через прежний folders API. libraryWidth200–420/libraryCollapsed добавлены в нормализованные desktop preferences и строгий configure allowlist. Drag пишет настройку по завершении, не на каждом pointermove; новые циклические эффекты не добавлены.
+
+Тип альбома из VK type1/is_album проходит через playlistRow/publicPlaylist/метаданные бокового списка и route. Неизвестный type не угадывается по названию или count. playlistDetails разрешает чтение описания только своего редактируемого списка и отклоняет смену аккаунта. rename допускает bounded description; audio.editPlaylist сохраняет состав/no_discover и проверяет title/description/порядок серверным readback. Исследовательский браузерный путь описания не заявляется поддержанным.

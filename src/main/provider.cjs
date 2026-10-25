@@ -30,13 +30,13 @@ class VkProvider {
     for(const row of rows||[]){const signature=JSON.stringify(row.vkId?['vk',row.vkId]:[row.index,row.title,row.owner]);let id=this.playlistHandles.get(signature);
       if(!id){const matches=[...this.playlists].filter(([,p])=>row.vkId&&p.vkId===row.vkId||!p.vkId&&p.title===row.title&&p.owner===row.owner);if(matches.length===1)id=matches[0][0];}
       if(!id)id=randomUUID();this.playlistHandles.set(signature,id);const current=this.playlists.get(id);const newer=(current?.confirmedRevision||0)>revision;
-      const item=newer?current:{...current,...row,cover:cover(row.cover)||current?.cover,owner:row.owner||current?.owner||(row.editable?'Ваш плейлист':'Плейлист VK'),route};this.playlists.set(id,item);incoming.push(this.publicPlaylist(id,item));
+      const item=newer?current:{...current,...row,kind:row.kind||current?.kind,cover:cover(row.cover)||current?.cover,owner:row.owner||current?.owner||(row.editable?'Ваш плейлист':'Плейлист VK'),route};this.playlists.set(id,item);incoming.push(this.publicPlaylist(id,item));
     }
     const seen=new Set(incoming.map(p=>p.id));const missing=previous.filter(p=>!seen.has(p.id));
     // The VK carousel is a partial viewport, never proof that a saved playlist was deleted.
     this.savedPlaylists=[...missing.filter(p=>(this.playlists.get(p.id)?.confirmedRevision||0)>revision),...incoming,...missing.filter(p=>(this.playlists.get(p.id)?.confirmedRevision||0)<=revision)];return this.savedPlaylists;
   }
-  publicPlaylist(id,item){return{id,title:item.title,owner:item.owner,cover:item.cover,editable:item.editable===true};}
+  publicPlaylist(id,item){return{id,title:item.title,owner:item.owner,cover:item.cover,kind:item.kind,editable:item.editable===true};}
   playbackKey(route){try{const u=new URL(route);const z=u.searchParams.get('z')?.match(/^audio_playlist(-?\d+_\d+)/);if(z)return'playlist:'+z[1];const path=u.pathname.match(/^\/music\/(?:playlist|album)\/(-?\d+_\d+)/);if(path)return'playlist:'+path[1];return u.origin+u.pathname+u.search;}catch{return route;}}
   invalidatePlayback(route){this.playbackRevisions??=new Map();const key=this.playbackKey(route);this.playbackRevisions.set(key,(this.playbackRevisions.get(key)||0)+1);}
 
@@ -117,7 +117,7 @@ class VkProvider {
     const payload=await this.store?.load();
     if(payload){
       this.root=payload.accountRoot;
-      for(const item of payload.playlists){this.playlists.set(item.id,item);this.playlistHandles.set(JSON.stringify(item.kind==='album'?['album',item.route,item.title,item.owner]:item.vkId?['vk',item.vkId]:[item.index,item.title,item.owner]),item.id);if(item.inLibrary===true||item.kind!=='album')this.savedPlaylists.push({id:item.id,title:item.title,owner:item.owner,cover:item.cover,editable:item.editable===true});}
+      for(const item of payload.playlists){this.playlists.set(item.id,item);this.playlistHandles.set(JSON.stringify(item.kind==='album'?['album',item.route,item.title,item.owner]:item.vkId?['vk',item.vkId]:[item.index,item.title,item.owner]),item.id);if(item.inLibrary===true||item.kind!=='album')this.savedPlaylists.push({id:item.id,title:item.title,owner:item.owner,cover:item.cover,kind:item.kind,editable:item.editable===true});}
       for(const item of payload.collections){
         const e=this.cache.create(item.playlistId,item.title,item.kind);e.route=item.route;e.total=item.total;e.cacheState='complete';e.stale=true;e.cover=cover(this.playlists.get(item.playlistId)?.cover);e.savedAt=payload.savedAt;e.createdAt=0;
         const occurrences=new Map();
@@ -196,6 +196,7 @@ class VkProvider {
     }
     if(context.cacheId&&raw.total!==null&&raw.total!==undefined)context.total=raw.total;
   }
+  async playlistDetails(id){const root=this.root,item=this.playlists.get(id);if(!this.network||!this.online||this.authTransition||!item||item.kind==='album'||item.editable!==true)throw Error('Изменять можно только собственный плейлист');const ref=this.network.parseIdentity(item.vkId);if(ref.owner!==this.network.accountId)throw Error('Недоступный плейлист');const epoch=this.network.accountEpoch;const result=await this.network.call('audio.getPlaylistById',{owner_id:ref.owner,playlist_id:ref.id});if(this.root!==root||this.authTransition||epoch!==this.network.accountEpoch)throw Error('Аккаунт изменился');if(result.permissions?.edit!==true)throw Error('VK не разрешил редактирование');if(typeof result.description==='string'&&result.description.length>2000)throw Error('Описание VK длиннее допустимого для редактора; оно не будет обрезано');return{title:String(result.title||'').slice(0,100),description:String(result.description||'').slice(0,2000)};}
   musicLink(id){return require('./music-links.cjs').linkedTrack(this,id);}
   library(refresh=false){
     const saved=this.cache.byPlaylist.get('library:'+this.root);

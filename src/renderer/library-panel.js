@@ -1,0 +1,14 @@
+'use strict';
+(()=>{const panel=document.querySelector('.library'),workspace=document.querySelector('.workspace');let width=236,collapsed=false,drag=null,received=false,saveSerial=Promise.resolve();const narrow=matchMedia('(max-width:600px)');
+ const button=el('button','icon small');button.id='library-collapse';button.type='button';panel.querySelector('.section-head').prepend(button);
+ const handle=el('div','library-resizer');handle.id='library-resizer';handle.tabIndex=0;handle.setAttribute('role','separator');handle.setAttribute('aria-orientation','vertical');handle.setAttribute('aria-label','Ширина медиатеки');workspace.append(handle);
+ const limit=()=>Math.max(200,Math.min(420,innerWidth-660));
+ function apply(){const actual=collapsed?72:Math.max(200,Math.min(limit(),width));workspace.style.setProperty('--library-width',actual+'px');workspace.classList.toggle('library-collapsed',collapsed&&!narrow.matches);handle.hidden=narrow.matches||collapsed;handle.setAttribute('aria-valuemin','200');handle.setAttribute('aria-valuemax',String(limit()));handle.setAttribute('aria-valuenow',String(actual));button.title=collapsed?'Развернуть медиатеку':'Свернуть медиатеку';button.setAttribute('aria-label',button.title);button.setAttribute('aria-expanded',String(!collapsed));setIcon(button,collapsed?'expandLibrary':'collapseLibrary');}
+ function save(){if(!has('desktop'))return;const value={libraryWidth:width,libraryCollapsed:collapsed};saveSerial=saveSerial.catch(()=>{}).then(()=>call('desktop','configure',value)).catch(fail);}
+ function collapse(value){collapsed=value;apply();save();}button.onclick=()=>collapse(!collapsed);
+ handle.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();window.WaveMenus?.close();drag={x:e.clientX,width:Math.max(200,Math.min(limit(),width))};handle.setPointerCapture(e.pointerId);document.body.classList.add('library-resizing');};
+ handle.onpointermove=e=>{if(!drag)return;width=Math.round(Math.max(200,Math.min(limit(),drag.width+e.clientX-drag.x)));apply();};
+ const stop=()=>{if(!drag)return;drag=null;document.body.classList.remove('library-resizing');save();};handle.onpointerup=stop;handle.onpointercancel=stop;handle.onlostpointercapture=stop;
+ handle.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();width=e.key==='Home'?200:e.key==='End'?limit():Math.max(200,Math.min(limit(),width+(e.key==='ArrowRight'?1:-1)*(e.shiftKey?40:16)));apply();save();};handle.ondblclick=()=>{width=236;apply();save();};
+ const receive=data=>{if(received)return;received=true;width=data.prefs?.libraryWidth||236;collapsed=data.prefs?.libraryCollapsed===true;apply();};if(has('desktop'))call('desktop','status').then(receive).catch(()=>{});window.addEventListener('resize',apply);narrow.addEventListener('change',apply);window.WaveLibraryPanel={collapse,reset:()=>{width=236;collapsed=false;apply();save();}};apply();
+})();
