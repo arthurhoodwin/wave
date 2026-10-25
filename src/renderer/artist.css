@@ -15,9 +15,6 @@
 .artist-release-card{text-align:left;min-width:0}
 .artist-release-card strong,.artist-release-card small{overflow-wrap:anywhere}
 .artist-release-card .album-cover{aspect-ratio:1;outline:1px solid #ffffff1a;outline-offset:-1px}
-.artist-unclassified{margin-top:32px;padding-top:24px;border-top:1px solid var(--border-subtle)}
-.artist-unclassified h3{font-size:1rem;margin:0 0 8px}
-.artist-unclassified p{margin:0 0 20px;line-height:1.5}
 .hero.artist-hero{position:relative;isolation:isolate;min-height:240px;padding:36px 32px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
 .artist-hero .hero-art{display:none}
 .artist-hero .eyebrow,.artist-hero h1,.artist-hero #subtitle,.artist-hero .hero-bottom{position:relative;z-index:2;max-width:100%}
@@ -34,7 +31,6 @@
 @media(prefers-reduced-motion:no-preference){.artist-tab{transition:color 120ms ease-out}.artist-banner{animation:artist-image-in 180ms ease-out}@keyframes artist-image-in{from{opacity:0}to{opacity:1}}}
 @media(max-width:650px){.hero.artist-hero{padding:24px 20px}.artist-tabs{gap:24px}.artist-grid .virtual-card-row{gap:12px}}
 @media(forced-colors:active){.artist-tab[aria-selected=true]{border-bottom:2px solid Highlight}.artist-hero.artist-has-banner::after{background:Canvas}.artist-hero.artist-has-banner h1,.artist-hero.artist-has-banner .eyebrow{color:CanvasText;text-shadow:none}.artist-hero .hero-cover{outline:1px solid CanvasText}}
-.artist-unclassified .album-grid.virtualized{display:block}
 
 .artist-release-tools{display:flex;justify-content:flex-end;margin:0 0 20px;gap:12px}
 .artist-release-tools label{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--text-secondary);font-size:.8125rem}

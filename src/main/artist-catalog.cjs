@@ -28,9 +28,9 @@ function releaseKind(p,section){
  // Counts and type=1 (a music release versus a user playlist) do not identify singles.
  return'unknown';
 }
-function blockKind(title,type){
+function blockKind(title,type,block={}){
  const text=heading(title);
- if(['music_audios','audios'].includes(type)&&/^(Популярные(?: треки)?|Popular(?: tracks)?|Top tracks)$/i.test(text))return'tracks';
+ if(['music_audios','audios'].includes(type)||Array.isArray(block.audios_ids)){if(/^(Популярн(?:ые(?: треки| песни)?|ое)|Popular(?: tracks| songs)?|Top (?:tracks|songs))$/i.test(text))return'tracks';if(/^(Все треки|Треки|Песни|All tracks|Tracks|Songs)$/i.test(text))return'artistTracks';}
  if(type!=='music_playlists')return;
  if(/^(Участие в релизах|Appears on|Contributions)$/i.test(text))return'contributions';
  if(/^(Синглы(?: и EP)?|Singles(?: and EPs)?)$/i.test(text))return'singles';
@@ -41,12 +41,15 @@ async function readArtist(api,id,name,{keyOf,audioRow,playlistRow},options={}){
  const {signal}=options,request=(method,params)=>api.call(method,params,{signal});
  const data=await request('catalog.getAudioArtist',{url:'https://vk.ru/artist/'+id,artist_id:id,need_blocks:1});
  if(!Array.isArray(data?.catalog?.sections))throw fail('VK не вернул страницу исполнителя. Повторите открытие.');
- const groups={tracks:[],albums:[],singles:[],contributions:[],unknown:[]},sections={};
+ const exact=(data.artists||[]).filter(a=>heading(a.name).toLocaleLowerCase()===heading(name).toLocaleLowerCase()),person=data.artists?.find(a=>String(a.id)===String(id))||(exact.length===1?exact[0]:undefined),authorId=person?.id||id;
+ const groups={tracks:[],albums:[],singles:[],contributions:[],unknown:[]},sections={},allReleases=[];
  const audios=new Map((data.audios||[]).map(a=>[keyOf(a),a])),playlists=new Map((data.playlists||[]).map(p=>[keyOf(p),p]));
  api.rememberAudio(data.audios);api.rememberPlaylist(data.playlists);
  const blocks=[];
- for(const section of data.catalog.sections){let title=section.title;for(const block of section.blocks||[]){if(block.title)title=block.title;const kind=blockKind(title,block.data_type);if(kind)blocks.push({block,kind});}}
- for(const {block,kind} of blocks){
+ for(const section of data.catalog.sections){let title=section.title;for(const block of section.blocks||[]){if(block.title)title=block.title;const kind=blockKind(title,block.data_type,block);if(kind)blocks.push({block,kind});}}
+ const popular=blocks.some(b=>b.kind==='tracks');
+ for(const {block,kind:sourceKind} of blocks){
+  if(sourceKind==='artistTracks'&&popular)continue;const kind=sourceKind==='artistTracks'?'tracks':sourceKind;
   const targets=kind==='releases'?['albums','singles','unknown']:[kind];for(const t of targets)sections[t]??={available:true,error:null};
   const idsKey=kind==='tracks'?'audios_ids':'playlists_ids',keys=Array.isArray(block[idsKey])?[...block[idsKey]]:[];
   let error=null,cursor=block.next_from,blockId=block.id,pages=0;const seen=new Set();
@@ -66,13 +69,20 @@ async function readArtist(api,id,name,{keyOf,audioRow,playlistRow},options={}){
    if(kind==='tracks'){const raw=audios.get(String(key)),row=raw&&audioRow(raw,groups.tracks.length);if(row&&!groups.tracks.some(t=>t.key===row.key))groups.tracks.push(row);else if(!raw)sections.tracks.error='VK вернул неполный список треков.';continue;}
    const p=playlists.get(String(key));if(!p){for(const t of targets)sections[t].error='VK вернул неполный список релизов.';continue;}
    const row=playlistRow(p,0);if(!row)continue;if(Number.isInteger(p.year)&&p.year>=1000&&p.year<=9999)row.year=p.year;
-   const creators=p.main_artists||[],own=creators.some(a=>a.id?String(a.id)===String(id):heading(a.name).toLocaleLowerCase()===heading(name).toLocaleLowerCase());
+   const creators=p.main_artists||[],own=creators.some(a=>a.id?String(a.id)===String(authorId):heading(a.name).toLocaleLowerCase()===heading(name).toLocaleLowerCase());
    const target=kind!=='contributions'&&creators.length&&!own?'contributions':releaseKind(p,kind);
-   sections[target]??={available:true,error:null};if(!groups[target].some(a=>a.vkId===row.vkId))groups[target].push(row);
+   sections[target]??={available:true,error:null};if(!groups[target].some(a=>a.vkId===row.vkId))groups[target].push(row);if(target!=='contributions'&&!allReleases.some(a=>a.vkId===row.vkId))allReleases.push(row);
   }
  }
+ // Unlabelled pools are not popularity evidence. Recover only records whose
+ // author identity matches this page, and label this fallback simply Tracks.
+ if(!sections.tracks){
+  const own=(data.audios||[]).filter(a=>{const authors=[...(a.main_artists||[]),...(a.featured_artists||[])];return authors.length?authors.some(person=>person.id?String(person.id)===String(authorId):heading(person.name).toLocaleLowerCase()===heading(name).toLocaleLowerCase()):heading(a.artist).toLocaleLowerCase()===heading(name).toLocaleLowerCase();});
+  for(const a of own){const row=audioRow(a,groups.tracks.length);if(row&&!groups.tracks.some(t=>t.key===row.key))groups.tracks.push(row);}
+  if(groups.tracks.length)sections.tracks={available:true,error:null};
+ }
  for(const key of Object.keys(groups))sections[key]??={available:false,error:null};
- const person=data.artists?.find(a=>String(a.id)===String(id));
- return{title:person?.name||name,rows:groups.tracks,total:groups.tracks.length,partial:false,albums:[...groups.albums,...groups.singles,...groups.unknown],contributions:groups.contributions,discography:groups,artistSections:sections,artwork:artistArtwork(person)};
+ const releaseSections=['albums','singles','unknown'].map(key=>sections[key]);sections.releases={available:releaseSections.some(s=>s.available),error:[...new Set(releaseSections.map(s=>s.error).filter(Boolean))].join(' ')||null};
+ return{title:person?.name||name,rows:groups.tracks,total:groups.tracks.length,partial:false,albums:allReleases,contributions:groups.contributions,discography:{...groups,releases:allReleases},artistSections:sections,trackSectionTitle:popular?'Популярные треки':'Треки',artwork:artistArtwork(person)};
 }
 module.exports={readArtist,artistArtwork,releaseKind,blockKind,images};

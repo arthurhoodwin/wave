@@ -7,7 +7,7 @@ try{
  if(result.status!==0)throw Error(result.stderr||result.stdout||result.error?.message||'Artist UI test failed');
  const report=JSON.parse(fs.readFileSync(path.join(root,'report.json'),'utf8'));
  fs.writeFileSync(path.join(scratch,'artist-ui-report.json'),JSON.stringify(report,null,2));
- fs.copyFileSync(path.join(root,'artist-ui.png'),path.join(scratch,'artist-ui.png'));
+ for(const name of ['artist-ui.png','artist-releases.png','artist-tracks.png'])fs.copyFileSync(path.join(root,name),path.join(scratch,name));
  console.log('Artist UI integration passed:',JSON.stringify(report));
 }catch(e){if(fs.existsSync(path.join(root,'error.json')))console.error(fs.readFileSync(path.join(root,'error.json'),'utf8'));console.error(e.message);process.exitCode=1;}
 finally{if(path.dirname(root)!==scratch||!path.basename(root).startsWith('artist-ui-'))throw Error('Unsafe fixture cleanup path');fs.rmSync(root,{recursive:true,force:true,maxRetries:3,retryDelay:150});}

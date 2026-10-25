@@ -1,18 +1,17 @@
 'use strict';
 (()=>{
- const labels={tracks:'Популярные треки',albums:'Альбомы',singles:'Синглы',contributions:'Участие в релизах'};
+ const labels={tracks:'Треки',albums:'Альбомы',singles:'Синглы',releases:'Релизы',contributions:'Участие в релизах'};
  const section=document.querySelector('.track-section'),hero=document.querySelector('.hero'),main=document.querySelector('main');
  const tabs=el('div','artist-tabs hidden');tabs.id='artist-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Музыка исполнителя');
  const releases=el('section','artist-releases hidden');releases.id='artist-releases';releases.setAttribute('role','tabpanel');
- const status=el('p','muted artist-section-status'),retry=el('button','secondary hidden','Повторить'),grid=el('div','artist-grid'),unknown=el('section','artist-unclassified hidden');
- const unknownTitle=el('h3','','Релизы без указанного типа'),unknownCopy=el('p','muted','VK не разделил эти релизы на альбомы и синглы.'),unknownGrid=el('div','album-grid');unknown.append(unknownTitle,unknownCopy,unknownGrid);
- const tools=el('div','artist-release-tools'),sortLabel=el('label','','Порядок релизов'),sort=el('select');sort.setAttribute('aria-label','Порядок релизов');sortLabel.append(sort);tools.append(sortLabel);releases.append(status,retry,tools,grid,unknown);section.prepend(tabs,releases);
+ const status=el('p','muted artist-section-status'),retry=el('button','secondary hidden','Повторить'),grid=el('div','artist-grid');
+ const tools=el('div','artist-release-tools'),sortLabel=el('label','','Порядок релизов'),sort=el('select');sort.setAttribute('aria-label','Порядок релизов');sortLabel.append(sort);tools.append(sortLabel);releases.append(status,retry,tools,grid);section.prepend(tabs,releases);
  const banner=el('img','artist-banner hidden');banner.alt='';banner.referrerPolicy='no-referrer';hero.prepend(banner);
- const trackPanel=$('search-results');let active='tracks',currentKey='',artKey='',imageEpoch=0,cardWindow;let sortMode='original';const sorted=new WeakMap(),paints=new Map(),positions=new Map();
+ const trackPanel=$('search-results');let active='tracks',currentKey='',artKey='',imageEpoch=0,cardWindow;let sortMode='original';const sorted=new WeakMap(),mergedCache=new WeakMap(),paints=new Map(),positions=new Map();let lastArtistNotice='';
  for(const [type,label] of Object.entries(labels)){
   const button=el('button','artist-tab',label);button.type='button';button.id='artist-tab-'+type;button.setAttribute('role','tab');
   button.onclick=()=>select(type);
-  button.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const all=[...tabs.children],i=all.indexOf(button),n=e.key==='Home'?0:e.key==='End'?all.length-1:(i+(e.key==='ArrowRight'?1:-1)+all.length)%all.length;all[n].click();all[n].focus({preventScroll:true});};tabs.append(button);
+  button.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const all=[...tabs.children].filter(b=>!b.classList.contains('hidden')),i=all.indexOf(button),n=e.key==='Home'?0:e.key==='End'?all.length-1:(i+(e.key==='ArrowRight'?1:-1)+all.length)%all.length;all[n].click();all[n].focus({preventScroll:true});};tabs.append(button);
  }
  sort.onchange=()=>{sortMode=sort.value;remember();render();};
  retry.type='button';retry.onclick=()=>navigate({...state.route},true).catch(fail);
@@ -44,18 +43,25 @@
   const artist=state.route.type==='artist';hero.classList.toggle('artist-hero',artist);tabs.classList.toggle('hidden',!artist);releases.classList.toggle('hidden',!artist||active==='tracks');
   if(!artist){++imageEpoch;artKey='';banner.classList.add('hidden');hero.classList.remove('artist-has-banner','artist-has-avatar');trackPanel?.classList.remove('artist-track-hidden');return;}
   const key=routeKey(state.route);if(key!==currentKey){currentKey=key;active=navigation.views.get(key)?.artistTab||state.route.artistTab||'tracks';if(!Object.hasOwn(labels,active))active='tracks';sortMode=positions.get(key)?.[active]?.sort||'original';}
-  applyArt();setText($('subtitle'),'');setText($('list-heading'),'Популярные треки');$('count').textContent='';
+  const disc=state.artistDiscography||{},combined=state.artistDiscography?(!disc.albums?.length||!disc.singles?.length||!!disc.unknown?.length):state.loading?active==='releases':true;
+  if(!state.loading&&combined&&['albums','singles'].includes(active)){active='releases';state.route.artistTab=active;}else if(!state.loading&&!combined&&active==='releases'){active='albums';state.route.artistTab=active;}
+  const tracksTitle=state.artistTrackTitle==='Популярные треки'?'Популярные треки':'Треки';setText($('artist-tab-tracks'),tracksTitle);
+  for(const type of ['albums','singles'])$('artist-tab-'+type).classList.toggle('hidden',combined);$('artist-tab-releases').classList.toggle('hidden',!combined);
+  let combinedItems=disc.releases;if(!combinedItems){combinedItems=mergedCache.get(disc);if(!combinedItems){const seen=new Set();combinedItems=[...(disc.albums||[]),...(disc.singles||[]),...(disc.unknown||[])].filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true;});mergedCache.set(disc,combinedItems);}}
+  applyArt();setText($('subtitle'),'');setText($('list-heading'),tracksTitle);$('count').textContent='';
+  const emptyTracks=!state.loading&&!state.allTracks.length;document.querySelector('.table-head').classList.toggle('hidden',emptyTracks);document.querySelector('.list-tools').classList.toggle('hidden',emptyTracks);$('play-all').classList.toggle('hidden',emptyTracks);if(emptyTracks)setText($('list-detail'),'');
   $('albums-section').classList.add('hidden');$('contributions-section').classList.add('hidden');
   for(const button of tabs.children){const type=button.id.slice('artist-tab-'.length),selected=type===active;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;button.setAttribute('aria-controls',type==='tracks'?'search-results':'artist-releases');}
   trackPanel?.classList.toggle('artist-track-hidden',active!=='tracks');if(trackPanel){trackPanel.setAttribute('role','tabpanel');trackPanel.setAttribute('aria-labelledby','artist-tab-tracks');trackPanel.setAttribute('aria-busy',String(!!state.loading));}
   releases.classList.toggle('hidden',active==='tracks');releases.setAttribute('aria-labelledby','artist-tab-'+active);releases.setAttribute('aria-busy',String(!!state.loading));
-  const meta=state.artistSections?.[active],rawItems=state.artistDiscography?.[active]||[];let items=rawItems;const withYear=rawItems.some(item=>Number.isInteger(item.year));const options=[['original','Порядок VK'],...(withYear?[['newest','Сначала новые']]:[]),['title','Название · А–Я']];const optionKey=JSON.stringify(options);if(sort.dataset.options!==optionKey){sort.dataset.options=optionKey;sort.replaceChildren(...options.map(([value,title])=>{const option=el('option','',title);option.value=value;return option;}));}if(sortMode==='newest'&&!withYear)sortMode='original';sort.value=sortMode;tools.classList.toggle('hidden',active==='tracks'||rawItems.length<2);if(sortMode!=='original'){let cache=sorted.get(rawItems);if(!cache){cache={};sorted.set(rawItems,cache);}cache[sortMode]??=rawItems.map((item,index)=>({item,index})).sort((a,b)=>(sortMode==='title'?a.item.title.localeCompare(b.item.title,'ru'):(b.item.year||0)-(a.item.year||0))||a.index-b.index).map(row=>row.item);items=cache[sortMode];}
+  const meta=state.artistSections?.[active],rawItems=active==='releases'?combinedItems:disc[active]||[];let items=rawItems;const withYear=rawItems.some(item=>Number.isInteger(item.year));const options=[['original','Порядок VK'],...(withYear?[['newest','Сначала новые']]:[]),['title','Название · А–Я']];const optionKey=JSON.stringify(options);if(sort.dataset.options!==optionKey){sort.dataset.options=optionKey;sort.replaceChildren(...options.map(([value,title])=>{const option=el('option','',title);option.value=value;return option;}));}if(sortMode==='newest'&&!withYear)sortMode='original';sort.value=sortMode;tools.classList.toggle('hidden',active==='tracks'||rawItems.length<2);if(sortMode!=='original'){let cache=sorted.get(rawItems);if(!cache){cache={};sorted.set(rawItems,cache);}cache[sortMode]??=rawItems.map((item,index)=>({item,index})).sort((a,b)=>(sortMode==='title'?a.item.title.localeCompare(b.item.title,'ru'):(b.item.year||0)-(a.item.year||0))||a.index-b.index).map(row=>row.item);items=cache[sortMode];}
   const text=state.loading?'Загружаем…':meta?.error||(!meta?.available?'VK не предоставил этот раздел.':items.length||active==='tracks'&&state.allTracks.length?'':'В этом разделе пока нет релизов.');status.textContent=text;status.classList.toggle('error',!!meta?.error);retry.classList.toggle('hidden',state.loading||!meta?.error);
+  if(lastArtistNotice&&$('message').textContent===lastArtistNotice)message('');lastArtistNotice='';
   if(active==='tracks'){
-   if(!state.loading&&(meta?.error||!meta?.available)){message(meta?.error||'VK не предоставил популярные треки. Треки доступны в релизах исполнителя.',!!meta?.error);$('empty-state').classList.add('hidden');}
+   if(!state.loading&&(meta?.error||!state.allTracks.length)){lastArtistNotice=meta?.error||'У исполнителя пока нет доступных треков.';message(lastArtistNotice,!!meta?.error);$('empty-state').classList.add('hidden');}
    return;
   }
-  paint(items);const unclassified=active==='albums'?state.artistDiscography?.unknown||[]:[];unknown.classList.toggle('hidden',!unclassified.length);if(unclassified.length)paint(unclassified,unknownGrid,'unknown');
+  paint(items);
  }
  window.WaveArtistUI={render,remember,tab:()=>active,reset(){currentKey='';artKey='';positions.clear();++imageEpoch;}};
  render();
