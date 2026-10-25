@@ -64,3 +64,10 @@ body.hide-queue .workspace,.workspace{grid-template-columns:var(--library-width,
 #playlist-editor label{display:grid;gap:8px;margin-block:16px}#playlist-editor textarea{width:100%;resize:vertical;min-height:100px;background:var(--bg-input);color:var(--text-primary);font:inherit;border:1px solid var(--border-control);border-radius:6px;padding:10px}
 
 .track>.duration,.table-head>.duration{display:flex;align-items:center;justify-content:center;text-align:center;padding-inline:0;justify-self:stretch;min-width:0}.table-head>.duration .wave-icon{margin-inline:0}
+
+/* Expanded library keeps its name; only the collapsed rail hides labels. */
+.library .section-head{display:grid;grid-template-columns:28px minmax(0,1fr) repeat(3,28px);gap:2px}
+.library .section-head h2{display:block;font-size:12px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;color:var(--text-secondary)}
+.library .section-head h2 .wave-icon{display:none}
+.library-collapsed .library .section-head{display:flex;flex-direction:column}
+.library-collapsed .library .section-head h2{display:none}
