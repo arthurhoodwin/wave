@@ -90,3 +90,9 @@ renderer/track-wave.js управляет только индикатором с
 library-panel.js управляет только геометрией, library-menus.js — anchored popover с клавиатурой, library-view.js — density; library-folders.js сохраняет локальную структуру через прежний folders API. libraryWidth200–420/libraryCollapsed добавлены в нормализованные desktop preferences и строгий configure allowlist. Drag пишет настройку по завершении, не на каждом pointermove; новые циклические эффекты не добавлены.
 
 Тип альбома из VK type1/is_album проходит через playlistRow/publicPlaylist/метаданные бокового списка и route. Неизвестный type не угадывается по названию или count. playlistDetails разрешает чтение описания только своего редактируемого списка и отклоняет смену аккаунта. rename допускает bounded description; audio.editPlaylist сохраняет состав/no_discover и проверяет title/description/порядок серверным readback. Исследовательский браузерный путь описания не заявляется поддержанным.
+
+## 1.1.2.2 · Валидация длительности загрузки
+
+Физическая длина и SHA256 проверяются как прежде. downloads/audio-duration.cjs потоково считает сэмплы ADTS/MPEG LayerIII, используя небольшую остаточную часть между chunks; для неподдерживаемого MPEG layer/free bitrate возвращается decoder fallback. Успешный Chromium canplay остаётся обязательным. Для измеренного потока canplay.duration может быть предварительной оценкой/Infinity и не заменяет sample duration. Свежий media.duration относится только к запрошенному key; HLS EXTINF — дополнительная сверка, не замена целостности сегментов. Не расширять допуск ради прохождения любого файла.
+
+После exhausted retryable download-http5xx/download-network один повтор source resolve; permanent access/rate не зацикливаются. На сетевых/API write-операциях это не применяется.
