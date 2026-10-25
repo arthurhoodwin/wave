@@ -16,7 +16,7 @@
  sort.onchange=()=>{sortMode=sort.value;remember();render();};
  retry.type='button';retry.onclick=()=>navigate({...state.route},true).catch(fail);
  function select(type){if(state.route.type!=='artist'||type===active)return;remember();active=type;sortMode=positions.get(currentKey)?.[type]?.sort||'original';state.route.artistTab=type;render();const saved=positions.get(currentKey)?.[type];main.scrollTop=saved?.scroll||0;if(saved?.anchor&&type!=='tracks')cardWindow?.restore(saved.anchor);saveView();}
- function remember(){if(!currentKey)return;const all=positions.get(currentKey)||{};all[active]={sort:sortMode,scroll:main.scrollTop||0,anchor:active==='tracks'?window.WaveTracks?.anchor():cardWindow?.anchor()};positions.set(currentKey,all);while(positions.size>100)positions.delete(positions.keys().next().value);}
+ function remember(){if(!currentKey||state.route.type!=='artist'||state.loading||!state.viewLoaded)return;const all=positions.get(currentKey)||{};all[active]={sort:sortMode,scroll:main.scrollTop||0,anchor:active==='tracks'?window.WaveTracks?.anchor():cardWindow?.anchor()};positions.set(currentKey,all);while(positions.size>100)positions.delete(positions.keys().next().value);}
  function applyArt(){
   const art=state.artistArtwork||{},key=JSON.stringify([routeKey(state.route),art]);if(key===artKey)return;artKey=key;const epoch=++imageEpoch;
   const avatar=$('hero-cover');hero.classList.remove('artist-has-banner','artist-has-avatar');banner.classList.add('hidden');banner.removeAttribute('src');
@@ -40,9 +40,10 @@
   view.window.commit(mounted);for(const [id,e] of view.nodes)if(!live.has(id)){e.node.remove();view.nodes.delete(id);}for(const [id,row] of view.rows)if(!liveRows.has(id)){row.remove();view.rows.delete(id);}
  }
  function render(){
-  const artist=state.route.type==='artist';hero.classList.toggle('artist-hero',artist);tabs.classList.toggle('hidden',!artist);releases.classList.toggle('hidden',!artist||active==='tracks');
+  const artist=state.route.type==='artist',pending=artist&&(state.loading||!state.viewLoaded);section.classList.toggle('artist-content-pending',pending);if(artist)section.setAttribute('aria-busy',String(!!state.loading));else section.removeAttribute('aria-busy');hero.classList.toggle('artist-hero',artist);tabs.classList.toggle('hidden',!artist);releases.classList.toggle('hidden',!artist||active==='tracks');
   if(!artist){++imageEpoch;artKey='';banner.classList.add('hidden');hero.classList.remove('artist-has-banner','artist-has-avatar');trackPanel?.classList.remove('artist-track-hidden');return;}
   const key=routeKey(state.route);if(key!==currentKey){currentKey=key;active=navigation.views.get(key)?.artistTab||state.route.artistTab||'tracks';if(!Object.hasOwn(labels,active))active='tracks';sortMode=positions.get(key)?.[active]?.sort||'original';}
+  if(pending){applyArt();tabs.classList.add('hidden');releases.classList.add('hidden');trackPanel?.classList.remove('artist-track-hidden');trackPanel?.removeAttribute('role');trackPanel?.removeAttribute('aria-labelledby');trackPanel?.setAttribute('aria-busy',String(!!state.loading));$('play-all').classList.add('hidden');if(state.loading&&(!$('message').textContent||$('message').textContent===lastArtistNotice)){lastArtistNotice='Загружаем музыку…';message(lastArtistNotice);}return;}
   const disc=state.artistDiscography||{},combined=state.artistDiscography?(!disc.albums?.length||!disc.singles?.length||!!disc.unknown?.length):state.loading?active==='releases':true;
   if(!state.loading&&combined&&['albums','singles'].includes(active)){active='releases';state.route.artistTab=active;}else if(!state.loading&&!combined&&active==='releases'){active='albums';state.route.artistTab=active;}
   const tracksTitle=state.artistTrackTitle==='Популярные треки'?'Популярные треки':'Треки';setText($('artist-tab-tracks'),tracksTitle);

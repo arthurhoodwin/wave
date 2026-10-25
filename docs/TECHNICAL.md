@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.3.1 Stable**, 25 октября 2026. Публичный тег [v1.1.3.1](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.3.1), канал stable, Windows FileVersion 1.1.3.301. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.1.3.2 Stable**, 25 октября 2026. Публичный тег [v1.1.3.2](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.3.2), канал stable, Windows FileVersion 1.1.3.302. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
 
 ## Границы процессов
 
@@ -101,4 +101,4 @@ library-panel.js управляет только геометрией, library-m
 
 VkHttpClient.artist → artist-catalog.readArtist → network-provider.artist → artist-ui.js. Ссылки/ключи VK остаются в main; renderer получает непрозрачные ID релизов, allowlisted изображения и состояния разделов. Продолжения дочитываются с защитой от циклов; ошибка одного раздела сохраняет уже прочитанное. Неизвестный тип не определяется по count/type=1. Активный artistController отменяется при новом артисте/поиске, уходе, выходе и закрытии; поздний ответ проверяет root и текущую collection до регистрации handles. Локальные сортировки применяются к полученным данным, не обещают серверный порядок полного каталога при ошибке продолжения.
 
-В1.1.3.1 discography.releases хранит единый порядок полученных собственных релизов. trackSectionTitle различает подтверждённую популярность и generic artist tracks. Fallback аудиопула фильтруется по main/featured identity; случайные записи из соседних блоков не превращаются в популярные.
+Начиная с1.1.3.1 discography.releases хранит единый порядок полученных собственных релизов. trackSectionTitle различает подтверждённую популярность и generic artist tracks. Fallback аудиопула фильтруется по main/featured identity; случайные записи из соседних блоков не превращаются в популярные.

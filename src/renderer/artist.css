@@ -36,3 +36,8 @@
 .artist-release-tools label{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--text-secondary);font-size:.8125rem}
 .artist-release-tools select{max-width:100%;background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-control);border-radius:6px;padding:9px 12px;font:inherit}
 .artist-release-tools select:focus-visible{outline:2px solid var(--focus-ring);outline-offset:3px}
+
+/* Resolve the artist's final sections before exposing their labels and tools. */
+.artist-content-pending #artist-tabs,
+.artist-content-pending #artist-releases,
+.artist-content-pending #search-results>:not(#message){display:none!important}
