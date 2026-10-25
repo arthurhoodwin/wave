@@ -15,6 +15,7 @@
 | Правила и история тестов | [TESTING.md](TESTING.md) |
 | Фактически выполненные проверки/установка и их границы | [VALIDATION.md](VALIDATION.md) |
 | Что отложено и что планировать дальше | [ROADMAP.md](ROADMAP.md) |
+| Сравнение Spotify/VK/Wave и основания плана 1.2 | [MUSIC-FEATURE-STUDY.md](MUSIC-FEATURE-STUDY.md) |
 | Причины решений и исторические срезы | [ROADMAP-AUDIT.md](ROADMAP-AUDIT.md), [DESIGN-AUDIT.md](DESIGN-AUDIT.md) |
 | Лайки/тексты | [VK-OWNERSHIP.md](VK-OWNERSHIP.md), [LYRICS-TIMING.md](LYRICS-TIMING.md) |
 | История версий / текущая публикация | [CHANGELOG.md](CHANGELOG.md) / [LATEST.md](../releases/LATEST.md) |
