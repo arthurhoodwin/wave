@@ -9,3 +9,11 @@ test('variable AAC frame sizes yield sample duration independent of byte-rate es
 test('truncated AAC frames and wrong full-song duration remain errors',()=>fixture(async file=>{await fs.writeFile(file,Buffer.concat([aac(80),aac(600).subarray(0,200)]));await assert.rejects(frameDuration(file,'aac'),e=>e.kind==='incomplete-download');await fs.writeFile(file,Buffer.concat(Array.from({length:1500},()=>aac(80))));await assert.rejects(validateDownload({file,record:{ext:'aac',bytes:120000,track:{duration:100}}},{BrowserWindow:Window}),/Длительность/);}));
 test('MPEG Layer III VBR with ID3 tags is counted by samples, not first frame bitrate',()=>fixture(async file=>{const id3=Buffer.from([73,68,51,4,0,0,0,0,0,3,1,2,3]),tag=Buffer.alloc(128);tag.write('TAG');await fs.writeFile(file,Buffer.concat([id3,...Array.from({length:2000},(_,i)=>mp3(i%2?14:5)),tag]));assert(Math.abs(await frameDuration(file,'mp3')-2000*1152/44100)<.00001);}));
 test('HLS duration corroboration rejects a stream missing most of its advertised audio',()=>fixture(async file=>{await fs.writeFile(file,Buffer.concat(Array.from({length:1500},()=>aac(80))));await assert.rejects(validateDownload({file,record:{ext:'aac',bytes:120000,track:{duration:1500*1024/44100}},sourceDuration:120},{BrowserWindow:Window}),/Длительность/);}));
+
+test('catalog mismatch is advisory only for byte-complete frame audio independently corroborated by the decoder',()=>fixture(async file=>{
+ const bytes=Buffer.concat(Array.from({length:1500},()=>aac(80)));await fs.writeFile(file,bytes);class ExactWindow extends Window{get webContents(){return{executeJavaScript:async()=>1500*1024/44100};}}
+ const input={file,record:{ext:'aac',bytes:bytes.length,track:{duration:55}},completeSource:true};const actual=await validateDownload(input,{BrowserWindow:ExactWindow});assert(Math.abs(actual-1500*1024/44100)<.001);
+ await assert.rejects(validateDownload({...input,completeSource:false},{BrowserWindow:ExactWindow}),/Длительность/);
+ await assert.rejects(validateDownload(input,{BrowserWindow:Window}),/Длительность/);
+ await assert.rejects(validateDownload({...input,sourceDuration:80},{BrowserWindow:ExactWindow}),/Длительность/);
+}));
