@@ -27,3 +27,19 @@ input[type="range"]:disabled{cursor:default;opacity:.42}
 .top>.brand-home#home{display:flex}
 .settings-about{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:28px;padding-top:16px;border-top:1px solid var(--border-subtle);color:var(--text-muted);font-size:var(--text-caption)}
 @media(hover:hover){.brand-home:hover{background:transparent;color:var(--text-accent)}}
+
+/* Playback indicator: bounded to visible current rows; no audio analysis. */
+.track-wave{display:inline-flex;align-items:center;justify-content:center;gap:2px;width:20px;height:20px;color:var(--text-accent);pointer-events:none}
+.track-wave i{display:block;width:2px;height:16px;border-radius:1px;background:currentColor;transform:scaleY(.4)}
+.track-wave i:nth-child(2){transform:scaleY(.85)}.track-wave i:nth-child(3){transform:scaleY(.65)}
+[data-wave-mode="paused"] .track-wave{color:var(--text-secondary)}
+@media(prefers-reduced-motion:no-preference){
+ .track-wave i{animation:wave-track-bars 800ms ease-in-out infinite alternate;animation-play-state:paused}
+ .track-wave i:nth-child(2){animation-duration:1000ms;animation-delay:-400ms}.track-wave i:nth-child(3){animation-duration:900ms;animation-delay:-200ms}.track-wave i:nth-child(4){animation-duration:1100ms;animation-delay:-600ms}
+ .wave-window-visible [data-wave-mode="playing"].wave-visible .track-wave i{animation-play-state:running}
+ .link-copied{animation:wave-link-copied 300ms cubic-bezier(.2,0,0,1)}
+ @keyframes wave-track-bars{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+ @keyframes wave-link-copied{from{background-color:var(--bg-accent-soft)}to{background-color:var(--bg-button)}}
+}
+#copy-song-link{align-self:flex-start;font-size:12px}#copy-list-link{flex-shrink:0}
+@media(forced-colors:active){.track-wave i{background:Highlight}}

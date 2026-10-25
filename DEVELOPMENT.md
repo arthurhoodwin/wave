@@ -4,7 +4,7 @@
 
 ## Текущий результат
 
-**Wave 1.1.0 Stable** опубликована как [Latest](https://github.com/arthurhoodwin/wave/releases/latest) и установлена на основном ПК. Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
+**Wave 1.1.1 Stable** — текущая версия исходников; статус публикации/установки фиксируется в [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
 
 ## Запуск
 
@@ -88,6 +88,6 @@ npm run release:check
 npm run release -- --draft
 ```
 
-Скрипт публикации требует существующий отправленный тег. Проверьте CI, комплект файлов релиза (для переходной Beta 5 — EXE и SHA256SUMS.txt; Stable 1.1.0 дополнительно включает маленький пакет от RC 1), подпись и установку перед публикацией. Не включайте в Git профиль Electron, cookies, токены, аудиофайлы, подписанные CDN-ссылки и ключи. Правила PR — [CONTRIBUTING.md](CONTRIBUTING.md).
+Скрипт публикации требует существующий отправленный тег. Проверьте CI, комплект файлов релиза (для 1.1.1 — EXE, маленький пакет от точной 1.1.0 и SHA256SUMS.txt), подпись и установку перед публикацией. Не включайте в Git профиль Electron, cookies, токены, аудиофайлы, подписанные CDN-ссылки и ключи. Правила PR — [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Файловые патчи, разовый переход через EXE и очистка `dist/` описаны в [UPDATES.md](docs/UPDATES.md). Устаревшие локальные артефакты удаляются командой `npm run artifacts:clean`; распакованную текущую сборку сохраняйте как основу следующего патча.

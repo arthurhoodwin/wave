@@ -135,7 +135,7 @@ class VkProvider {
     if(s?.ready&&/^\/audios\d+$/.test(s.root||'')){
       if(this.root&&this.root!==s.root){this.lyricsSources?.clear();this.batchPlans?.clear();this.ownedKeys?.clear();this.ownedAccount=null;if(this.runningBatch)this.runningBatch.cancelled=true;
         ++this.playRequest;++this.warmRequest;try{if(this.active)await this.pause();}catch{}
-        if(this.editor!==this.network)await this.editor?.close();if(this.network){this.network.audioRefs.clear();this.network.playlistRefs.clear();await this.nativePlayer?.stop();}this.editor=null;this.operationLog=[];this.operationChanged();await this.cache.close();this.cache=new PlaylistCache(this.engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));this.tracks.clear();this.searchArtists?.clear();this.searchEntries?.clear();this.searchController?.abort();this.handles.clear();this.playlists.clear();this.playlistHandles.clear();this.savedPlaylists=[];this.collection=null;this.active=null;this.setSession({state:'signedOut',accountChanged:true});
+        if(this.editor!==this.network)await this.editor?.close();if(this.network){this.network.audioRefs.clear();this.network.playlistRefs.clear();await this.nativePlayer?.stop();}this.editor=null;this.operationLog=[];this.operationChanged();await this.cache.close();this.cache=new PlaylistCache(this.engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));this.tracks.clear();this.musicLinkRefs?.clear();this.searchArtists?.clear();this.searchEntries?.clear();this.searchController?.abort();this.handles.clear();this.playlists.clear();this.playlistHandles.clear();this.savedPlaylists=[];this.collection=null;this.active=null;this.setSession({state:'signedOut',accountChanged:true});
       }
       this.root=s.root;if(!this.network&&typeof this.engine.fork==='function'){this.editor??=this.network||new CollectionEditor(this.engine);this.editor.warm(this.root); }const next=this.setSession({state:'ready',cached:false,verifying:false,...(this.nativePlayer?{nativePlayback:true,volume:this.nativePlayer.state().volume}:{})});const library=this.cache.byPlaylist.get('library:'+this.root);if(library?.stale)this.refreshCollection(library);return next;
     }
@@ -196,6 +196,7 @@ class VkProvider {
     }
     if(context.cacheId&&raw.total!==null&&raw.total!==undefined)context.total=raw.total;
   }
+  musicLink(id){return require('./music-links.cjs').linkedTrack(this,id);}
   library(refresh=false){
     const saved=this.cache.byPlaylist.get('library:'+this.root);
     if(saved?.cacheState==='complete'){this.collection=saved;if(this.online&&(refresh||saved.stale||Date.now()-saved.createdAt>300000))this.refreshCollection(saved);return Promise.resolve({...this.cache.snapshot(saved),version:this.cacheVersion(saved),playlists:this.savedPlaylists,playlistsRevision:this.sidebarRevision||0});}

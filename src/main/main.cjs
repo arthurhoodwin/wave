@@ -50,7 +50,15 @@ app.whenReady().then(async()=>{
    personalService=new (require('./personal-service.cjs').PersonalService)({library:personal,downloads,provider,chooseFolder:async()=>{const picked=await dialog.showOpenDialog(main,{title:'Папка для новых загрузок Wave',properties:['openDirectory','createDirectory']});return picked.canceled?null:picked.filePaths[0];}});
    ipcMain.handle('personal:request',async(event,command)=>{if(event.sender!==main.webContents||event.senderFrame!==main.webContents.mainFrame)throw Error('Недопустимый источник');try{return await personalService.handle(command);}catch(error){return{ok:false,error:{message:/token|cookie|https?:/i.test(error.message)?'Не удалось обновить личную медиатеку. Повторите действие.':String(error.message)}};}});
   }
-  const allowed=['prepareTrack','transitionTrack','discardPrepared','trackAlbum','batchPreview','batchExecute','batchCancel','cancelLyrics','searchPage','cancelSearch','status','lyrics','account','login','logout','switchAccount','library','playlist','playlistCache','artist','mutate','operations','more','search','play','pause','resume','seek','player','volume'];
+  ipcMain.handle('links:request',(event,command)=>{
+   if(event.sender!==main.webContents||event.senderFrame!==main.webContents.mainFrame||!command||typeof command!=='object'||Array.isArray(command))throw Error('Недопустимая команда ссылки');
+   const links=require('./music-links.cjs');
+   try{if(command.action==='resolve'&&Object.keys(command).every(k=>['action','url'].includes(k)))return links.resolveMusicLink(provider,command.url);
+    if(command.action==='copy'&&Object.keys(command).every(k=>['action','kind','id'].includes(k)))return links.copyMusicLink(provider,command,text=>electron.clipboard.writeText(text));
+    throw Error('Некорректная команда ссылки');
+   }catch{return{ok:false,error:{message:command.action==='copy'?'Не удалось скопировать ссылку. Откройте музыку снова.':'Не удалось открыть музыкальную ссылку. Проверьте адрес и подключение к VK.'}};}
+  });
+  const allowed=['musicLink','prepareTrack','transitionTrack','discardPrepared','trackAlbum','batchPreview','batchExecute','batchCancel','cancelLyrics','searchPage','cancelSearch','status','lyrics','account','login','logout','switchAccount','library','playlist','playlistCache','artist','mutate','operations','more','search','play','pause','resume','seek','player','volume'];
   for(const method of allowed)ipcMain.handle(`music:${method}`,async(e,...args)=>{
     if(e.sender!==main.webContents||e.senderFrame!==main.webContents.mainFrame)throw Error('Недопустимый источник команды');
     try{if(!provider)throw Error('VK ещё не готов');if(method==='playlist'){if(args.length>2||(args.length===2&&typeof args[1]!=='boolean'))throw Error('Некорректная команда');}else if(!['login','status'].includes(method)&&args.length>1)throw Error('Некорректная команда');return await provider[method](...args);}catch(err){diagnostics.record(err);const message=String(err?.message||'Ошибка VK');return{ok:false,error:{...(Number.isSafeInteger(err.code)?{code:err.code}:{}),kind:require('./diagnostics.cjs').errorKind(err),...(err.kind==='unavailable'?{unavailableIds:err.unavailableIds}:{}),message:/token|cookie|https?:\/\//i.test(message)?'Ошибка подключения к VK. Повторите действие.':message}};}

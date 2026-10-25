@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.0 Stable**, 25 октября 2026. Публичный тег [v1.1.0](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.0), канал stable, Windows FileVersion 1.1.0.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.1.1 Stable**, 25 октября 2026. Публичный тег [v1.1.1](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.1), канал stable, Windows FileVersion 1.1.1.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
 
 ## Границы процессов
 
@@ -78,3 +78,9 @@ Renderer не получает cookies, токены или постоянные
 Stable опубликована как Latest и установлена на основном ПК; 77 файлов совпали со сборкой, окно отвечает. Набор — 300 Node.js-тестов и отдельный Electron ASAR-gate. Это не означает проверку всех настоящих VK-сценариев или независимого Windows-ПК. Владелец перенёс такие дополнительные проверки на будущее; перечень остаётся в [ROADMAP.md](ROADMAP.md) и [VALIDATION.md](VALIDATION.md).
 
 См. также [DEVELOPMENT.md](../DEVELOPMENT.md), [UPDATES.md](UPDATES.md), [VK-OWNERSHIP.md](VK-OWNERSHIP.md), [LYRICS-TIMING.md](LYRICS-TIMING.md). История — [CHANGELOG.md](CHANGELOG.md), пользовательские заметки текущего выпуска — [LATEST.md](../releases/LATEST.md).
+
+## Дополнение 1.1.1: музыкальные ссылки и индикатор
+
+music-links.cjs проверяет host/path/идентичность и создаёт непрозрачный route; renderer не получает key доступа. Ссылки на трек разрешаются через audio.getById и регистрируются обычным absorbRows без запуска плеера. Смена аккаунта/контекста делает запоздалый результат неактивным. Копирование пишет в clipboard только сгенерированный канонический VK URL известной песни/списка; ключи и stream URL исключены. История поиска отбрасывает новые и прежние URL-похожие записи.
+
+renderer/track-wave.js управляет только индикатором строки: IntersectionObserver/visibilitychange и CSS transform; анимация не является спектральным анализом. Обычная EQ-иконка остаётся статичной. Подключение, пауза и playing различимы; prefers-reduced-motion отключает цикл.

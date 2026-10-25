@@ -34,3 +34,12 @@ test('mini growth near the taskbar keeps the entire window in its monitor work a
 
 
 test('diagnostic buttons and connection badges are off by default and opt in independently',()=>{assert.equal(preferences().showSync,false);assert.equal(preferences().showConnectionStatus,false);assert.equal(preferences({showSync:true}).showSync,true);assert.equal(preferences({showSync:true}).showConnectionStatus,false);});
+
+test('native hide and minimize publish visibility even when Chromium background throttling is disabled',async()=>{
+ const {EventEmitter}=require('node:events');const main=new EventEmitter(),states=[];let visible=true,minimized=false;
+ Object.assign(main,{isDestroyed:()=>false,isVisible:()=>visible,isMinimized:()=>minimized,webContents:{send:(channel,state)=>{if(channel==='desktop:state')states.push(state);}}});
+ class Tray extends EventEmitter{setToolTip(){}setContextMenu(){}}
+ const powerMonitor=new EventEmitter(),electron={app:{},powerMonitor,Tray,Menu:{buildFromTemplate:x=>x},nativeImage:{createFromPath:()=>({resize:()=>({})})},safeStorage:{}};
+ const w=new WindowsIntegration({electron,main,provider:{root:null},directory:'unused'});w.store={load:async()=>null};await w.init();
+ try{assert.equal(w.public().mainVisible,true);visible=false;main.emit('hide');assert.equal(states.at(-1).mainVisible,false);visible=true;minimized=true;main.emit('minimize');assert.equal(states.at(-1).mainVisible,false);minimized=false;main.emit('restore');assert.equal(states.at(-1).mainVisible,true);}finally{w.sleep.close();powerMonitor.removeAllListeners();}
+});
