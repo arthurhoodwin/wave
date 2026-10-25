@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.1 Stable**, 25 октября 2026. Публичный тег [v1.1.1](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.1), канал stable, Windows FileVersion 1.1.1.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.1.3 Stable**, 25 октября 2026. Публичный тег [v1.1.3](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.3), канал stable, Windows FileVersion 1.1.3.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
 
 ## Границы процессов
 
@@ -22,7 +22,7 @@ Renderer не получает cookies, токены или постоянные
 | Область | Основные файлы | Ответственность |
 | --- | --- | --- |
 | Запуск/IPC | main.cjs, src/preload/ | Окна, проверка отправителя/команд, жизненный цикл |
-| VK | vk-http.cjs, provider.cjs, network-provider.cjs | Сеанс, каталог, непрозрачные handles, согласование данных |
+| VK | vk-http.cjs, artist-catalog.cjs, provider.cjs, network-provider.cjs | Сеанс, каталог, непрозрачные handles, согласование данных |
 | Планирование/кэш | request-scheduler.cjs, playlist-cache.cjs, metadata-store.cjs | Приоритеты, полнота списков и зашифрованные метаданные |
 | Подборки | home-feed.cjs, personal-service.cjs | Реальные секции VK, ограниченное продолжение, частичный результат, повтор |
 | Коллекция | quick-ownership.cjs, collection-batch.cjs, renderer/likes.js | Оптимистичный отклик, одна запись, подтверждение чтением, массовые операции |
@@ -96,3 +96,7 @@ library-panel.js управляет только геометрией, library-m
 Физическая длина и SHA256 проверяются как прежде. downloads/audio-duration.cjs потоково считает сэмплы ADTS/MPEG LayerIII, используя небольшую остаточную часть между chunks; для неподдерживаемого MPEG layer/free bitrate возвращается decoder fallback. Успешный Chromium canplay остаётся обязательным. Для измеренного потока canplay.duration может быть предварительной оценкой/Infinity и не заменяет sample duration. Свежий media.duration относится только к запрошенному key; HLS EXTINF — дополнительная сверка, не замена целостности сегментов. Не расширять допуск ради прохождения любого файла.
 
 После exhausted retryable download-http5xx/download-network один повтор source resolve; permanent access/rate не зацикливаются. На сетевых/API write-операциях это не применяется.
+
+## Исполнители
+
+VkHttpClient.artist → artist-catalog.readArtist → network-provider.artist → artist-ui.js. Ссылки/ключи VK остаются в main; renderer получает непрозрачные ID релизов, allowlisted изображения и состояния разделов. Продолжения дочитываются с защитой от циклов; ошибка одного раздела сохраняет уже прочитанное. Неизвестный тип не определяется по count/type=1. Активный artistController отменяется при новом артисте/поиске, уходе, выходе и закрытии; поздний ответ проверяет root и текущую collection до регистрации handles. Локальные сортировки применяются к полученным данным, не обещают серверный порядок полного каталога при ошибке продолжения.

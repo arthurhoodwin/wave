@@ -1,0 +1,28 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {VkHttpClient}=require('../src/main/vk-http.cjs');
+const {artistArtwork,releaseKind}=require('../src/main/artist-catalog.cjs');
+const {VkProvider}=require('../src/main/provider.cjs');
+const song=id=>({owner_id:1,id,title:'Song '+id,artist:'Artist',duration:100});
+const release=(id,extra={})=>({owner_id:-2,id,title:'Same title',count:1,main_artists:[{id:'selected',name:'Artist'}],...extra});
+const block=(title,data_type,ids,extra={})=>({title,data_type,...(data_type==='music_playlists'?{playlists_ids:ids}:{audios_ids:ids}),...extra});
+function fixture(data){const api=new VkHttpClient({fetch:async()=>{throw Error('No live network');}});api.call=async()=>data;return api;}
+test('artist sections use exact popular IDs and explicit release types, never the full audio pool or track count',async()=>{
+ const api=fixture({artists:[],audios:[song(1),song(2)],playlists:[release(1,{release_type:'album'}),release(2,{release_type:'single',count:12}),release(3)],catalog:{sections:[{blocks:[block('Популярные треки','music_audios',['1_2']),block('Релизы','music_playlists',['-2_1','-2_2','-2_3'])]}]}});
+ const result=await api.artist('selected','Artist');assert.deepEqual(result.rows.map(r=>r.key),['1_2']);assert.deepEqual(result.discography.albums.map(r=>r.vkId),['-2_1']);assert.deepEqual(result.discography.singles.map(r=>r.vkId),['-2_2']);assert.deepEqual(result.discography.unknown.map(r=>r.vkId),['-2_3']);api.close();
+});
+test('missing popular section does not relabel incidental audios as popular',async()=>{const api=fixture({audios:[song(1)],catalog:{sections:[]}});const result=await api.artist('selected','Artist');assert.equal(result.rows.length,0);assert.equal(result.artistSections.tracks.available,false);api.close();});
+test('a failed release continuation preserves the popular section and the already received release',async()=>{
+ const api=fixture({audios:[song(1)],playlists:[release(1)],catalog:{sections:[{blocks:[block('Популярные треки','music_audios',['1_1']),block('Релизы','music_playlists',['-2_1'],{id:'releases',next_from:'next'})]}]}});const first=api.call;api.call=async(method,...args)=>{if(method==='catalog.getBlockItems')throw Error('Timeout');return first(method,...args);};const r=await api.artist('selected','Artist');assert.equal(r.rows.length,1);assert.equal(r.discography.unknown.length,1);assert(r.artistSections.albums.error);assert.equal(r.artistSections.tracks.error,null);api.close();
+});
+test('missing referenced IDs and repeated continuation tokens are visible errors, not complete results',async()=>{const api=fixture({catalog:{sections:[{blocks:[block('Альбомы','music_playlists',['-2_1'])]}]}});const r=await api.artist('selected','Artist');assert.match(r.artistSections.albums.error,/неполный/);assert.equal(r.discography.albums.length,0);api.close();});
+test('artist artwork separates wide profile images from avatars and rejects foreign image hosts',()=>{
+ const url='https://sun1.userapi.com/';const art=artistArtwork({photo:[{url:url+'wide',width:1600,height:500},{url:url+'avatar',width:300,height:300}]});assert.equal(art.banner,url+'wide');assert.equal(art.avatar,url+'avatar');assert.equal(art.profile,undefined);
+ assert.equal(artistArtwork({photo:[{url:url+'wide',width:1600,height:500}]}).avatar,undefined);assert.equal(artistArtwork({photo:[{url:url+'unknown'}]}).profile,url+'unknown');assert.equal(artistArtwork({banner:{url:'https://evil.example/image'}}).banner,undefined);
+});
+test('release classification preserves explicit sections and never treats numeric playlist type as a single',()=>{assert.equal(releaseKind({type:1,count:1},'releases'),'unknown');assert.equal(releaseKind({type:1,count:20},'singles'),'singles');assert.equal(releaseKind({release_type:'single'},'contributions'),'contributions');});
+test('late artist responses cannot replace a newer provider collection or register release handles',async()=>{
+ let finish;const p=new VkProvider({}, {},{network:{artist:()=>new Promise(r=>finish=r)}});p.root='/audios1';p.online=true;p.tracks.set('one',{id:'one',artist:'Artist',artistRoute:'https://vk.ru/artist/selected'});
+ const pending=p.artist('one');p.collection={kind:'search',items:new Map()};finish({rows:[],albums:[{vkId:'-2_1',title:'Late'}]});await assert.rejects(pending,e=>e.kind==='cancelled');assert.equal(p.playlists.size,0);await p.cache.close();
+});
+test('artist cancellation reaches continuation reads and is not converted to an empty section',async()=>{const controller=new AbortController();const api=fixture({catalog:{sections:[{blocks:[block('Релизы','music_playlists',[],{id:'releases',next_from:'next'})]}]}});const first=api.call;api.call=async(method,params,options)=>{assert.equal(options.signal,controller.signal);if(method==='catalog.getBlockItems'){controller.abort();throw Object.assign(Error('Cancelled'),{kind:'cancelled'});}return first(method,params,options);};await assert.rejects(api.artist('selected','Artist',{signal:controller.signal}),e=>e.kind==='cancelled');api.close();});

@@ -18,3 +18,4 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:updates-electron
+      - run: npm run test:artists-electron
