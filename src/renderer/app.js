@@ -229,7 +229,7 @@ async function navigate(route,refresh=false,preserve=false,traveling=false){
  else await loadRoute({...route},refresh,!!snapshot||preserve);
  if(routeKey(state.route)!==key)return;
  const title=($('heading').textContent||'Музыка')+' · Wave';if(document.title!==title)document.title=title;if(traveling||!preserve)$('heading').focus?.({preventScroll:true});window.WaveTransitions?.enter();window.WavePersonal?.visit(state.route);
- state.visibleLimit=saved?.limit||30;trackList();scrollMain.scrollTop=saved?.scroll||0;if(saved?.anchor){if(saved.anchorKind==='entities')window.WaveSearch?.restore?.(saved.anchor);else window.WaveTracks?.restore(saved.anchor);}if(navigation.index>=0)navigation.entries[navigation.index]={...state.route};saveView();
+ state.visibleLimit=saved?.limit||30;trackList();scrollMain.scrollTop=saved?.scroll||0;if(saved?.anchor&&saved.scroll>0){if(saved.anchorKind==='entities')window.WaveSearch?.restore?.(saved.anchor);else window.WaveTracks?.restore({...saved.anchor,scrollTop:saved.scroll});}if(navigation.index>=0)navigation.entries[navigation.index]={...state.route};saveView();
 }
 function travel(delta){const target=navigation.index+delta;if(target<0||target>=navigation.entries.length)return;saveView();navigation.index=target;const route={...navigation.entries[target]};return navigate(route,false,false,true).catch(fail);}
 $('nav-back').onclick=()=>travel(-1);$('nav-forward').onclick=()=>travel(1);

@@ -10,3 +10,5 @@ body.history-entities .track-section{display:none!important}.recent-visits{paddi
 .eq-bands{grid-template-columns:repeat(10,minmax(64px,1fr));gap:12px;overflow-x:auto;overscroll-behavior-x:contain;max-width:100%;padding:8px 4px 14px}.eq-card{width:min(920px,calc(100vw - 48px));max-width:920px}.eq-band{min-width:0}.eq-band output{font-variant-numeric:tabular-nums;white-space:nowrap}
 
 
+
+.toolbar>#list-detail{margin-inline-start:auto}.artist-page .toolbar>#list-detail:empty{display:none}
