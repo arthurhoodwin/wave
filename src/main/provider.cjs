@@ -32,9 +32,9 @@ class VkProvider {
       if(!id)id=randomUUID();this.playlistHandles.set(signature,id);const current=this.playlists.get(id);const newer=(current?.confirmedRevision||0)>revision;
       const item=newer?current:{...current,...row,kind:row.kind||current?.kind,cover:cover(row.cover)||current?.cover,owner:row.owner||current?.owner||(row.editable?'Ваш плейлист':'Плейлист VK'),route};this.playlists.set(id,item);incoming.push(this.publicPlaylist(id,item));
     }
-    const seen=new Set(incoming.map(p=>p.id));const missing=previous.filter(p=>!seen.has(p.id));
-    // The VK carousel is a partial viewport, never proof that a saved playlist was deleted.
-    this.savedPlaylists=[...missing.filter(p=>(this.playlists.get(p.id)?.confirmedRevision||0)>revision),...incoming,...missing.filter(p=>(this.playlists.get(p.id)?.confirmedRevision||0)<=revision)];return this.savedPlaylists;
+    const updated=new Map(incoming.map(p=>[p.id,p])),known=new Set(previous.map(p=>p.id));
+    // New arrivals precede existing lists; a partial/stale carousel never resets their order.
+    this.savedPlaylists=[...[...updated.values()].filter(p=>!known.has(p.id)),...previous.map(p=>updated.get(p.id)||p)];return this.savedPlaylists;
   }
   publicPlaylist(id,item){return{id,title:item.title,owner:item.owner,cover:item.cover,kind:item.kind,editable:item.editable===true};}
   playbackKey(route){try{const u=new URL(route);const z=u.searchParams.get('z')?.match(/^audio_playlist(-?\d+_\d+)/);if(z)return'playlist:'+z[1];const path=u.pathname.match(/^\/music\/(?:playlist|album)\/(-?\d+_\d+)/);if(path)return'playlist:'+path[1];return u.origin+u.pathname+u.search;}catch{return route;}}
@@ -157,7 +157,7 @@ class VkProvider {
     const deadline=Date.now()+180000;while(Date.now()<deadline){try{if((await this.checkSession()).state==='ready')return{state:'ready'};}catch{}await sleep(700);}throw Error('Вход не завершён. Нажмите «Войти через VK» снова.');
   }
   exportMetadata(){
-    const visible=new Set(this.savedPlaylists.map(p=>p.id));return{version:1,accountRoot:this.root,savedAt:Date.now(),playlists:Array.from(this.playlists).filter(([id,p])=>visible.has(id)||p.kind==='album').map(([id,p])=>({id,title:p.title,owner:p.owner||'',index:p.index,route:p.route,cover:cover(p.cover),kind:p.kind,inLibrary:visible.has(id),vkId:p.vkId,editable:p.editable})),collections:Array.from(this.cache.byPlaylist.values()).filter(e=>(e.kind==='library'||visible.has(e.playlistId)||this.playlists.get(e.playlistId)?.kind==='album')&&e.cacheState==='complete'&&e.total===e.items.size).map(e=>({playlistId:e.playlistId,kind:e.kind,title:e.title,route:e.route,total:e.total,tracks:Array.from(e.items.keys()).map(id=>this.tracks.get(id)).filter(Boolean).map(t=>({id:t.id,key:t.key,title:t.title,artist:t.artist||'',time:t.time||'0:00',duration:t.duration,available:t.available,index:Number.isSafeInteger(t.index)?t.index:0,scope:t.scope,route:t.route,...trackMeta(t)}))}))};
+    const visible=new Set(this.savedPlaylists.map(p=>p.id)),ordered=[...this.savedPlaylists.map(p=>[p.id,this.playlists.get(p.id)]).filter(([,p])=>p),...Array.from(this.playlists).filter(([id,p])=>!visible.has(id)&&p.kind==='album')];return{version:1,accountRoot:this.root,savedAt:Date.now(),playlists:ordered.map(([id,p])=>({id,title:p.title,owner:p.owner||'',index:p.index,route:p.route,cover:cover(p.cover),kind:p.kind,inLibrary:visible.has(id),vkId:p.vkId,editable:p.editable})),collections:Array.from(this.cache.byPlaylist.values()).filter(e=>(e.kind==='library'||visible.has(e.playlistId)||this.playlists.get(e.playlistId)?.kind==='album')&&e.cacheState==='complete'&&e.total===e.items.size).map(e=>({playlistId:e.playlistId,kind:e.kind,title:e.title,route:e.route,total:e.total,tracks:Array.from(e.items.keys()).map(id=>this.tracks.get(id)).filter(Boolean).map(t=>({id:t.id,key:t.key,title:t.title,artist:t.artist||'',time:t.time||'0:00',duration:t.duration,available:t.available,index:Number.isSafeInteger(t.index)?t.index:0,scope:t.scope,route:t.route,...trackMeta(t)}))}))};
   }
   scheduleSave(){if(!this.store||!this.root)return;clearTimeout(this.saveTimer);this.saveTimer=setTimeout(()=>{this.saveTimer=null;this.store.save(this.exportMetadata()).catch(()=>{});},250);}
   cacheChanged(){this.scheduleSave();}

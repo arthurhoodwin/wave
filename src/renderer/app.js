@@ -81,7 +81,7 @@ function playlists(){
   button.classList.toggle('active',['playlist','album'].includes(state.route.type)&&state.route.id===p.id);button.disabled=!has('playlist');
   if(!window.WaveFolders&&root.children[index]!==button){if(root.insertBefore)root.insertBefore(button,root.children[index]||null);else root.append(button);}
  });for(const [id,entry] of playlistNodes)if(!alive.has(id)){entry.button.remove?.();playlistNodes.delete(id);}
- $('library-nav').classList.toggle('active',state.route.type==='library');window.WaveFolders?.layout([...playlistNodes].map(([id,e])=>({id,button:e.button,title:e.data.title,owner:e.data.owner,kind:e.data.kind,editable:e.data.editable})));window.WaveImages?.sweep();
+ $('library-nav').classList.toggle('active',state.route.type==='library');window.WaveFolders?.layout(lists.map(p=>{const e=playlistNodes.get(p.id);return{id:p.id,button:e.button,title:p.title,owner:p.owner,kind:p.kind,editable:p.editable};}));window.WaveImages?.sweep();
 }
 function markUnavailable(ids){const found=new Set(ids||[]);const update=tracks=>{for(const t of tracks||[])if(found.has(t.id))t.available=false;};update(state.allTracks);update(state.tracks);update(state.loop);for(const e of cacheEntries.values())update(e.tracks);for(const e of navigation.snapshots.values())update(e.allTracks||e.tracks);if(found.has(state.current?.id))state.current.available=false;viewSource=null;renderedSignature=null;trackList();}
 async function playTrack(t,{history,loop,playContext}={}){
