@@ -1,8 +1,8 @@
 # Тестирование Wave
 
-## Текущий срез · 1.1.4 Stable
+## Текущий срез · 1.1.5 Stable
 
-26 октября 2026: **353 Node.js-теста** и отдельный обязательный Electron ASAR-gate. Музыкальные ссылки и native видимость индикатора покрыты отдельными сценариями; точные результаты публикации/установки и границы — [VALIDATION.md](VALIDATION.md). Эти цифры относятся к срезу 1.1.4, в последующих версиях источник истины — фактический прогон.
+26 октября 2026: **369 Node.js-тестов** и отдельный обязательный Electron ASAR-gate. Музыкальные ссылки и native видимость индикатора покрыты отдельными сценариями; точные результаты публикации/установки и границы — [VALIDATION.md](VALIDATION.md). Эти цифры относятся к срезу 1.1.5, в последующих версиях источник истины — фактический прогон.
 
 ## Запуск
 
@@ -98,4 +98,6 @@ node --test --test-name-pattern="signed version must equal" tests/github-updater
 
 Главная и альбомы: `npm run test:discovery-electron` (также в Windows CI). Независимый профиль без VK: keyed-карточки и фокус при обновлении, открытие generated-списка, разрешение placeholder-имени, синхронизация current/list/loop, отсутствие запросов из200 обновлений controls, отмена старого результата после reset, axe/узкое окно/zoom200%. Отчёт `work/discovery-ui-report.json`; снимки `work/discovery-home.png` и `work/discovery-album.png`.
 
-После выпуска1.1.4 инструменты публикации получили4 offline-регрессии (`tests/release-tool.test.cjs`); рабочий набор —357 Node-тестов, релизный срез1.1.4 выше остаётся353. Измерения и политика повторов — [PERFORMANCE.md](PERFORMANCE.md).
+После выпуска1.1.4 инструменты публикации получили4 offline-регрессии (`tests/release-tool.test.cjs`); на том этапе набор составлял357 Node-тестов, релизный срез1.1.4 выше остаётся353. Измерения и политика повторов — [PERFORMANCE.md](PERFORMANCE.md).
+
+1.1.5: download-parallel/download-preferences/mp3-tags проверяют пул, отмену, квоту,429, миграцию настроек, opt-in/aliases/сортировку и сохранение MPEG payload. Discovery Electron также декодирует tagged MP3 и проверяет настройки/сортировку в renderer.

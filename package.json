@@ -1,6 +1,6 @@
 {
   "name": "wave-vk-research-client",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": false,
   "description": "Windows music client with an independent VK network adapter and local audio player",
   "main": "src/main/main.cjs",
@@ -53,7 +53,7 @@
         "nsis"
       ],
       "icon": "assets/icons/wave.ico",
-      "artifactName": "Wave-Setup-1.1.4.${ext}"
+      "artifactName": "Wave-Setup-1.1.5.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -74,7 +74,7 @@
     "asarUnpack": [
       "build/windows/apply-update.ps1"
     ],
-    "buildVersion": "1.1.4.300"
+    "buildVersion": "1.1.5.300"
   },
   "license": "GPL-3.0-only",
   "repository": {
@@ -85,7 +85,7 @@
   "bugs": {
     "url": "https://github.com/arthurhoodwin/wave/issues"
   },
-  "releaseVersion": "1.1.4",
+  "releaseVersion": "1.1.5",
   "releaseChannel": "stable",
   "updateMode": "files"
 }

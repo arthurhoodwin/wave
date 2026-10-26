@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.4 Stable**, 26 октября 2026. Публичный тег [v1.1.4](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.4), канал stable, Windows FileVersion 1.1.4.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.1.5 Stable**, 26 октября 2026. Публичный тег [v1.1.5](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.5), канал stable, Windows FileVersion 1.1.5.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
 
 ## Границы процессов
 
@@ -110,3 +110,9 @@ VkHttpClient.artist → artist-catalog.readArtist → network-provider.artist �
 `PersonalService.recommendations` различает попытки объектом cache-entry: manual retry создаёт fresh-запрос, повтор на уже свежую выполняющуюся попытку её разделяет. Поздняя предыдущая попытка не регистрирует handles. При отказе сохраняются настоящие старые секции с пометкой stale/partial, пустой результат получает короткий TTL. `home-feed-ui.js` обновляет группы/карточки по ID без полной замены DOM.
 
 `album-metadata.cjs` связывает имя только с доказанной album identity, обновляет private/public occurrences, активный трек и историю. Полная playlist-мета не затирается частичной audio.album; параллельные чтения имени объединяются. `album-meta.js` обновляет renderer-копии, а новый loop-reference обеспечивает сохранение desktop-контекста с теми же песнями/порядком. Скрытая проверка placeholder запускается при открытии плеера, не из frame/position loop.
+
+## Скачивание1.1.5
+
+DownloadManager содержит до3 runJob workers, admission queue остаётся ограниченной. reserve сериализует вычисление общего quota/disk бюджета; commitTail сериализует финальную запись index. Отдельный worker failure не останавливает остальные.429 уменьшает пул до1 и включает server cooldown; после успешных задач лимит растёт до выбранного значения. HLS segments остаются последовательными внутри задачи.
+
+mp3-tags.cjs потоково копирует MPEG payload в sibling .tags, добавляет ID3v2.4, сверяет hash payload и атомарно заменяет файл. Финальный hash/bytes/validation относятся к tagged MP3. download-preferences.cjs обрабатывает только подтверждённые новые likes вне времени ожидания UI. Полный liked-order snapshot обновляется после full library reads; partial pages его не заменяют. Никакой фоновой синхронизации внешних лайков нет.
