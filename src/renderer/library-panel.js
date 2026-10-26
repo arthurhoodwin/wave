@@ -5,7 +5,7 @@
  const limit=()=>Math.max(200,Math.min(420,innerWidth-660));
  function apply(){const actual=collapsed?72:Math.max(200,Math.min(limit(),width));workspace.style.setProperty('--library-width',actual+'px');workspace.classList.toggle('library-collapsed',collapsed&&!narrow.matches);handle.hidden=narrow.matches||collapsed;handle.setAttribute('aria-valuemin','200');handle.setAttribute('aria-valuemax',String(limit()));handle.setAttribute('aria-valuenow',String(actual));button.title=collapsed?'Развернуть медиатеку':'Свернуть медиатеку';button.setAttribute('aria-label',button.title);button.setAttribute('aria-expanded',String(!collapsed));setIcon(button,collapsed?'expandLibrary':'collapseLibrary');}
  function save(){if(!has('desktop'))return;const value={libraryWidth:width,libraryCollapsed:collapsed};saveSerial=saveSerial.catch(()=>{}).then(()=>call('desktop','configure',value)).catch(fail);}
- function collapse(value){collapsed=value;apply();save();}button.onclick=()=>collapse(!collapsed);
+ function collapse(value){if(value===collapsed)return;collapsed=value;apply();window.WaveTransitions?.fade(panel,Symbol(),{first:true,duration:120});save();}button.onclick=()=>collapse(!collapsed);
  handle.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();window.WaveMenus?.close();drag={x:e.clientX,width:Math.max(200,Math.min(limit(),width))};handle.setPointerCapture(e.pointerId);document.body.classList.add('library-resizing');};
  handle.onpointermove=e=>{if(!drag)return;width=Math.round(Math.max(200,Math.min(limit(),drag.width+e.clientX-drag.x)));apply();};
  const stop=()=>{if(!drag)return;drag=null;document.body.classList.remove('library-resizing');save();};handle.onpointerup=stop;handle.onpointercancel=stop;handle.onlostpointercapture=stop;

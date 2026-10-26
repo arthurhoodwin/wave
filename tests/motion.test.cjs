@@ -7,3 +7,5 @@ test('dialog closes once and only if the latest application intent still permits
 test('missing Web Animations support still closes native dialogs',async()=>{const dialog={querySelector:()=>null,close(){this.closed=true;}};const motion=createMotion({style:()=>({opacity:'1',transform:'none'})});await motion.exit(dialog);assert.equal(dialog.closed,true);});
 
 test('a suspended animation clock cannot keep a dialog modal indefinitely',async()=>{const f=fixture();await f.motion.exit(f.dialog);assert.equal(f.dialog.closed,1);});
+
+test('a newer content transition cancels stale fade and preserves its current opacity',async()=>{const f=fixture(),node=f.dialog.querySelector();const first=f.motion.fade(node,120),next=f.motion.fade(node,120,true);assert.equal(f.animations[1].frames[0].opacity,'.6');f.animations[0].finish();f.animations[1].finish();assert.equal(await first,false);assert.equal(await next,true);assert.equal(f.dialog.closed,0);});

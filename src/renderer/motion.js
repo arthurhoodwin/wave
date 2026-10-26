@@ -11,7 +11,7 @@ function createMotion({reduced=()=>false,style=node=>getComputedStyle(node)}={})
    job.timer=setTimeout(complete,duration+50);job.animation.finished.then(complete,()=>{if(jobs.get(node)===job)cancel(node);});
   });
  }
- return{cancel,enter(dialog,resuming=false){const node=dialog.querySelector?.('.modal-card,.song-card')||dialog;const quiet=reduced();return run(node,from=>[{opacity:resuming?from.opacity:0,...(!quiet?{transform:resuming?from.transform:'translateY(12px)'}:{})},{opacity:1,...(!quiet?{transform:'none'}:{})}],quiet?100:300);},
+ return{cancel,fade(node,duration=150,resuming=false){if(!node)return Promise.resolve(false);return run(node,from=>[{opacity:resuming?from.opacity:0},{opacity:1}],reduced()?Math.min(duration,100):duration);},enter(dialog,resuming=false){const node=dialog.querySelector?.('.modal-card,.song-card')||dialog;const quiet=reduced();return run(node,from=>[{opacity:resuming?from.opacity:0,...(!quiet?{transform:resuming?from.transform:'translateY(12px)'}:{})},{opacity:1,...(!quiet?{transform:'none'}:{})}],quiet?100:300);},
   exit(dialog,allowed=()=>true){const node=dialog.querySelector?.('.modal-card,.song-card')||dialog,quiet=reduced();return run(node,from=>[{opacity:from.opacity,...(!quiet?{transform:from.transform}:{})},{opacity:0,...(!quiet?{transform:'translateY(-12px)'}:{})}],quiet?100:150,()=>{if(allowed())dialog.close();});}};
 }
 if(typeof module!=='undefined')module.exports={createMotion};

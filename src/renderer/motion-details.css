@@ -1,0 +1,21 @@
+/* Semantic layers stay fixed in size; never animate virtual row geometry. */
+.icon-swap{display:inline-grid;place-items:center;width:24px;height:24px;vertical-align:middle}.icon-layer{grid-area:1/1;display:flex;opacity:0;pointer-events:none}.icon-layer.is-active{opacity:1}.icon-layer .wave-icon{flex:none}
+.mini-window .icon-swap{width:18px;height:18px}.play-toggle .icon-swap{width:24px;height:24px}
+.library-popover,.wave-toast{opacity:0;pointer-events:none;transition:opacity 100ms ease-out,display 100ms allow-discrete,overlay 100ms allow-discrete}
+.library-popover:popover-open,.wave-toast:popover-open{opacity:1;pointer-events:auto;transition-duration:150ms}
+@starting-style{.library-popover:popover-open,.wave-toast:popover-open{opacity:0}}
+.wave-toast{animation:none!important}
+@media(prefers-reduced-motion:no-preference){
+ .icon-layer{transition:opacity 150ms cubic-bezier(.2,0,0,1)}
+ .play-toggle .icon-layer,#toggle .icon-layer,#song-toggle .icon-layer{scale:.25;filter:blur(4px);transition:opacity 300ms cubic-bezier(.2,0,0,1),scale 300ms cubic-bezier(.2,0,0,1),filter 300ms cubic-bezier(.2,0,0,1)}
+ .play-toggle .icon-layer.is-active,#toggle .icon-layer.is-active,#song-toggle .icon-layer.is-active{scale:1;filter:blur(0)}
+ .library-popover{translate:0 -4px;transition:opacity 100ms ease-out,translate 100ms ease-out,display 100ms allow-discrete,overlay 100ms allow-discrete}
+ .library-popover:popover-open{translate:0 0;transition-duration:150ms}
+ @starting-style{.library-popover:popover-open{opacity:0;translate:0 -4px}}
+ #search-history,.folder-items,.playlist-search-control input,#empty-state{transition:opacity 120ms ease-out,display 120ms allow-discrete}
+ #search-history.hidden,.folder-items.hidden,.playlist-search-control input[hidden],#empty-state.hidden{opacity:0;pointer-events:none}
+ @starting-style{#search-history:not(.hidden),.folder-items:not(.hidden),.playlist-search-control input:not([hidden]),#empty-state:not(.hidden){opacity:0}}
+ .heart-button .wave-icon,.row-like .wave-icon{transition:fill 120ms ease-out,color 120ms ease-out}
+ .settings-group>summary::after,.folder-chevron{transition:rotate 120ms ease-out}
+}
+@media(prefers-reduced-motion:reduce){.library-popover,.wave-toast{translate:none;transition:opacity 80ms ease-out,display 80ms allow-discrete,overlay 80ms allow-discrete!important}.icon-layer{scale:1;filter:none;transition:opacity 80ms ease-out!important}}
