@@ -14,11 +14,13 @@
 | Понять модули и форматы данных | [TECHNICAL.md](TECHNICAL.md) |
 | Собрать, подписать, выпустить или откатить обновление | [UPDATES.md](UPDATES.md) |
 | Понять скачивание и его ограничения | [DOWNLOADS-PLAN.md](DOWNLOADS-PLAN.md) |
+| Почему выпуск занимал много времени / быстрый цикл | [PERFORMANCE.md](PERFORMANCE.md), [AGENTS.md](../AGENTS.md) |
+| Исторические отчёты и выпущенные этапы | [archive/](archive/README.md) |
 | Правила и история тестов | [TESTING.md](TESTING.md) |
 | Фактически выполненные проверки/установка и их границы | [VALIDATION.md](VALIDATION.md) |
 | Что отложено и что планировать дальше | [ROADMAP.md](ROADMAP.md) |
 | Сравнение Spotify/VK/Wave и основания плана 1.2 | [MUSIC-FEATURE-STUDY.md](MUSIC-FEATURE-STUDY.md) |
-| Причины решений и исторические срезы | [ROADMAP-AUDIT.md](ROADMAP-AUDIT.md), [DESIGN-AUDIT.md](DESIGN-AUDIT.md) |
+| Причины решений и исторические срезы | [ROADMAP-AUDIT.md](archive/ROADMAP-AUDIT.md), [DESIGN-AUDIT.md](archive/DESIGN-AUDIT.md) |
 | Лайки/тексты | [VK-OWNERSHIP.md](VK-OWNERSHIP.md), [LYRICS-TIMING.md](LYRICS-TIMING.md) |
 | История версий / текущая публикация | [CHANGELOG.md](CHANGELOG.md) / [LATEST.md](../releases/LATEST.md) |
 

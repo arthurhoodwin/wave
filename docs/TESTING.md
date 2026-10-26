@@ -97,3 +97,5 @@ node --test --test-name-pattern="signed version must equal" tests/github-updater
 С1.1.3.2 UI-гейт удерживает ответ артиста незавершённым: проверяет отсутствие предварительных вкладок/списков, видимость loading-статуса, итоговую навигацию после ответа и сохранение прокрутки после refresh.
 
 Главная и альбомы: `npm run test:discovery-electron` (также в Windows CI). Независимый профиль без VK: keyed-карточки и фокус при обновлении, открытие generated-списка, разрешение placeholder-имени, синхронизация current/list/loop, отсутствие запросов из200 обновлений controls, отмена старого результата после reset, axe/узкое окно/zoom200%. Отчёт `work/discovery-ui-report.json`; снимки `work/discovery-home.png` и `work/discovery-album.png`.
+
+После выпуска1.1.4 инструменты публикации получили4 offline-регрессии (`tests/release-tool.test.cjs`); рабочий набор —357 Node-тестов, релизный срез1.1.4 выше остаётся353. Измерения и политика повторов — [PERFORMANCE.md](PERFORMANCE.md).

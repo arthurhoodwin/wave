@@ -1,6 +1,6 @@
 # Wave — дизайн-код
 
-Актуальная версия: **1.1.4 Stable**, 26 октября 2026. Это действующие правила интерфейса. Исторические варианты и причины перехода к текущему виду — в [DESIGN-AUDIT.md](DESIGN-AUDIT.md) и [CHANGELOG.md](CHANGELOG.md).
+Актуальная версия: **1.1.4 Stable**, 26 октября 2026. Это действующие правила интерфейса. Исторические варианты и причины перехода к текущему виду — в [DESIGN-AUDIT.md](archive/DESIGN-AUDIT.md) и [CHANGELOG.md](CHANGELOG.md).
 
 ## Характер интерфейса
 
@@ -108,7 +108,7 @@ Native dialog/showModal, Escape, удержание/возврат фокуса;
 - [settings-layout.js](../src/renderer/settings-layout.js) — одноразовая группировка существующих узлов настроек без потери обработчиков.
 - [motion.js](../src/renderer/motion.js), [dialog-manager.js](../src/renderer/dialog-manager.js), [polish.css](../src/renderer/polish.css) — движения, фокус, диапазоны.
 
-Проверять фактический каскад из index.html/mini.html. Снимки и история решений — [DESIGN-AUDIT.md](DESIGN-AUDIT.md); реальные результаты/непроверенные сценарии — [VALIDATION.md](VALIDATION.md). Правила сформированы с better-interface и шестью better-* навыками. Старую палитру из ранних Alpha/Beta не считать действующей спецификацией.
+Проверять фактический каскад из index.html/mini.html. Снимки и история решений — [DESIGN-AUDIT.md](archive/DESIGN-AUDIT.md); реальные результаты/непроверенные сценарии — [VALIDATION.md](VALIDATION.md). Правила сформированы с better-interface и шестью better-* навыками. Старую палитру из ранних Alpha/Beta не считать действующей спецификацией.
 
 ## План развития движения после 1.1.0
 

@@ -1,7 +1,16 @@
 name: Windows checks
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".ignore"
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".ignore"
   workflow_dispatch:
 permissions:
   contents: read
