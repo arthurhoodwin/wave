@@ -1,7 +1,7 @@
 'use strict';
 const {cover,artistRoute}=require('./navigation-meta.cjs');
 const CLIENT='6287487',VERSION='5.269';
-const METHODS=new Set(['audio.get','audio.getPlaylists','audio.getPlaylistById','audio.getById','audio.getLyrics','audio.search','audio.getAudiosByArtist','catalog.getAudio','catalog.getSection','catalog.getAudioArtist','catalog.getAudioSearch','catalog.getBlockItems','users.get','audio.createPlaylist','audio.editPlaylist','audio.deletePlaylist','audio.add','audio.delete','audio.restore']);
+const METHODS=new Set(['audio.get','audio.getPlaylists','audio.getPlaylistById','audio.getById','audio.getLyrics','audio.search','audio.getAudiosByArtist','catalog.getAudio','catalog.getSection','catalog.getAudioArtist','catalog.getAudioSearch','catalog.getBlockItems','users.get','audio.createPlaylist','audio.editPlaylist','audio.deletePlaylist','audio.followPlaylist','audio.followArtist','audio.unfollowArtist','audio.add','audio.delete','audio.restore']);
 class VkError extends Error{constructor(kind,message,{code,uncertain=false}={}){super(message);this.name='VkError';this.kind=kind;this.code=code;this.uncertain=uncertain;}}
 const keyOf=a=>Number.isSafeInteger(Number(a?.owner_id))&&Number(a.owner_id)!==0&&Number.isSafeInteger(Number(a?.id))&&Number(a.id)>0?String(a.owner_id)+'_'+a.id:null;
 const playlistKeyOf=p=>keyOf(p)||(p?.type==='generated'&&Number.isSafeInteger(Number(p.owner_id))&&Number(p.owner_id)!==0&&Number.isSafeInteger(Number(p.id))&&Number(p.id)<0?String(p.owner_id)+'_'+p.id:null);

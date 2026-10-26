@@ -86,3 +86,5 @@ dist/                   Игнорируемые результаты сборк
 В 1.1.1: EXE, канонический файловый пакет от точной Stable 1.1.0 и SHA256SUMS.txt. src/main/music-links.cjs — проверка и разрешение обычных музыкальных ссылок; renderer/music-links.js и track-wave.js — интерфейс ссылок и индикатор строки.
 
 1.1.2: library-panel.js — сохраняемая геометрия, library-menus.js — anchored menu, library-view.js — плотность, library-folders.js — папки, playlist-editor.js — название/описание, selection-model.js — идентичность выбора.
+
+Контракты управления коллекцией1.1.8: [VK-COLLECTION-CONTRACTS.md](VK-COLLECTION-CONTRACTS.md); реализация — main/collection-management.cjs и renderer/collection-management-ui.js.

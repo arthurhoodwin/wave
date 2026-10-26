@@ -9,6 +9,7 @@ class PlaylistCache {
  snapshot(e){return{tracks:e.cacheState==='loading'&&e.items.size<30?[]:Array.from(e.items.values()),title:e.title,cover:e.cover,partial:e.cacheState!=='complete',cacheId:e.id,total:e.total,cacheState:e.cacheState,error:e.error||undefined,errorCode:e.errorCode,stale:!!e.stale,refreshing:!!e.refreshing,refreshError:!!e.refreshError,savedAt:e.savedAt};}
  read(id){const e=this.entries.get(id);if(!e)throw Error('Кэш плейлиста устарел. Откройте его снова.');return this.snapshot(e);}
  finish(entry,success){
+  if(entry.removed||entry.refreshTarget?.removed){this.entries.delete(entry.id);return;}
   if(success){entry.cacheState='complete';entry.savedAt=Date.now();entry.createdAt=Date.now();entry.stale=false;}
   const target=entry.refreshTarget;
   if(target){

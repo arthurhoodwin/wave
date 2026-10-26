@@ -20,3 +20,5 @@
 @media(hover:hover){.wave-select-trigger:hover{background:var(--bg-hover)}}
 @media(forced-colors:active){.hero,.home-list-card,.album-card,.modal-card{background:Canvas}.wave-toast,.wave-select-trigger{border:1px solid ButtonText;background:Canvas;color:CanvasText;box-shadow:none}.wave-listbox [aria-selected=true]{outline:1px solid Highlight}}
 .library-collapsed .library-pinned-title{display:none}
+
+.hero-follow{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:164px;min-height:40px}.hero-follow .wave-icon{width:18px;height:18px}#album-save[aria-pressed=true]{color:var(--text-accent)}

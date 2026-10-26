@@ -27,7 +27,7 @@ class VkProvider {
   operationChanged(){this.onOperations?.(this.operations(false));}
   absorbPlaylists(rows,route,{revision=this.sidebarRevision||0}={}){
     const previous=this.savedPlaylists.slice(),incoming=[];
-    for(const row of rows||[]){const signature=JSON.stringify(row.vkId?['vk',row.vkId]:[row.index,row.title,row.owner]);let id=this.playlistHandles.get(signature);
+    for(const row of rows||[]){if(this.removedPlaylists?.root===this.root&&this.removedPlaylists.keys.has(row.vkId))continue;const signature=JSON.stringify(row.vkId?['vk',row.vkId]:[row.index,row.title,row.owner]);let id=this.playlistHandles.get(signature);
       if(!id){const matches=[...this.playlists].filter(([,p])=>row.vkId&&p.vkId===row.vkId||!p.vkId&&p.title===row.title&&p.owner===row.owner);if(matches.length===1)id=matches[0][0];}
       if(!id)id=randomUUID();this.playlistHandles.set(signature,id);const current=this.playlists.get(id);const newer=(current?.confirmedRevision||0)>revision;
       const item=newer?current:{...current,...row,kind:row.kind||current?.kind,cover:cover(row.cover)||current?.cover,owner:row.owner||current?.owner||(row.editable?'Ваш плейлист':'Плейлист VK'),route};this.playlists.set(id,item);incoming.push(this.publicPlaylist(id,item));
@@ -75,11 +75,11 @@ class VkProvider {
   batchCancel(id){return require('./collection-batch.cjs').cancel(this,id);}
   mutate(input){
     const command=validateCommand(input);this.operationLog??=[];this.mutationSerial??=Promise.resolve();this.editor??=this.network||new CollectionEditor(this.engine);
-    const playlist=this.playlists.get(command.playlistId),track=this.tracks.get(command.trackId),before=this.tracks.get(command.beforeTrackId);
-    const operation={id:randomUUID(),action:command.action,title:command.title||playlist?.title||track?.title||'Коллекция',trackTitle:track?.title,state:'pending',createdAt:Date.now()};this.operationLog.push(operation);if(this.operationLog.length>50)this.operationLog.shift();this.operationChanged();
+    const playlist=this.playlists.get(command.playlistId),track=this.tracks.get(command.trackId),before=this.tracks.get(command.beforeTrackId),artist=this.artistProfiles?.get(command.artistId);
+    const operation={id:randomUUID(),action:command.action,title:command.title||playlist?.title||track?.title||artist?.title||'Коллекция',trackTitle:track?.title,state:'pending',createdAt:Date.now()};this.operationLog.push(operation);if(this.operationLog.length>50)this.operationLog.shift();this.operationChanged();
     const accountRoot=this.root;
     const job=this.mutationSerial.then(async()=>{
-      const context={root:accountRoot,knownNativeIds:[...this.playlists.values()].map(p=>p.vkId).filter(Boolean),playlist:this.playlists.get(command.playlistId),track:this.tracks.get(command.trackId),before:this.tracks.get(command.beforeTrackId)};
+      const context={root:accountRoot,knownNativeIds:[...this.playlists.values()].map(p=>p.vkId).filter(Boolean),playlist:this.playlists.get(command.playlistId),track:this.tracks.get(command.trackId),before:this.tracks.get(command.beforeTrackId),artist:this.artistProfiles?.get(command.artistId)};
       try{
         if(!this.online||!accountRoot||this.root!==accountRoot)throw Error('Подключитесь к своему аккаунту VK перед изменением коллекции');
         if(['rename','add','remove','move'].includes(command.action)&&(!context.playlist||context.playlist.kind==='album'||context.playlist.editable!==true))throw Error('Изменять можно только собственные плейлисты. Обновите медиатеку');
@@ -88,9 +88,10 @@ class VkProvider {
         operation.state='running';this.operationChanged();
         if(this.network&&['like','unlike'].includes(command.action)){context.quickOwnership=true;const ownEntry=this.cache.byPlaylist.get('library:'+accountRoot);context.membershipRows=ownEntry?.cacheState==='complete'?[...ownEntry.items.keys()].map(id=>this.tracks.get(id)).filter(Boolean):[];context.membershipAlias=this.ownershipAliases?.root===accountRoot?this.ownershipAliases.keys.get(context.track.key):undefined;const library=this.cache.byPlaylist.get('library:'+accountRoot);if(library?.cacheState==='complete'&&!library.stale&&!library.refreshing&&Date.now()-library.createdAt<30000){const rows=[...library.items.keys()].map(id=>this.tracks.get(id)).filter(Boolean);if(rows.length===library.total)context.cachedLibrary={root:accountRoot,verifiedAt:library.createdAt,title:library.title,route:library.route,total:library.total,rows};}}
         const stage=state=>{operation.state=state;this.operationChanged();};
-        const result=await (['like','unlike'].includes(command.action)?this.editor.own(command,context,stage):this.editor.edit(command,context,stage));
+        const managed=require('./collection-management.cjs').ACTIONS.has(command.action);if(managed&&!this.network)throw Error('Эта операция требует сетевого адаптера VK');
+         const result=managed?await require('./collection-management.cjs').manage(this.network,command,context,stage):await (['like','unlike'].includes(command.action)?this.editor.own(command,context,stage):this.editor.edit(command,context,stage));
         if(this.root!==accountRoot)throw Object.assign(Error('Аккаунт изменился. Проверьте результат операции в VK'),{uncertain:true});
-        const response=this.applyCollectionMutation(command,result,context);operation.state='success';operation.finishedAt=Date.now();operation.durationMs=operation.finishedAt-operation.createdAt;this.operationChanged();return{ok:true,operation:{...operation},...response};
+        const response=managed?await require('./collection-management.cjs').apply(this,command,result,context):this.applyCollectionMutation(command,result,context);operation.state='success';operation.finishedAt=Date.now();operation.durationMs=operation.finishedAt-operation.createdAt;this.operationChanged();return{ok:true,operation:{...operation},...response};
       }catch(error){operation.state=error.uncertain?'uncertain':'error';operation.message=/https?:|token|cookie/i.test(error.message)?'Ошибка соединения с VK. Проверьте результат перед повтором':error.message;operation.finishedAt=Date.now();operation.durationMs=operation.finishedAt-operation.createdAt;this.operationChanged();return{ok:true,operation:{...operation}};}
     });this.mutationSerial=job.catch(()=>{});return job;
   }
@@ -196,6 +197,7 @@ class VkProvider {
     }
     if(context.cacheId&&raw.total!==null&&raw.total!==undefined)context.total=raw.total;
   }
+  async collectionDetails(id){const item=this.playlists.get(id),root=this.root;if(typeof id!=='string'||!item?.vkId||!this.online||!this.network||this.authTransition)throw Error('Откройте список при подключении к VK');const result=await require('./collection-management.cjs').details(this.network,{root,playlist:item});if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}
   async playlistDetails(id){const root=this.root,item=this.playlists.get(id);if(!this.network||!this.online||this.authTransition||!item||item.kind==='album'||item.editable!==true)throw Error('Изменять можно только собственный плейлист');const ref=this.network.parseIdentity(item.vkId);if(ref.owner!==this.network.accountId)throw Error('Недоступный плейлист');const epoch=this.network.accountEpoch;const result=await this.network.call('audio.getPlaylistById',{owner_id:ref.owner,playlist_id:ref.id});if(this.root!==root||this.authTransition||epoch!==this.network.accountEpoch)throw Error('Аккаунт изменился');if(result.permissions?.edit!==true)throw Error('VK не разрешил редактирование');if(typeof result.description==='string'&&result.description.length>2000)throw Error('Описание VK длиннее допустимого для редактора; оно не будет обрезано');return{title:String(result.title||'').slice(0,100),description:String(result.description||'').slice(0,2000)};}
   musicLink(id){return require('./music-links.cjs').linkedTrack(this,id);}
   library(refresh=false){

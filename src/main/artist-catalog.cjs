@@ -83,6 +83,6 @@ async function readArtist(api,id,name,{keyOf,audioRow,playlistRow},options={}){
  }
  for(const key of Object.keys(groups))sections[key]??={available:false,error:null};
  const releaseSections=['albums','singles','unknown'].map(key=>sections[key]);sections.releases={available:releaseSections.some(s=>s.available),error:[...new Set(releaseSections.map(s=>s.error).filter(Boolean))].join(' ')||null};
- return{title:person?.name||name,rows:groups.tracks,total:groups.tracks.length,partial:false,albums:allReleases,contributions:groups.contributions,discography:{...groups,releases:allReleases},artistSections:sections,trackSectionTitle:popular?'Популярные треки':'Треки',artwork:artistArtwork(person)};
+ return{subscription:person&&typeof person.is_followed==='boolean'?{nativeId:String(person.id),routeId:String(id),title:String(person.name||name),followed:person.is_followed,canFollow:person.can_follow===true}:undefined,title:person?.name||name,rows:groups.tracks,total:groups.tracks.length,partial:false,albums:allReleases,contributions:groups.contributions,discography:{...groups,releases:allReleases},artistSections:sections,trackSectionTitle:popular?'Популярные треки':'Треки',artwork:artistArtwork(person)};
 }
 module.exports={readArtist,artistArtwork,releaseKind,blockKind,images};
