@@ -22,3 +22,6 @@
 .library-collapsed .library-pinned-title{display:none}
 
 .hero-follow{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:164px;min-height:40px}.hero-follow .wave-icon{width:18px;height:18px}#album-save[aria-pressed=true]{color:var(--text-accent)}
+
+/* Empty metadata must not create an extra flex gap between action buttons. */
+.hero-bottom>#count:empty{display:none}
