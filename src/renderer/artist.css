@@ -41,3 +41,10 @@
 .artist-content-pending #artist-tabs,
 .artist-content-pending #artist-releases,
 .artist-content-pending #search-results>:not(#message){display:none!important}
+
+/* Navigation and its current controls share one line; content follows immediately. */
+.artist-nav-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border-subtle);margin:0 0 12px;min-width:0}
+.artist-nav-row .artist-tabs{flex:1 1 300px;min-width:0;margin:0;border-bottom:0}.artist-nav-row .toolbar{flex:0 0 auto;margin:0;gap:12px}.artist-nav-row .artist-release-tools{flex:0 0 auto;margin:0;gap:0}.artist-sort{display:grid;place-items:center;width:40px;height:40px;padding:0;background:transparent}.artist-sort .wave-icon{width:20px;height:20px}.artist-nav-row .track-list-actions{gap:12px}.artist-nav-row #list-detail{white-space:nowrap}.artist-nav-row .playlist-search-control input{width:180px}.artist-nav-row .artist-tabs:only-child{flex-basis:100%}
+@media(max-width:650px){.artist-nav-row{gap:0 12px}.artist-nav-row .artist-tabs{flex-basis:100%}.artist-nav-row .toolbar,.artist-nav-row .artist-release-tools{margin-inline-start:auto;padding-block:4px}}
+
+.artist-content-pending .artist-nav-row .toolbar{display:none!important}
