@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.5 Stable**, 26 октября 2026. Публичный тег [v1.1.5](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.5), канал stable, Windows FileVersion 1.1.5.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.1.6 Stable**, 26 октября 2026. Публичный тег [v1.1.6](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.6), канал stable, Windows FileVersion 1.1.6.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
 
 ## Границы процессов
 
@@ -116,3 +116,9 @@ VkHttpClient.artist → artist-catalog.readArtist → network-provider.artist �
 DownloadManager содержит до3 runJob workers, admission queue остаётся ограниченной. reserve сериализует вычисление общего quota/disk бюджета; commitTail сериализует финальную запись index. Отдельный worker failure не останавливает остальные.429 уменьшает пул до1 и включает server cooldown; после успешных задач лимит растёт до выбранного значения. HLS segments остаются последовательными внутри задачи.
 
 mp3-tags.cjs потоково копирует MPEG payload в sibling .tags, добавляет ID3v2.4, сверяет hash payload и атомарно заменяет файл. Финальный hash/bytes/validation относятся к tagged MP3. download-preferences.cjs обрабатывает только подтверждённые новые likes вне времени ожидания UI. Полный liked-order snapshot обновляется после full library reads; partial pages его не заменяют. Никакой фоновой синхронизации внешних лайков нет.
+
+## Интерфейс и aliases1.1.6
+
+Коллекция VK может присвоить лайкнутой записи libraryKey, отличный от исходного key. downloadAliases хранит подтверждённый libraryKey→sourceKey по аккаунту. Локальный индекс и файлы не дублируются, UI получает обе opaque occurrence ID. Legacy repair — отдельное отменяемое background resolve сравнение разрешённого media URL, без записи guessed identity.
+
+UI: select-controls наблюдает select value/options и проксирует change, popup перемещается в открытый modal при необходимости. playlist-controls переносит filter и sort в hero только для списков, не пересоздаёт их при controls polling. Toast manual popover не сдвигает layout. Списки медиатеки объединяют сохранённые и pinned opaque handles, папочные назначения не перезаписываются при pin.

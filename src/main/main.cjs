@@ -90,6 +90,6 @@ let cleanedUp=false;
 app.on('before-quit',event=>{
  if(cleanedUp)return;
  event.preventDefault();if(app.isQuitting)return;app.isQuitting=true;
- (async()=>{try{if(provider?.active)await provider.pause();}catch{}updater?.cancel();await personalService?.serial;await provider?.autoLikeTask;await provider?.likedOrderTask;await downloads?.close();await provider?.albumMetadataTask;await personal?.close();await windows?.close();await provider?.close();await health?.clean().catch(()=>{});await Promise.allSettled([engine?.close(),playEngine?.close()]);cleanedUp=true;app.quit();})();
+ (async()=>{try{if(provider?.active)await provider.pause();}catch{}updater?.cancel();provider?.preferenceController?.abort();await provider?.aliasRepairTask;await personalService?.serial;await provider?.autoLikeTask;await provider?.likedOrderTask;await downloads?.close();await provider?.albumMetadataTask;await personal?.close();await windows?.close();await provider?.close();await health?.clean().catch(()=>{});await Promise.allSettled([engine?.close(),playEngine?.close()]);cleanedUp=true;app.quit();})();
 });
 

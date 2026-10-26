@@ -1,0 +1,22 @@
+.hero:not(.artist-has-banner){background:var(--gradient-hero)}
+.home-list-card,.album-card{background:var(--gradient-card)}
+.modal-card,.settings-about{background:var(--gradient-raised)}
+.wave-native-select{position:absolute!important;width:1px!important;height:1px!important;clip-path:inset(50%);opacity:0;pointer-events:none;margin:0!important;padding:0!important}
+.wave-select{position:relative;display:inline-flex;max-width:100%;min-width:0;vertical-align:middle}
+.wave-select-trigger{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:38px;padding:9px 12px;border:1px solid var(--border-control);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font:inherit;text-align:left}
+.wave-select-trigger>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.wave-select-trigger .wave-icon{width:16px;height:16px;flex:none}
+.library-popover.wave-listbox{max-height:min(360px,60vh);max-width:calc(100vw - 16px);overflow:auto;overscroll-behavior:contain;z-index:300}
+.wave-listbox [aria-selected=true]{background:var(--bg-selected);color:var(--text-accent);font-weight:600}.wave-listbox button{width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.wave-listbox button:focus-visible,.library-popover button:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px}
+.wave-toast{position:fixed;inset:auto;margin:0;bottom:calc(var(--player-height,96px) + 20px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:20px;max-width:min(520px,calc(100vw - 32px));padding:12px 16px;background:var(--bg-raised);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:0 12px 32px #0005;z-index:10000;font-size:.875rem;line-height:1.5}
+.wave-toast .icon{width:28px;height:28px;flex:none;background:transparent}.mini-window .wave-toast{bottom:12px;max-width:calc(100vw - 20px)}
+.song-toast-open .wave-toast{bottom:128px}
+.playlist-search-control{display:inline-flex;align-items:center;gap:10px;max-width:100%;min-width:0}.playlist-search-control input{height:40px;padding:9px 12px;border:1px solid var(--border-control);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font:inherit;min-width:0;flex:1 1 230px;width:230px;max-width:calc(100vw - 104px)}
+.hero-bottom .playlist-search-control .hero-action{flex:none}.hero-bottom .playlist-tools-hidden{display:none!important}
+#personal-pin[aria-pressed=true] .wave-icon path:first-child{fill:currentColor}
+.library-pinned{padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid var(--border-subtle)}.library-pinned-title{font-size:.75rem;font-weight:600;color:var(--text-muted);padding:4px 12px 8px}
+.library-playlist-row.is-pinned .playlist-copy strong::after{content:'•';margin-left:6px;color:var(--text-accent)}
+@media(prefers-reduced-motion:no-preference){.wave-select-trigger,.hero-action{transition:background-color 120ms ease-out,color 120ms ease-out}.hero-action:not(:disabled):active{scale:.96;transition:scale 150ms ease-out}.wave-toast{animation:toast-in 150ms ease-out}@keyframes toast-in{from{opacity:0}to{opacity:1}}}
+@media(hover:hover){.wave-select-trigger:hover{background:var(--bg-hover)}}
+@media(forced-colors:active){.hero,.home-list-card,.album-card,.modal-card{background:Canvas}.wave-toast,.wave-select-trigger{border:1px solid ButtonText;background:Canvas;color:CanvasText;box-shadow:none}.wave-listbox [aria-selected=true]{outline:1px solid Highlight}}
+.library-collapsed .library-pinned-title{display:none}

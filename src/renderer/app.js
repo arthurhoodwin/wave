@@ -6,7 +6,7 @@ const playable=t=>!!t&&(t.available!==false||t.local===true)&&trackDuration(t)>0
 const playableNow=t=>playable(t)&&(state.online||t.local===true);
 const has=name=>typeof api?.[name]==='function';
 const format=n=>{n=Math.max(0,Math.floor(Number(n)||0));return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
-function message(text='',error=false){$('message').textContent=text;$('message').classList.toggle('error',error);}
+function message(text='',error=false){if(!error&&text&&!/Загружа|Войдите|Подключ|Нет |Не |В этом|Ничего|Порядок .*не|Список.*измен/i.test(text)&&window.WaveToast){window.WaveToast.show(text);return;}$('message').textContent=text;$('message').classList.toggle('error',error);}
 function fail(e){message(e?.message||String(e)||'Не удалось выполнить действие',true);}
 function requireResult(r){if(r&&((r.ok===false)||r.error))throw Object.assign(new Error(typeof r.error==='string'?r.error:r.error?.message||r.message||'Ошибка VK'),{kind:r.error?.kind,unavailableIds:r.error?.unavailableIds});return r;}
 async function call(name,...args){if(!has(name))throw new Error('Эта функция пока недоступна. Обновите Wave.');return requireResult(await api[name](...args));}
@@ -17,6 +17,7 @@ function setIcon(node,name,fallback){if(window.WaveIcons)window.WaveIcons.set(no
 const trackNumberFormat=new Intl.NumberFormat('ru-RU'),trackPlural=new Intl.PluralRules('ru-RU');function countTracks(n){const form=trackPlural.select(n);return trackNumberFormat.format(n)+' '+(form==='one'?'трек':form==='few'?'трека':'треков');}
 let controlsSignature;
 function controls(){
+ window.WavePlaylistControls?.render();
  window.WaveUI?.ranges();window.WavePersonal?.controls();window.WaveRowActions?.update();
  window.waveDesktop?.publish();window.WaveSong?.controls();window.WaveCollection?.controls();
  const signature=JSON.stringify([state.refreshing,state.online,state.nativePlayback,state.localRevision,state.current?.id,state.current?.local,playable(state.current),state.playing,state.busy,state.loading,state.ready,state.collectionBusy,state.shuffle,state.repeat,state.duration>0,(state.hasPlayableTracks??state.tracks.some(playable)),hasNextTrack(),!!previousTrack(),!!ownPlaylist(),has('mutate'),has('volume'),has('seek')]);
@@ -72,7 +73,7 @@ function applyPlaylists(result){if(!Array.isArray(result?.playlists))return;cons
 const playlistNodes=new Map();
 function playlists(){
  const root=$('playlists'),alive=new Set();
- state.playlists.forEach((p,index)=>{alive.add(p.id);let entry=playlistNodes.get(p.id);
+ const ids=new Set(state.playlists.map(p=>p.id)),lists=[...(state.pinnedLists||[]).filter(p=>!ids.has(p.id)).map(p=>({...p,kind:p.type,editable:false})),...state.playlists];lists.forEach((p,index)=>{alive.add(p.id);let entry=playlistNodes.get(p.id);
   if(!entry){const button=el('button','playlist-item'),copy=el('span','playlist-copy'),name=el('strong',''),owner=el('small','');copy.append(name,owner);button.append(coverNode(p.cover,'playlist-icon'),copy);entry={button,copy,name,owner,cover:p.cover};playlistNodes.set(p.id,entry);button.onclick=()=>{const item=entry.data;navigate({type:item.kind==='album'?'album':'playlist',id:item.id,title:item.title||'Плейлист',cover:item.cover});};}
   entry.data=p;const {button,name,owner}=entry;setText(name,p.title||'Плейлист');setText(owner,p.kind==='album'?'Альбом'+(p.owner?' · '+p.owner:''):typeof p.owner==='string'?p.owner:'Плейлист VK');
   if(entry.cover!==p.cover){entry.cover=p.cover;button.firstChild.replaceWith(coverNode(p.cover,'playlist-icon'));}
@@ -250,7 +251,7 @@ function retryAutoLoad(){
  else message('Продолжение пока недоступно. Обновите список.',true);
 }
 async function more(){if(state.loading||!state.ready||!state.partial||!has('more'))return;const ticket=state.request,route=state.route;state.loading=true;controls();message('Загружаем ещё…');try{await dataTask(async()=>{if(ticket!==state.request)return;const r=await call('more');if(ticket!==state.request||route!==state.route)return;if(!Array.isArray(r?.tracks))throw new Error('Не удалось загрузить продолжение списка.');const entity=window.WaveSearch?.entityMode(),before=entity?(state.searchEntities||[]).length:state.allTracks.length;state.searchEntities=r.entities||[];if((entity?state.searchEntities.length:r.tracks.length)<=before&&r.partial)retryAutoLoad();else resetAutoLoad();state.allTracks=r.tracks;state.visibleLimit=Math.max(state.visibleLimit,before+30);state.tracks=state.allTracks.slice(0,state.visibleLimit);state.partial=r.partial===true;if(state.playContext?.searchContextId&&state.playContext.searchContextId===r.searchContextId)updatePlaybackCache({tracks:r.tracks,cacheState:r.partial?'loading':'complete'});trackList();if(autoLoadAttempts<=4)message('');});}catch(e){if(ticket===state.request){retryAutoLoad();fail(e);}}finally{if(ticket===state.request){state.loading=false;controls();scheduleReveal();}}}
-async function applySession(s,startup=false){if(s.accountChanged){window.WaveLikes?.reset();window.WavePersonal?.reset();window.WaveSong?.reset();window.WaveSearch?.reset();window.WaveArtistUI?.reset();window.WaveFolders?.reset();}
+async function applySession(s,startup=false){if(s.accountChanged){window.WaveToast?.clear();state.pinnedLists=[];window.WaveLikes?.reset();window.WavePersonal?.reset();window.WaveSong?.reset();window.WaveSearch?.reset();window.WaveArtistUI?.reset();window.WaveFolders?.reset();}
  const priorReady=state.ready,priorOnline=state.online;if(s.nativePlayback!==undefined)state.nativePlayback=s.nativePlayback;if(Number.isFinite(s.volume)){state.volume=s.volume;$('volume').value=String(s.volume);}
  state.online=s.state==='ready';state.ready=state.online||s.state==='cached'||(s.state==='error'&&priorReady);
  document.body.classList.toggle('connected',state.online);
@@ -258,7 +259,7 @@ async function applySession(s,startup=false){if(s.accountChanged){window.WaveLik
  $('login').textContent=state.online?'VK подключён ✓':'Войти через VK ↗';$('login').disabled=state.online||!has('login');window.WaveAccount?.session(s);
  if(s.reason==='auth'){++state.generation;state.busy=false;state.current=null;state.playContext=null;state.loop=[];state.playing=false;state.wasPlaying=false;renderNow();}
  if(!state.online&&!state.nativePlayback){state.pendingNext=false;state.playing=false;state.wasPlaying=false;++state.generation;state.busy=false;}
- if(s.state==='signedOut'){window.WaveLikes?.reset();window.WavePersonal?.reset();window.WaveTransitionsPlayback?.reset();window.WaveSong?.reset();window.WaveCollection?.reset();window.WaveFolders?.reset();window.WaveSearch?.reset();window.WaveArtistUI?.reset();window.waveDesktop?.reset();state.restoredPosition=null;++state.generation;state.busy=false;state.playing=false;state.wasPlaying=false;state.duration=0;navigationReset();state.operations=[];renderOperations();closeCollectionDialog();
+ if(s.state==='signedOut'){window.WaveToast?.clear();window.WaveLikes?.reset();window.WavePersonal?.reset();window.WaveTransitionsPlayback?.reset();window.WaveSong?.reset();window.WaveCollection?.reset();window.WaveFolders?.reset();window.WaveSearch?.reset();window.WaveArtistUI?.reset();window.waveDesktop?.reset();state.restoredPosition=null;++state.generation;state.busy=false;state.playing=false;state.wasPlaying=false;state.duration=0;navigationReset();state.operations=[];renderOperations();closeCollectionDialog();
   ++state.request;resetAutoLoad();cacheEntries.clear();state.allTracks=[];state.tracks=[];state.playlists=[];state.sidebarRevision=0;state.cacheId=null;state.cacheState=null;state.cacheTotal=undefined;state.refreshing=false;state.current=null;state.loop=[];state.history=[];state.playContext=null;state.route={type:'library'};state.viewLoaded=false;state.loading=false;state.partial=false;renderNow();routeHeader();trackList();message(s.message||'Войдите через VK, чтобы слушать свою музыку.');
   if(has('pause'))call('pause').catch(()=>{});
  }else if(state.ready){

@@ -1,0 +1,7 @@
+'use strict';
+(()=>{
+ const toast=document.createElement('div');toast.id='wave-toast';toast.className='wave-toast hidden';toast.setAttribute('popover','manual');toast.setAttribute('role','status');toast.setAttribute('aria-live','polite');const copy=document.createElement('span'),close=document.createElement('button');close.type='button';close.className='icon';close.setAttribute('aria-label','Закрыть уведомление');close.innerHTML=window.WaveIcons?.html('close')||'×';toast.append(copy,close);document.body.append(toast);let timer,remaining=2500,started=0;
+ const hide=()=>{clearTimeout(timer);toast.classList.add('hidden');if(toast.matches(':popover-open'))toast.hidePopover();};const resume=()=>{clearTimeout(timer);if(toast.matches(':focus-within')||toast.matches(':hover'))return;started=Date.now();timer=setTimeout(hide,Math.max(300,remaining));};const pause=()=>{clearTimeout(timer);remaining=Math.max(0,remaining-(Date.now()-started));};
+ close.onclick=hide;toast.addEventListener('pointerenter',pause);toast.addEventListener('pointerleave',resume);toast.addEventListener('focusin',pause);toast.addEventListener('focusout',resume);
+ window.WaveToast={show(text){if(!text)return hide();const host=document.querySelector('dialog[open]')||document.body;if(toast.parentElement!==host){if(toast.matches(':popover-open'))toast.hidePopover();host.append(toast);}copy.textContent=text;remaining=2500;toast.classList.remove('hidden');if(!toast.matches(':popover-open'))toast.showPopover();resume();},clear:hide};
+})();

@@ -32,3 +32,6 @@
   --accent: var(--text-accent);
   --surface: var(--bg-surface);
 }
+
+/* Restrained tonal surfaces, shared by main window and mini-player. */
+:root{--gradient-hero:linear-gradient(118deg,#242a2d 0%,#1c2124 48%,#141719 100%);--gradient-raised:linear-gradient(130deg,#252a2d,#1b1f21);--gradient-card:linear-gradient(135deg,#202628,#171b1d)}
