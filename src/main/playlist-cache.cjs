@@ -6,7 +6,7 @@ class PlaylistCache {
  constructor(engine,absorb,onChange=()=>{}){this.source=engine;this.absorb=absorb;this.onChange=onChange;this.entries=new Map();this.byPlaylist=new Map();this.pending=[];this.running=new Map();this.closed=false;this.order=0;}
  getFresh(playlistId){const e=this.byPlaylist.get(playlistId);return e&&e.cacheState!=='error'&&(e.cacheState==='loading'||Date.now()-e.createdAt<300000)?e:null;}
  create(playlistId,title,kind='playlist'){const entry={id:randomUUID(),playlistId,title,kind,scope:kind==='library'?'[data-testid="AudioCatalog_SectionTracks"]':'[data-testid="MusicPlaylistModal"]',items:new Map(),total:null,cacheState:'loading',createdAt:Date.now(),error:null};entry.cacheId=entry.id;this.entries.set(entry.id,entry);this.byPlaylist.set(playlistId,entry);return entry;}
- snapshot(e){return{tracks:e.cacheState==='loading'&&e.items.size<30?[]:Array.from(e.items.values()),title:e.title,cover:e.cover,partial:e.cacheState!=='complete',cacheId:e.id,total:e.total,cacheState:e.cacheState,error:e.error||undefined,errorCode:e.errorCode,stale:!!e.stale,refreshing:!!e.refreshing,refreshError:!!e.refreshError,savedAt:e.savedAt};}
+ snapshot(e){return{tracks:e.cacheState==='loading'&&e.items.size<30?[]:Array.from(e.items.values()),title:e.title,description:e.description||'',cover:e.cover,partial:e.cacheState!=='complete',cacheId:e.id,total:e.total,cacheState:e.cacheState,error:e.error||undefined,errorCode:e.errorCode,stale:!!e.stale,refreshing:!!e.refreshing,refreshError:!!e.refreshError,savedAt:e.savedAt};}
  read(id){const e=this.entries.get(id);if(!e)throw Error('Кэш плейлиста устарел. Откройте его снова.');return this.snapshot(e);}
  finish(entry,success){
   if(entry.removed||entry.refreshTarget?.removed){this.entries.delete(entry.id);return;}
@@ -14,7 +14,7 @@ class PlaylistCache {
   const target=entry.refreshTarget;
   if(target){
    if((entry.refreshRevision||0)!==(target.revision||0)){this.entries.delete(entry.id);return;}
-   if(success){target.cover=entry.cover||target.cover;target.items=entry.items;target.total=entry.total;target.route=entry.route;target.savedAt=entry.savedAt;target.createdAt=entry.createdAt;target.stale=false;target.cacheState='complete';}
+   if(success){target.cover=entry.cover||target.cover;target.description=entry.description;target.items=entry.items;target.total=entry.total;target.route=entry.route;target.savedAt=entry.savedAt;target.createdAt=entry.createdAt;target.stale=false;target.cacheState='complete';}
    target.refreshing=false;target.refreshError=!success;this.entries.delete(entry.id);this.onChange(target);
   }else this.onChange(entry);
  }

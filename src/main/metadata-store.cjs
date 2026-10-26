@@ -29,7 +29,7 @@ function normalizePayload(input){
  const playlists=[];
  for(const p of input.playlists){
   if(!p||str(p.id,512)===null||str(p.title)===null||str(p.owner)===null||!integer(p.index)||!route(p.route))return null;
-  playlists.push({id:p.id,title:p.title,owner:p.owner,index:p.index,route:p.route,...(cover(p.cover)?{cover:cover(p.cover)}:{}),...(p.kind==='album'?{kind:'album'}:{}),...(typeof p.inLibrary==='boolean'?{inLibrary:p.inLibrary}:{}),...(/^-?\d+_\d+$/.test(p.vkId||'')?{vkId:p.vkId}:{}),...(typeof p.editable==='boolean'?{editable:p.editable}:{})});
+  playlists.push({id:p.id,title:p.title,description:typeof p.description==='string'?p.description.slice(0,2000):'',owner:p.owner,index:p.index,route:p.route,...(cover(p.cover)?{cover:cover(p.cover)}:{}),...(p.kind==='album'?{kind:'album'}:{}),...(typeof p.inLibrary==='boolean'?{inLibrary:p.inLibrary}:{}),...(/^-?\d+_\d+$/.test(p.vkId||'')?{vkId:p.vkId}:{}),...(typeof p.editable==='boolean'?{editable:p.editable}:{})});
  }
  const collections=[];
  for(const c of input.collections){
@@ -41,7 +41,7 @@ function normalizePayload(input){
    if(!t||str(t.id,512)===null||str(t.key,512)===null||str(t.title)===null||str(t.artist)===null||str(t.time,32)===null||!Number.isFinite(t.duration)||t.duration<0||typeof t.available!=='boolean'||!integer(t.index)||str(t.scope,512)===null||!route(t.route))return null;
    tracks.push({id:t.id,key:t.key,title:t.title,artist:t.artist,time:t.time,duration:t.duration,available:t.available&&t.duration>0,index:t.index,scope:t.scope,route:t.route,...trackMeta(t)});
   }
-  collections.push({playlistId:c.playlistId,kind:c.kind,title:c.title,route:c.route,total:c.total,tracks});
+  collections.push({playlistId:c.playlistId,kind:c.kind,title:c.title,description:typeof c.description==='string'?c.description.slice(0,2000):'',route:c.route,total:c.total,tracks});
  }
  return {version:1,accountRoot:input.accountRoot,savedAt:input.savedAt,playlists,collections};
 }

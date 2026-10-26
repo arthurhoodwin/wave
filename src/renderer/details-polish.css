@@ -1,0 +1,12 @@
+.hero.cover-tinted:not(.artist-hero){background:linear-gradient(180deg,rgb(var(--cover-tint)) 0%,rgb(var(--cover-tint) / .72) 48%,var(--bg-surface) 100%)}
+.playlist-description{white-space:pre-line;overflow-wrap:anywhere;max-width:min(70ch,calc(100% - 180px));font-size:.875rem;line-height:1.6;color:var(--text-secondary);margin:12px 0}.playlist-description[hidden]{display:none}
+.track-list-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}.track-list-actions .hero-action{display:grid;place-items:center;width:40px;height:40px;min-width:40px;padding:0}.track-list-actions .wave-icon{width:20px;height:20px}
+.artist-page #list-heading{display:none}.artist-page .toolbar{justify-content:flex-start}.history-categories{display:flex;gap:8px;flex-wrap:wrap;padding:20px 32px 0}.history-category{border-radius:999px;background:var(--bg-button);color:var(--text-secondary);padding:9px 18px;font-weight:600}.history-category[aria-selected=true]{background:var(--bg-selected);color:var(--text-primary)}
+body.history-entities .track-section{display:none!important}.recent-visits{padding-top:20px}.recent-visits .home-grid{margin:0}.history-empty{color:var(--text-muted);margin:8px 0 16px}
+#library-nav .liked-cover{padding:0;overflow:hidden;background:none}#library-nav .liked-cover img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.liked-page .hero{min-height:200px}.liked-page .hero-art{display:none}.liked-page .hero-cover{border-radius:16px}
+@media(max-width:600px){.playlist-description{max-width:100%}.history-categories{padding-inline:16px}.track-list-actions{gap:8px}.track-list-actions .playlist-search-control input{max-width:calc(100vw - 136px)}}
+@media(forced-colors:active){.hero.cover-tinted:not(.artist-hero){background:Canvas}.history-category[aria-selected=true]{outline:2px solid Highlight}}
+
+.eq-bands{grid-template-columns:repeat(10,minmax(64px,1fr));gap:12px;overflow-x:auto;overscroll-behavior-x:contain;max-width:100%;padding:8px 4px 14px}.eq-card{width:min(920px,calc(100vw - 48px));max-width:920px}.eq-band{min-width:0}.eq-band output{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+

@@ -40,6 +40,7 @@
   view.window.commit(mounted);for(const [id,e] of view.nodes)if(!live.has(id)){e.node.remove();view.nodes.delete(id);}for(const [id,row] of view.rows)if(!liveRows.has(id)){row.remove();view.rows.delete(id);}
  }
  function render(){
+  document.body.classList.toggle('artist-page',state.route.type==='artist');
   const artist=state.route.type==='artist',pending=artist&&(state.loading||!state.viewLoaded);section.classList.toggle('artist-content-pending',pending);if(artist)section.setAttribute('aria-busy',String(!!state.loading));else section.removeAttribute('aria-busy');hero.classList.toggle('artist-hero',artist);tabs.classList.toggle('hidden',!artist);releases.classList.toggle('hidden',!artist||active==='tracks');
   if(!artist){++imageEpoch;artKey='';banner.classList.add('hidden');hero.classList.remove('artist-has-banner','artist-has-avatar');trackPanel?.classList.remove('artist-track-hidden');return;}
   const key=routeKey(state.route);if(key!==currentKey){currentKey=key;active=navigation.views.get(key)?.artistTab||state.route.artistTab||'tracks';if(!Object.hasOwn(labels,active))active='tracks';sortMode=positions.get(key)?.[active]?.sort||'original';}
@@ -60,10 +61,12 @@
   if(lastArtistNotice&&$('message').textContent===lastArtistNotice)message('');lastArtistNotice='';
   window.WaveTransitions?.artist(active==='tracks'?trackPanel:releases,currentKey+'|'+active);
   if(active==='tracks'){
+   window.WavePlaylistControls?.render();
    if(!state.loading&&(meta?.error||!state.allTracks.length)){lastArtistNotice=meta?.error||'У исполнителя пока нет доступных треков.';message(lastArtistNotice,!!meta?.error);$('empty-state').classList.add('hidden');}
    return;
   }
   paint(items);
+  window.WavePlaylistControls?.render();
  }
  window.WaveArtistUI={render,remember,tab:()=>active,reset(){currentKey='';artKey='';positions.clear();++imageEpoch;}};
  render();
