@@ -88,3 +88,5 @@ dist/                   Игнорируемые результаты сборк
 1.1.2: library-panel.js — сохраняемая геометрия, library-menus.js — anchored menu, library-view.js — плотность, library-folders.js — папки, playlist-editor.js — название/описание, selection-model.js — идентичность выбора.
 
 Контракты управления коллекцией1.1.8: [VK-COLLECTION-CONTRACTS.md](VK-COLLECTION-CONTRACTS.md); реализация — main/collection-management.cjs и renderer/collection-management-ui.js.
+
+Подписанные OTA-переходы1.1.9 и окно поддержки: [OTA-UPDATES.md](OTA-UPDATES.md).

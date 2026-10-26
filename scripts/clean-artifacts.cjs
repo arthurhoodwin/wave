@@ -5,7 +5,7 @@ async function clean({directory=path.resolve(__dirname,'../dist'),keep=[pkg.rele
  const root=path.resolve(directory),removed=[];let bytes=0;
  for(const entry of await fs.readdir(root,{withFileTypes:true})){
   if(!entry.isFile()||entry.isSymbolicLink())continue;
-  const match=/^(?:Wave-Setup-(.+)\.exe(?:\.blockmap)?|Wave-(.+)\.waveupdate)$/.exec(entry.name);if(!match||keep.includes(match[1]||match[2])||pkg.extraUpdateBase&&keep.some(v=>entry.name==='Wave-'+v+'-from-'+pkg.extraUpdateBase+'.waveupdate'))continue;
+  const match=/^(?:Wave-Setup-(.+)\.exe(?:\.blockmap)?|Wave-(.+)\.waveupdate)$/.exec(entry.name);if(!match||keep.includes(match[1]||match[2])||pkg.otaManifest&&keep.some(v=>entry.name.startsWith('Wave-'+v+'-')&&entry.name.endsWith('.waveupdate'))||pkg.extraUpdateBase&&keep.some(v=>entry.name==='Wave-'+v+'-from-'+pkg.extraUpdateBase+'.waveupdate'))continue;
   const file=path.resolve(root,entry.name);if(path.dirname(file)!==root)throw Error('Artifact escaped dist');
   bytes+=(await fs.stat(file)).size;removed.push(entry.name);if(apply)await fs.unlink(file);
  }

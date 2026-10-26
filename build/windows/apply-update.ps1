@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$JobFile,[switch]$Bootstrap)
+param([string]$JobFile,[switch]$Bootstrap,[string]$RecoverRoot)
 $ErrorActionPreference='Stop'
 if ($Bootstrap) {
   try {
@@ -8,8 +8,8 @@ if ($Bootstrap) {
     exit 0
   } catch { exit 1 }
 }
-$job=Get-Content -LiteralPath $JobFile -Encoding UTF8 -Raw | ConvertFrom-Json
-$result=if ($job.result) { $job.result } else { Join-Path (Split-Path -Parent $job.installer) 'last-install.json' }
+$job=if($RecoverRoot){$null}else{Get-Content -LiteralPath $JobFile -Encoding UTF8 -Raw | ConvertFrom-Json}
+$result=if ($job -and $job.result) { $job.result } elseif ($job) { Join-Path (Split-Path -Parent $job.installer) 'last-install.json' } else { $null }
 function Report([string]$stage,[int]$code=0) { @{stage=$stage;code=$code;time=[DateTime]::UtcNow.ToString('o')} | ConvertTo-Json -Compress | Set-Content -LiteralPath $result -Encoding UTF8 }
 function FileHash([string]$file) {
   $stream=[IO.File]::OpenRead($file); $hash=[Security.Cryptography.SHA512]::Create()
@@ -26,9 +26,35 @@ function SafePath([string]$root,[string]$name) {
   }
   return $at
 }
+function RecoverTransactions([string]$root) {
+  foreach ($dir in Get-ChildItem -LiteralPath $root -Directory -Force | Where-Object { $_.Name -match '^\.wave-transaction-[a-f0-9]{32}$' }) {
+    if ($dir.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked transaction' }
+    $journalFile=Join-Path $dir.FullName 'journal.json'
+    if (Test-Path -LiteralPath $journalFile) {
+      $parsed=Get-Content -LiteralPath $journalFile -Raw -Encoding UTF8 | ConvertFrom-Json; $items=@($parsed)
+      if ($items.Count -gt 4096) { throw 'Invalid recovery journal' }
+      if (!(Test-Path -LiteralPath (Join-Path $dir.FullName 'committed'))) {
+        for ($i=$items.Count-1;$i -ge 0;$i--) {
+          $entry=$items[$i]; $file=SafePath $root $entry.path
+          if ($entry.slot -notmatch '^\d+\.old$') { throw 'Invalid recovery slot' }
+          $saved=SafePath $dir.FullName $entry.slot
+          if (Test-Path -LiteralPath $saved) {
+            if (!$entry.before -or (FileHash $saved) -ne $entry.before) { throw 'Recovery backup differs' }
+            if (Test-Path -LiteralPath $file) { if (!$entry.after -or (FileHash $file) -ne $entry.after) { throw 'Recovery target differs' }; [IO.File]::Delete($file) }
+            [IO.Directory]::CreateDirectory((Split-Path -Parent $file)) | Out-Null
+            [IO.File]::Move($saved,$file)
+          } elseif ($entry.before) { if (!(Test-Path -LiteralPath $file) -or (FileHash $file) -ne $entry.before) { throw 'Recovery original missing' } }
+          elseif (Test-Path -LiteralPath $file) { if (!$entry.after -or (FileHash $file) -ne $entry.after) { throw 'Recovery new target differs' }; [IO.File]::Delete($file) }
+        }
+      }
+    }
+    if ([IO.Path]::GetDirectoryName($dir.FullName) -ne $root) { throw 'Invalid recovery directory' }
+    Remove-Item -LiteralPath $dir.FullName -Recurse -Force
+  }
+}
 function ApplyFiles {
   $plan=Get-Content -LiteralPath $job.installer -Encoding UTF8 -Raw | ConvertFrom-Json
-  $root=[IO.Path]::GetFullPath($job.directory); $sourceRoot=Split-Path -Parent $job.installer
+  $root=[IO.Path]::GetFullPath($job.directory); RecoverTransactions $root; $sourceRoot=Split-Path -Parent $job.installer
   if (!$plan.base -or !$plan.files -or $plan.files.Count -gt 4096) { throw 'Invalid patch plan' }
   foreach ($entry in $plan.base) { $file=SafePath $root $entry.path; if (!(Test-Path -LiteralPath $file -PathType Leaf) -or (FileHash $file) -ne $entry.sha512) { throw 'Patch base differs' } }
   $seen=@{}
@@ -49,23 +75,28 @@ function ApplyFiles {
       $file=SafePath $root $entry.path; $saved=Join-Path $transaction ($i.ToString()+'.old'); $pending=Join-Path $transaction ($i.ToString()+'.new'); $i++
       if ($entry.after) { [IO.File]::Copy((SafePath $sourceRoot $entry.source),$pending,$false); if ((FileHash $pending) -ne $entry.after) { throw 'Copied patch differs' } }
       [IO.Directory]::CreateDirectory((Split-Path -Parent $file)) | Out-Null
+      $journal.Add(@{file=$file;saved=$saved;hadOld=[bool]$entry.before;path=$entry.path;slot=[IO.Path]::GetFileName($saved);before=$entry.before;after=$entry.after})
+      # Persist intent BEFORE any rename; recovery handles either side of each move.
+      $journalFile=Join-Path $transaction 'journal.json'; $journalTemp=Join-Path $transaction 'journal.tmp'
+      [IO.File]::WriteAllText($journalTemp,($journal | ConvertTo-Json -Depth 5),[Text.UTF8Encoding]::new($false))
+      if (Test-Path -LiteralPath $journalFile) { [IO.File]::Replace($journalTemp,$journalFile,(Join-Path $transaction 'journal.bak')) } else { [IO.File]::Move($journalTemp,$journalFile) }
       if ($entry.before) { [IO.File]::Move($file,$saved) }
-      $journal.Add(@{file=$file;saved=$saved;hadOld=[bool]$entry.before})
-      $journal | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $transaction 'journal.json') -Encoding UTF8
       if ($entry.after) { [IO.File]::Move($pending,$file) }
     }
+    [IO.File]::WriteAllText((Join-Path $transaction 'committed'),'complete')
     $cleanup=$true
   } catch {
-    for ($j=$journal.Count-1;$j -ge 0;$j--) { $entry=$journal[$j]; if ([IO.File]::Exists($entry.file)) { [IO.File]::Delete($entry.file) }; if ($entry.hadOld) { [IO.File]::Move($entry.saved,$entry.file) } }
+    RecoverTransactions $root
     $cleanup=$true
     throw
   } finally {
     # The checked absolute path is generated directly inside the installation directory.
     if ([IO.Path]::GetDirectoryName($transaction) -ne $root -or [IO.Path]::GetFileName($transaction) -notmatch '^\.wave-transaction-[a-f0-9]{32}$') { throw 'Invalid transaction directory' }
-    if ($cleanup) { Remove-Item -LiteralPath $transaction -Recurse -Force }
+    if ($cleanup -and (Test-Path -LiteralPath $transaction)) { Remove-Item -LiteralPath $transaction -Recurse -Force }
   }
 }
 try {
+  if ($RecoverRoot) { RecoverTransactions ([IO.Path]::GetFullPath($RecoverRoot)); exit 0 }
   Report 'waiting'
   if ($job.sha512 -notmatch '^[a-f0-9]{128}$' -or $job.directory.Contains('"') -or $job.directory.Contains("`n") -or $job.pid -le 0) { Report 'failed' 2; exit 2 }
   if (Get-Process -Id $job.pid -ErrorAction SilentlyContinue) { Wait-Process -Id $job.pid -Timeout 40 -ErrorAction Stop }
@@ -85,5 +116,5 @@ try {
   $task.WaitForExit()
   if ($task.ExitCode -ne 0) { Report 'failed' $task.ExitCode; exit 6 }
   Report 'complete'
-} catch { [Console]::Error.WriteLine($_.Exception.Message); Report 'failed' 7; exit 7 }
-finally { Remove-Item -LiteralPath $JobFile -Force -ErrorAction SilentlyContinue }
+} catch { [Console]::Error.WriteLine($_.Exception.Message); if ($result) { Report 'failed' 7 }; exit 7 }
+finally { if ($JobFile) { Remove-Item -LiteralPath $JobFile -Force -ErrorAction SilentlyContinue } }

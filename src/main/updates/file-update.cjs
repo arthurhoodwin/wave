@@ -39,4 +39,4 @@ async function prepare({body,installRoot,directory,version,current}){const p=dec
  }
  const file=path.join(directory,'plan.json'),undo=path.join(directory,'rollback','plan.json');await fs.writeFile(file,JSON.stringify({...forward,version}),{flag:'wx'});await fs.writeFile(undo,JSON.stringify({...reverse,version:current}),{flag:'wx'});return{file,sha512:hash(await fs.readFile(file)),undo,undoHash:hash(await fs.readFile(undo))};
 }
-module.exports={MAGIC,LIMIT,hash,validHash,safeName,filePath,tree,createPatch,decode,verifyBase,prepare};
+module.exports={MAGIC,LIMIT,chunks,hash,validHash,safeName,filePath,tree,createPatch,decode,verifyBase,prepare};
