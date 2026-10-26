@@ -4,7 +4,7 @@
 
 ## Текущий результат
 
-**Wave 1.1.3.2 Stable** опубликована как [Latest](https://github.com/arthurhoodwin/wave/releases/latest) и установлена на основном ПК. Границы проверки — [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
+**Wave 1.1.4 Stable** подготовлена к публикации. Границы проверки — [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
 
 ## Запуск
 
@@ -17,6 +17,7 @@ npm ci
 npm test
 npm run test:updates-electron
 npm run test:artists-electron
+npm run test:discovery-electron
 npm start
 ```
 
@@ -65,6 +66,7 @@ Electron main
 npm test
 npm run test:updates-electron
 npm run test:artists-electron
+npm run test:discovery-electron
 ```
 
 Для сетевого адаптера нужны тесты разных ответов, обрывов и смены аккаунта. Не повторяйте запись после неоднозначного результата: сначала прочитайте состояние. Ошибка формата подтверждения сама по себе не доказывает, что запись не выполнена. [Разбор лайка](docs/VK-OWNERSHIP.md).

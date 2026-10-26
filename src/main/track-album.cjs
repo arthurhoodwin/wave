@@ -1,5 +1,17 @@
 'use strict';
-const {randomUUID}=require('node:crypto');
-const {cover}=require('./navigation-meta.cjs');
-async function trackAlbum(provider,id){if(typeof id!=='string'||id.length>512)throw Error('Некорректная песня');const track=provider.tracks.get(id);if(!track)throw Error('Откройте список песни снова');if(!provider.root||provider.authTransition)throw Error('Аккаунт изменился');const known=provider.playlists.get(track.albumId);if(known?.kind==='album'){const cached=provider.cache.byPlaylist.get(track.albumId)?.cacheState==='complete';if(!provider.online&&!cached)throw Error('Этот альбом ещё не сохранён. Подключитесь к VK');return{id:track.albumId,title:known.title,cover:cover(known.cover),cached};}if(!provider.network||!provider.online||provider.authTransition)throw Error('Для поиска альбома подключитесь к VK');const root=provider.root,row=await provider.network.albumForTrack(track.key);if(provider.root!==root||provider.authTransition)throw Error('Аккаунт изменился');if(!row)return null;const signature=JSON.stringify(['vk',row.vkId]);let albumId=provider.playlistHandles.get(signature);if(!albumId){albumId=randomUUID();provider.playlistHandles.set(signature,albumId);}provider.playlists.set(albumId,{...provider.playlists.get(albumId),...row,kind:'album',editable:false,route:'https://vk.ru'+root+'?section=all'});const ids=new Set();for(const item of provider.tracks.values())if(item.key===track.key){item.albumId=albumId;item.albumTitle=row.title;ids.add(item.id);}for(const entry of [...provider.cache.entries.values(),...(provider.searchEntries?.values()||[])])for(const item of entry.items.values())if(ids.has(item.id)){item.albumId=albumId;item.albumTitle=row.title;}provider.metadataRevision=(provider.metadataRevision||0)+1;provider.scheduleSave();return{id:albumId,title:row.title,cover:cover(row.cover)};}
+const {randomUUID}=require('node:crypto'),{cover}=require('./navigation-meta.cjs'),{provisional,applyAlbum}=require('./album-metadata.cjs');
+async function trackAlbum(provider,id){
+ if(typeof id!=='string'||id.length>512)throw Error('Некорректная песня');const track=provider.tracks.get(id);if(!track)throw Error('Откройте список песни снова');if(!provider.root||provider.authTransition)throw Error('Аккаунт изменился');
+ const known=provider.playlists.get(track.albumId),cached=known&&provider.cache.byPlaylist.get(track.albumId)?.cacheState==='complete';
+ if(known?.kind==='album'&&(known.albumTitleConfirmed||!provisional(known.title)||!provider.online)){
+  if(!provider.online&&!cached)throw Error('Этот альбом ещё не сохранён. Подключитесь к VK');applyAlbum(provider,track.albumId,known);return{id:track.albumId,title:known.title,cover:cover(known.cover),cached,confirmed:known.albumTitleConfirmed===true};
+ }
+ if(!provider.network||!provider.online||provider.authTransition)throw Error('Для поиска альбома подключитесь к VK');
+ const root=provider.root,row=await provider.network.albumForTrack(track.key);if(provider.root!==root||provider.authTransition)throw Error('Аккаунт изменился');if(!row)return null;
+ const signature=JSON.stringify(['vk',row.vkId]);let albumId=provider.playlistHandles.get(signature);if(!albumId){albumId=randomUUID();provider.playlistHandles.set(signature,albumId);}
+ const previous=provider.playlists.get(albumId),meta=previous?.albumTitleConfirmed&&!row.albumTitleConfirmed?{...row,title:previous.title,albumTitleConfirmed:true}:row;
+ provider.playlists.set(albumId,{...previous,...meta,kind:'album',editable:false,route:'https://vk.ru'+root+'?section=all'});
+ for(const item of provider.tracks.values())if(item.key===track.key)item.albumId=albumId;
+ applyAlbum(provider,albumId,meta);await provider.albumMetadataTask;provider.scheduleSave();return{id:albumId,title:meta.title,cover:cover(meta.cover),confirmed:meta.albumTitleConfirmed===true};
+}
 module.exports={trackAlbum};

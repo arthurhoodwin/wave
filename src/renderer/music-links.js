@@ -14,7 +14,7 @@
  }
  const listButton=el('button','secondary hidden','Скопировать ссылку');listButton.id='copy-list-link';listButton.type='button';listButton.className='icon hero-action hidden';listButton.title='Скопировать ссылку';listButton.setAttribute('aria-label','Скопировать ссылку');setIcon(listButton,'link');const rename=$('playlist-rename');rename.className='icon hero-action hidden';rename.title='Переименовать плейлист';rename.setAttribute('aria-label','Переименовать плейлист');setIcon(rename,'edit');rename.after(listButton);
  const songButton=el('button','secondary song-album','Скопировать ссылку');songButton.id='copy-song-link';songButton.type='button';$('song-album').after(songButton);songButton.onclick=()=>copy('track',state.current?.id,songButton);
- const render=()=>{const valid=['album','playlist'].includes(state.route.type);listButton.classList.toggle('hidden',!valid);listButton.disabled=!state.ready||!has('musicLinks');songButton.disabled=!state.current||!has('musicLinks');};
+ const render=()=>{const valid=['album','playlist'].includes(state.route.type)&&!state.route.generated;listButton.classList.toggle('hidden',!valid);listButton.disabled=!state.ready||!has('musicLinks');songButton.disabled=!state.current||!has('musicLinks');};
  listButton.onclick=()=>copy(state.route.type,state.route.id,listButton);
  new MutationObserver(render).observe($('heading'),{childList:true,characterData:true,subtree:true});
  new MutationObserver(render).observe($('song-title'),{childList:true,characterData:true,subtree:true});

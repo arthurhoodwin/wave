@@ -46,7 +46,7 @@ async function linkedTrack(p,id){
 function copyMusicLink(p,command,write){
  if(!p.root||p.authTransition)throw Error('Сначала откройте музыку своего аккаунта');
  const {kind,id}=command;if(typeof id!=='string'||id.length>100||!['track','album','playlist'].includes(kind))throw Error('Некорректная команда ссылки');
- const item=kind==='track'?p.tracks.get(id):p.playlists.get(id);if(!item)throw Error('Откройте песню или список снова');
+ const item=kind==='track'?p.tracks.get(id):p.playlists.get(id);if(!item)throw Error('Откройте песню или список снова');if(item.generated)throw Error('VK не предоставляет обычную ссылку для этой алгоритмической подборки');
  const link=canonicalLink(kind,kind==='track'?item.key:item.vkId);write(link);return {copied:true};
 }
 module.exports={parseMusicLink,canonicalLink,resolveMusicLink,linkedTrack,copyMusicLink};

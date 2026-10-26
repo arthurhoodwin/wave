@@ -44,6 +44,7 @@ app.whenReady().then(async()=>{
   if(signedOut){await network.suspend();provider.setSession({state:'signedOut',cached:false,verifying:false,nativePlayback:true});}else await provider.restore();
   const announce=root=>{if(root===provider.root&&!main.isDestroyed())main.webContents.send('personal:changed',{});};
   personal=new (require('./personal-library.cjs').PersonalLibrary)({directory:path.join(app.getPath('userData'),'personal-v1'),encrypt:text=>{if(!safeStorage.isEncryptionAvailable())throw Error('Хранилище Windows недоступно');return safeStorage.encryptString(text);},decrypt:bytes=>safeStorage.decryptString(bytes),onChange:announce});
+  provider.onAlbumMetadata=change=>personal.updateAlbum(change.root,change.keys,change.album);
   if(network){downloads=new (require('./downloads/download-manager.cjs').DownloadManager)({library:personal,resolve:(key,options)=>network.resolveAudio(key,options),fetch:(url,options)=>vkWindow.webContents.session.fetch(url,options),getRoot:()=>provider.root,defaultDirectory:path.join(app.getPath('music'),'Wave'),validate:input=>require('./downloads/download-validator.cjs').validateDownload(input,electron),onChange:announce});
    player.api={resolveAudio:async(key,options)=>{const root=provider.root,local=await downloads.locate(root,key);if(root!==provider.root)throw Error('Аккаунт изменился');if(local)return{format:'audio',url:'wave-local:'+key};return network.resolveAudio(key,options);}};
    provider.hasLocal=async key=>(await downloads.locate(provider.root,key))?.record;
@@ -88,6 +89,6 @@ let cleanedUp=false;
 app.on('before-quit',event=>{
  if(cleanedUp)return;
  event.preventDefault();if(app.isQuitting)return;app.isQuitting=true;
- (async()=>{try{if(provider?.active)await provider.pause();}catch{}updater?.cancel();await downloads?.close();await personalService?.serial;await personal?.close();await windows?.close();await provider?.close();await health?.clean().catch(()=>{});await Promise.allSettled([engine?.close(),playEngine?.close()]);cleanedUp=true;app.quit();})();
+ (async()=>{try{if(provider?.active)await provider.pause();}catch{}updater?.cancel();await downloads?.close();await personalService?.serial;await provider?.albumMetadataTask;await personal?.close();await windows?.close();await provider?.close();await health?.clean().catch(()=>{});await Promise.allSettled([engine?.close(),playEngine?.close()]);cleanedUp=true;app.quit();})();
 });
 

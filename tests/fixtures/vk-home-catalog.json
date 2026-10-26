@@ -1,0 +1,2128 @@
+{
+  "initial": {
+    "catalog": {
+      "default_section": "section-1",
+      "sections": [
+        {
+          "id": "section-1",
+          "title": "Главная",
+          "blocks": [
+            {
+              "id": "block-1",
+              "data_type": "audio_stream_mixes",
+              "layout": {
+                "name": "audio_stream_mix_interactive",
+                "style": "default"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-2",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-3",
+              "title": "Мои треки",
+              "data_type": "none",
+              "layout": {
+                "name": "header",
+                "title": "Мои треки"
+              },
+              "actions": [
+                {
+                  "title": "Показать все",
+                  "section_id": "section-2",
+                  "ref_layout_name": "triple_stacked_slider",
+                  "ref_data_type": "music_audios"
+                }
+              ]
+            },
+            {
+              "id": "block-4",
+              "title": "Мои треки",
+              "data_type": "music_audios",
+              "layout": {
+                "name": "triple_stacked_slider"
+              },
+              "meta": {},
+              "actions": [],
+              "audios_ids": [
+                "13_1",
+                "13_2",
+                "13_3",
+                "13_4",
+                "13_5",
+                "13_6",
+                "13_7",
+                "13_8",
+                "13_9",
+                "13_10",
+                "13_11",
+                "13_12",
+                "13_13",
+                "13_14",
+                "13_15",
+                "13_16",
+                "13_17",
+                "13_18"
+              ],
+              "next_from": "fixture-next-block-4"
+            },
+            {
+              "id": "block-5",
+              "title": "Мои треки",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-6",
+              "title": "Собрано алгоритмами",
+              "data_type": "none",
+              "layout": {
+                "name": "header",
+                "title": "Собрано алгоритмами"
+              },
+              "actions": [
+                {
+                  "title": "Настроить рекомендации",
+                  "ref_layout_name": "recomms_slider",
+                  "ref_data_type": "music_playlists"
+                }
+              ]
+            },
+            {
+              "id": "block-7",
+              "title": "Собрано алгоритмами",
+              "data_type": "music_playlists",
+              "layout": {
+                "name": "recomms_slider"
+              },
+              "actions": [],
+              "playlists_ids": [
+                "12_-1",
+                "12_-2",
+                "12_-3",
+                "12_-4",
+                "12_-5",
+                "12_-6",
+                "12_-7",
+                "12_-8"
+              ]
+            },
+            {
+              "id": "block-8",
+              "title": "Собрано алгоритмами",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-9",
+              "title": "Жанры",
+              "data_type": "none",
+              "layout": {
+                "name": "header_extended",
+                "title": "Жанры"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-10",
+              "title": "Жанры",
+              "data_type": "action",
+              "layout": {
+                "name": "crop_slider",
+                "style": "default",
+                "size": "large"
+              },
+              "meta": {},
+              "actions": [
+                {
+                  "title": "Поп",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Хип-хоп",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Рок",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Электроника",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Инди",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Метал",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Фолк",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Фонк",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Джаз",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Фанк",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Эмбиент",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Панк",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                }
+              ]
+            },
+            {
+              "id": "block-11",
+              "title": "Жанры",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-12",
+              "title": "Похоже на трек",
+              "data_type": "none",
+              "layout": {
+                "name": "header",
+                "title": "Похоже на трек"
+              },
+              "actions": [
+                {
+                  "title": "Показать все",
+                  "section_id": "section-3",
+                  "ref_layout_name": "triple_stacked_slider",
+                  "ref_data_type": "music_audios"
+                }
+              ]
+            },
+            {
+              "id": "block-13",
+              "title": "Похоже на трек",
+              "data_type": "music_audios",
+              "layout": {
+                "name": "triple_stacked_slider"
+              },
+              "meta": {},
+              "actions": [],
+              "audios_ids": [
+                "13_19",
+                "13_20",
+                "13_21",
+                "13_22",
+                "13_23",
+                "13_24",
+                "13_25",
+                "13_26",
+                "13_27",
+                "13_28",
+                "13_29",
+                "13_30",
+                "13_31",
+                "13_32",
+                "13_33",
+                "13_34",
+                "13_35",
+                "13_36"
+              ],
+              "next_from": "fixture-next-block-13"
+            },
+            {
+              "id": "block-14",
+              "title": "Похоже на трек",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-15",
+              "title": "Настроения и занятия",
+              "data_type": "none",
+              "layout": {
+                "name": "header_extended",
+                "title": "Настроения и занятия"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-16",
+              "title": "Настроения и занятия",
+              "data_type": "action",
+              "layout": {
+                "name": "crop_slider",
+                "style": "default",
+                "size": "large"
+              },
+              "meta": {},
+              "actions": [
+                {
+                  "title": "Радостно",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Работа",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Грустно",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Тренировка",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Спокойно",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Игры",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Активно",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Вечеринка",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Любовь",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Утро",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Сон",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                },
+                {
+                  "title": "Вечер",
+                  "ref_layout_name": "crop_slider",
+                  "ref_data_type": "action",
+                  "mix_id": "fixture-mix",
+                  "mix_options": {}
+                }
+              ]
+            },
+            {
+              "id": "block-17",
+              "title": "Настроения и занятия",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            },
+            {
+              "id": "block-18",
+              "title": "Слушайте друг друга",
+              "data_type": "none",
+              "layout": {
+                "name": "header_extended",
+                "title": "Слушайте друг друга"
+              },
+              "actions": [
+                {
+                  "title": "Показать все",
+                  "section_id": "section-4",
+                  "ref_layout_name": "large_slider",
+                  "ref_data_type": "music_recommended_playlists"
+                }
+              ]
+            },
+            {
+              "id": "block-19",
+              "title": "Слушайте друг друга",
+              "data_type": "music_recommended_playlists",
+              "layout": {
+                "name": "large_slider"
+              },
+              "meta": {},
+              "actions": [],
+              "playlists_ids": [
+                "12_9",
+                "12_10",
+                "12_11",
+                "12_12",
+                "12_13",
+                "12_14"
+              ],
+              "audios_ids": [
+                "13_37",
+                "13_38",
+                "13_39",
+                "13_40",
+                "13_41",
+                "13_42",
+                "13_43",
+                "13_44",
+                "13_45",
+                "13_46",
+                "13_47",
+                "13_48",
+                "13_49",
+                "13_50",
+                "13_51",
+                "13_52",
+                "13_53",
+                "13_54"
+              ]
+            },
+            {
+              "id": "block-20",
+              "title": "Слушайте друг друга",
+              "data_type": "none",
+              "layout": {
+                "name": "separator",
+                "style": "island"
+              },
+              "actions": []
+            }
+          ]
+        },
+        {
+          "id": "section-5",
+          "title": "Моя музыка",
+          "blocks": []
+        },
+        {
+          "id": "section-6",
+          "title": "Обзор",
+          "blocks": []
+        },
+        {
+          "id": "section-7",
+          "title": "Радио",
+          "blocks": []
+        },
+        {
+          "id": "section-8",
+          "title": "Обновления",
+          "blocks": []
+        }
+      ]
+    },
+    "playlists": [
+      {
+        "owner_id": 12,
+        "id": -1,
+        "title": "Пример подборки -1",
+        "type": "generated",
+        "count": 100,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -2,
+        "title": "Пример подборки -2",
+        "type": "generated",
+        "count": 100,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -3,
+        "title": "Пример подборки -3",
+        "type": "generated",
+        "count": 100,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -4,
+        "title": "Пример подборки -4",
+        "type": "generated",
+        "count": 50,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -5,
+        "title": "Пример подборки -5",
+        "type": "generated",
+        "count": 50,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -6,
+        "title": "Пример подборки -6",
+        "type": "generated",
+        "count": 50,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -7,
+        "title": "Пример подборки -7",
+        "type": "generated",
+        "count": 0,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": -8,
+        "title": "Пример подборки -8",
+        "type": "generated",
+        "count": 0,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 9,
+        "title": "Пример подборки 9",
+        "type": "ugc",
+        "count": 20,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 10,
+        "title": "Пример подборки 10",
+        "type": "ugc",
+        "count": 275,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 11,
+        "title": "Пример подборки 11",
+        "type": "ugc",
+        "count": 155,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 12,
+        "title": "Пример подборки 12",
+        "type": "ugc",
+        "count": 43,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 13,
+        "title": "Пример подборки 13",
+        "type": "ugc",
+        "count": 43,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 14,
+        "title": "Пример подборки 14",
+        "type": "ugc",
+        "count": 52,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      }
+    ],
+    "audios": [
+      {
+        "owner_id": 13,
+        "id": 1,
+        "title": "Пример песни 1",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 2,
+        "title": "Пример песни 2",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 3,
+        "title": "Пример песни 3",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 4,
+        "title": "Пример песни 4",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 5,
+        "title": "Пример песни 5",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 6,
+        "title": "Пример песни 6",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 7,
+        "title": "Пример песни 7",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 8,
+        "title": "Пример песни 8",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 9,
+        "title": "Пример песни 9",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 10,
+        "title": "Пример песни 10",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 11,
+        "title": "Пример песни 11",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 12,
+        "title": "Пример песни 12",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 13,
+        "title": "Пример песни 13",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 14,
+        "title": "Пример песни 14",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 15,
+        "title": "Пример песни 15",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 16,
+        "title": "Пример песни 16",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 17,
+        "title": "Пример песни 17",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 18,
+        "title": "Пример песни 18",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 19,
+        "title": "Пример песни 19",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 20,
+        "title": "Пример песни 20",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 21,
+        "title": "Пример песни 21",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 22,
+        "title": "Пример песни 22",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 23,
+        "title": "Пример песни 23",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 24,
+        "title": "Пример песни 24",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 25,
+        "title": "Пример песни 25",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 26,
+        "title": "Пример песни 26",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 27,
+        "title": "Пример песни 27",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 28,
+        "title": "Пример песни 28",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 29,
+        "title": "Пример песни 29",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 30,
+        "title": "Пример песни 30",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 31,
+        "title": "Пример песни 31",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 32,
+        "title": "Пример песни 32",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 33,
+        "title": "Пример песни 33",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 34,
+        "title": "Пример песни 34",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 35,
+        "title": "Пример песни 35",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 36,
+        "title": "Пример песни 36",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 37,
+        "title": "Пример песни 37",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 38,
+        "title": "Пример песни 38",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 39,
+        "title": "Пример песни 39",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 40,
+        "title": "Пример песни 40",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 41,
+        "title": "Пример песни 41",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 42,
+        "title": "Пример песни 42",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 43,
+        "title": "Пример песни 43",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 44,
+        "title": "Пример песни 44",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 45,
+        "title": "Пример песни 45",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 46,
+        "title": "Пример песни 46",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 47,
+        "title": "Пример песни 47",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 48,
+        "title": "Пример песни 48",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 49,
+        "title": "Пример песни 49",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 50,
+        "title": "Пример песни 50",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 51,
+        "title": "Пример песни 51",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 52,
+        "title": "Пример песни 52",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 53,
+        "title": "Пример песни 53",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 54,
+        "title": "Пример песни 54",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      }
+    ]
+  },
+  "overview": {
+    "section": {
+      "id": "section-6",
+      "title": "Обзор",
+      "blocks": [
+        {
+          "id": "block-21",
+          "title": "Вам может быть интересно",
+          "data_type": "catalog_banners",
+          "layout": {
+            "name": "promo_banners_slider"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-22",
+          "title": "Вам может быть интересно",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-23",
+          "title": "Сегодня в плеере",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Сегодня в плеере"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-9",
+              "ref_layout_name": "triple_stacked_slider",
+              "ref_data_type": "music_audios"
+            }
+          ]
+        },
+        {
+          "id": "block-24",
+          "title": "Сегодня в плеере",
+          "data_type": "music_audios",
+          "layout": {
+            "name": "triple_stacked_slider"
+          },
+          "meta": {},
+          "actions": [],
+          "audios_ids": [
+            "13_55",
+            "13_56",
+            "13_57",
+            "13_58",
+            "13_59",
+            "13_60",
+            "13_61",
+            "13_62",
+            "13_63",
+            "13_64",
+            "13_65",
+            "13_66"
+          ],
+          "next_from": "fixture-next-block-24"
+        },
+        {
+          "id": "block-25",
+          "title": "Сегодня в плеере",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-26",
+          "title": "Выбор редакции",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Выбор редакции"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-10",
+              "ref_layout_name": "large_slider",
+              "ref_data_type": "music_playlists"
+            }
+          ]
+        },
+        {
+          "id": "block-27",
+          "title": "Выбор редакции",
+          "data_type": "music_playlists",
+          "layout": {
+            "name": "large_slider"
+          },
+          "meta": {},
+          "actions": [],
+          "playlists_ids": [
+            "12_15",
+            "12_16",
+            "12_17",
+            "12_18",
+            "12_19",
+            "12_20"
+          ],
+          "next_from": "fixture-next-block-27"
+        },
+        {
+          "id": "block-28",
+          "title": "Выбор редакции",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-29",
+          "title": "Новинки",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Новинки"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-11",
+              "ref_layout_name": "triple_stacked_slider",
+              "ref_data_type": "music_audios"
+            }
+          ]
+        },
+        {
+          "id": "block-30",
+          "title": "Новинки",
+          "data_type": "music_audios",
+          "layout": {
+            "name": "triple_stacked_slider"
+          },
+          "meta": {},
+          "actions": [],
+          "audios_ids": [
+            "13_67",
+            "13_68",
+            "13_69",
+            "13_70",
+            "13_71",
+            "13_66",
+            "13_72",
+            "13_73",
+            "13_74",
+            "13_57",
+            "13_75",
+            "13_56"
+          ],
+          "next_from": "fixture-next-block-30"
+        },
+        {
+          "id": "block-31",
+          "title": "Новинки",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-32",
+          "title": "Оставаться в тренде",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Оставаться в тренде"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-12",
+              "ref_layout_name": "large_slider",
+              "ref_data_type": "music_playlists"
+            }
+          ]
+        },
+        {
+          "id": "block-33",
+          "title": "Оставаться в тренде",
+          "data_type": "music_playlists",
+          "layout": {
+            "name": "large_slider"
+          },
+          "actions": [],
+          "playlists_ids": [
+            "12_21",
+            "12_22",
+            "12_23",
+            "12_24",
+            "12_25",
+            "12_26"
+          ]
+        },
+        {
+          "id": "block-34",
+          "title": "Оставаться в тренде",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-35",
+          "title": "Новые альбомы",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Новые альбомы"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-13",
+              "ref_layout_name": "large_slider",
+              "ref_data_type": "music_playlists"
+            }
+          ]
+        },
+        {
+          "id": "block-36",
+          "title": "Новые альбомы",
+          "data_type": "music_playlists",
+          "layout": {
+            "name": "large_slider"
+          },
+          "meta": {},
+          "actions": [],
+          "playlists_ids": [
+            "12_27",
+            "12_28",
+            "12_29",
+            "12_30",
+            "12_31",
+            "12_32"
+          ],
+          "next_from": "fixture-next-block-36"
+        },
+        {
+          "id": "block-37",
+          "title": "Новые альбомы",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-38",
+          "title": "Новые имена",
+          "data_type": "none",
+          "layout": {
+            "name": "header",
+            "title": "Новые имена"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-14",
+              "ref_layout_name": "triple_stacked_slider",
+              "ref_data_type": "music_audios"
+            }
+          ]
+        },
+        {
+          "id": "block-39",
+          "title": "Новые имена",
+          "data_type": "music_audios",
+          "layout": {
+            "name": "triple_stacked_slider"
+          },
+          "meta": {},
+          "actions": [],
+          "audios_ids": [
+            "13_76",
+            "13_77",
+            "13_78",
+            "13_79",
+            "13_80",
+            "13_81",
+            "13_82",
+            "13_83",
+            "13_84",
+            "13_85",
+            "13_86",
+            "13_87",
+            "13_88",
+            "13_89",
+            "13_90",
+            "13_91",
+            "13_92",
+            "13_93"
+          ],
+          "next_from": "fixture-next-block-39"
+        },
+        {
+          "id": "block-40",
+          "title": "Новые имена",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-41",
+          "title": "Стримеры x VK Музыка",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Стримеры x VK Музыка"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-15",
+              "ref_layout_name": "large_slider",
+              "ref_data_type": "music_playlists"
+            }
+          ]
+        },
+        {
+          "id": "block-42",
+          "title": "Стримеры x VK Музыка",
+          "data_type": "music_playlists",
+          "layout": {
+            "name": "large_slider"
+          },
+          "actions": [],
+          "playlists_ids": [
+            "12_33",
+            "12_34",
+            "12_35",
+            "12_36",
+            "12_37",
+            "12_38"
+          ],
+          "next_from": "fixture-next-block-42"
+        },
+        {
+          "id": "block-43",
+          "title": "Стримеры x VK Музыка",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-44",
+          "title": "Новинки по жанрам",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Новинки по жанрам"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-16",
+              "ref_layout_name": "large_slider",
+              "ref_data_type": "music_playlists"
+            }
+          ]
+        },
+        {
+          "id": "block-45",
+          "title": "Новинки по жанрам",
+          "data_type": "music_playlists",
+          "layout": {
+            "name": "large_slider"
+          },
+          "actions": [],
+          "playlists_ids": [
+            "12_39",
+            "12_40",
+            "12_41",
+            "12_42",
+            "12_43",
+            "12_44"
+          ],
+          "next_from": "fixture-next-block-45"
+        },
+        {
+          "id": "block-46",
+          "title": "Новинки по жанрам",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        },
+        {
+          "id": "block-47",
+          "title": "Собрано редакцией",
+          "data_type": "none",
+          "layout": {
+            "name": "header_extended",
+            "title": "Собрано редакцией"
+          },
+          "actions": [
+            {
+              "title": "Показать все",
+              "section_id": "section-17",
+              "ref_layout_name": "triple_stacked_slider",
+              "ref_data_type": "music_audios"
+            }
+          ]
+        },
+        {
+          "id": "block-48",
+          "title": "Собрано редакцией",
+          "data_type": "music_audios",
+          "layout": {
+            "name": "triple_stacked_slider"
+          },
+          "meta": {},
+          "actions": [],
+          "audios_ids": [
+            "13_94",
+            "13_95",
+            "13_96",
+            "13_97",
+            "13_98",
+            "13_99",
+            "13_100"
+          ]
+        },
+        {
+          "id": "block-49",
+          "title": "Собрано редакцией",
+          "data_type": "none",
+          "layout": {
+            "name": "separator",
+            "style": "island"
+          },
+          "actions": []
+        }
+      ]
+    },
+    "playlists": [
+      {
+        "owner_id": 12,
+        "id": 15,
+        "title": "Пример подборки 15",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 16,
+        "title": "Пример подборки 16",
+        "type": "ugc",
+        "count": 112,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 17,
+        "title": "Пример подборки 17",
+        "type": "ugc",
+        "count": 212,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 18,
+        "title": "Пример подборки 18",
+        "type": "ugc",
+        "count": 49,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 19,
+        "title": "Пример подборки 19",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 20,
+        "title": "Пример подборки 20",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 21,
+        "title": "Пример подборки 21",
+        "type": "ugc",
+        "count": 153,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 22,
+        "title": "Пример подборки 22",
+        "type": "ugc",
+        "count": 175,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 23,
+        "title": "Пример подборки 23",
+        "type": "ugc",
+        "count": 299,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 24,
+        "title": "Пример подборки 24",
+        "type": "ugc",
+        "count": 329,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 25,
+        "title": "Пример подборки 25",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 26,
+        "title": "Пример подборки 26",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 27,
+        "title": "Пример подборки 27",
+        "type": "album",
+        "count": 10,
+        "year": 2026,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 28,
+        "title": "Пример подборки 28",
+        "type": "album",
+        "count": 9,
+        "year": 2026,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 29,
+        "title": "Пример подборки 29",
+        "type": "album",
+        "count": 7,
+        "year": 2026,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 30,
+        "title": "Пример подборки 30",
+        "type": "album",
+        "count": 11,
+        "year": 2026,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 31,
+        "title": "Пример подборки 31",
+        "type": "album",
+        "count": 11,
+        "year": 2026,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 32,
+        "title": "Пример подборки 32",
+        "type": "album",
+        "count": 4,
+        "year": 2026,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 33,
+        "title": "Пример подборки 33",
+        "type": "ugc",
+        "count": 30,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 34,
+        "title": "Пример подборки 34",
+        "type": "ugc",
+        "count": 23,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 35,
+        "title": "Пример подборки 35",
+        "type": "ugc",
+        "count": 23,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 36,
+        "title": "Пример подборки 36",
+        "type": "ugc",
+        "count": 14,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 37,
+        "title": "Пример подборки 37",
+        "type": "ugc",
+        "count": 27,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 38,
+        "title": "Пример подборки 38",
+        "type": "ugc",
+        "count": 30,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 39,
+        "title": "Пример подборки 39",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 40,
+        "title": "Пример подборки 40",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 41,
+        "title": "Пример подборки 41",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 42,
+        "title": "Пример подборки 42",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 43,
+        "title": "Пример подборки 43",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      },
+      {
+        "owner_id": 12,
+        "id": 44,
+        "title": "Пример подборки 44",
+        "type": "ugc",
+        "count": 150,
+        "photo": {
+          "photo_300": "https://sun1.userapi.com/fixture.jpg"
+        }
+      }
+    ],
+    "audios": [
+      {
+        "owner_id": 13,
+        "id": 55,
+        "title": "Пример песни 55",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 56,
+        "title": "Пример песни 56",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 57,
+        "title": "Пример песни 57",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 58,
+        "title": "Пример песни 58",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 59,
+        "title": "Пример песни 59",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 60,
+        "title": "Пример песни 60",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 61,
+        "title": "Пример песни 61",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 62,
+        "title": "Пример песни 62",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 63,
+        "title": "Пример песни 63",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 64,
+        "title": "Пример песни 64",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 65,
+        "title": "Пример песни 65",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 66,
+        "title": "Пример песни 66",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 67,
+        "title": "Пример песни 67",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 68,
+        "title": "Пример песни 68",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 69,
+        "title": "Пример песни 69",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 70,
+        "title": "Пример песни 70",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 71,
+        "title": "Пример песни 71",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 72,
+        "title": "Пример песни 72",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 73,
+        "title": "Пример песни 73",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 74,
+        "title": "Пример песни 74",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 75,
+        "title": "Пример песни 75",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 76,
+        "title": "Пример песни 76",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 77,
+        "title": "Пример песни 77",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 78,
+        "title": "Пример песни 78",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 79,
+        "title": "Пример песни 79",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 80,
+        "title": "Пример песни 80",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 81,
+        "title": "Пример песни 81",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 82,
+        "title": "Пример песни 82",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 83,
+        "title": "Пример песни 83",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 84,
+        "title": "Пример песни 84",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 85,
+        "title": "Пример песни 85",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 86,
+        "title": "Пример песни 86",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 87,
+        "title": "Пример песни 87",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 88,
+        "title": "Пример песни 88",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 89,
+        "title": "Пример песни 89",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 90,
+        "title": "Пример песни 90",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 91,
+        "title": "Пример песни 91",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 92,
+        "title": "Пример песни 92",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 93,
+        "title": "Пример песни 93",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 94,
+        "title": "Пример песни 94",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 95,
+        "title": "Пример песни 95",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 96,
+        "title": "Пример песни 96",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 97,
+        "title": "Пример песни 97",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 98,
+        "title": "Пример песни 98",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 99,
+        "title": "Пример песни 99",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      },
+      {
+        "owner_id": 13,
+        "id": 100,
+        "title": "Пример песни 100",
+        "artist": "Пример исполнителя",
+        "duration": 180
+      }
+    ]
+  }
+}

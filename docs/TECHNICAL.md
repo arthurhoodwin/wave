@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.3.2 Stable**, 25 октября 2026. Публичный тег [v1.1.3.2](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.3.2), канал stable, Windows FileVersion 1.1.3.302. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.1.4 Stable**, 26 октября 2026. Публичный тег [v1.1.4](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.4), канал stable, Windows FileVersion 1.1.4.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
 
 ## Границы процессов
 
@@ -102,3 +102,11 @@ library-panel.js управляет только геометрией, library-m
 VkHttpClient.artist → artist-catalog.readArtist → network-provider.artist → artist-ui.js. Ссылки/ключи VK остаются в main; renderer получает непрозрачные ID релизов, allowlisted изображения и состояния разделов. Продолжения дочитываются с защитой от циклов; ошибка одного раздела сохраняет уже прочитанное. Неизвестный тип не определяется по count/type=1. Активный artistController отменяется при новом артисте/поиске, уходе, выходе и закрытии; поздний ответ проверяет root и текущую collection до регистрации handles. Локальные сортировки применяются к полученным данным, не обещают серверный порядок полного каталога при ошибке продолжения.
 
 Начиная с1.1.3.1 discography.releases хранит единый порядок полученных собственных релизов. trackSectionTitle различает подтверждённую популярность и generic artist tracks. Fallback аудиопула фильтруется по main/featured identity; случайные записи из соседних блоков не превращаются в популярные.
+
+## Главная и метаданные1.1.4
+
+`home-feed.cjs` читает действительный каталог и отложенный «Обзор». Стандартные группы имеют канонические ключи, остальные поддерживаемые блоки — ключ от server block identity; непрозрачные ID не декодируются. Плейлисты и аудио имеют отдельные парсеры и UI-действия. `play_vk_mix` не становится плейлистом. Generated ID с отрицательным playlist_id поддерживается отдельным playlistKeyOf/parsePlaylistIdentity; audio keys остаются положительными по id.
+
+`PersonalService.recommendations` различает попытки объектом cache-entry: manual retry создаёт fresh-запрос, повтор на уже свежую выполняющуюся попытку её разделяет. Поздняя предыдущая попытка не регистрирует handles. При отказе сохраняются настоящие старые секции с пометкой stale/partial, пустой результат получает короткий TTL. `home-feed-ui.js` обновляет группы/карточки по ID без полной замены DOM.
+
+`album-metadata.cjs` связывает имя только с доказанной album identity, обновляет private/public occurrences, активный трек и историю. Полная playlist-мета не затирается частичной audio.album; параллельные чтения имени объединяются. `album-meta.js` обновляет renderer-копии, а новый loop-reference обеспечивает сохранение desktop-контекста с теми же песнями/порядком. Скрытая проверка placeholder запускается при открытии плеера, не из frame/position loop.
