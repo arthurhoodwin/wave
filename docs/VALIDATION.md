@@ -1,10 +1,16 @@
 # Проверки Wave
 
-Версия: **1.1.9.8 Stable**. Дата: 27 октября 2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+Версия: **1.1.9.9 Stable**. Дата: 27 октября 2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+
+## 1.1.9.9 · Исправление контентного IPC
+
+Реальный preload вызывал lyrics/artworkImage с двумя аргументами, а общий main IPC ограничивал число одним: запросы отклонялись до провайдера. Разрешены только эти два метода с optional options.refresh:boolean; неизвестные поля, лишние аргументы и чужие sender по-прежнему отвергаются. Новый content-ipc.test.cjs исполняет реальные preload и регистрацию main IPC: нормальный текст, cache hit, forced retry, artwork с options/undefined, mini readonly и отказ чужому окну.419 Node-тестов и три Electron-гейта прошли.1.1.9.8 осталась неопубликованным черновиком; исправление сохраняет общий кэш и выпускается отдельной версией.
 
 ## 1.1.9.8 · Общий контентный кэш
 
 Новый [CONTENT-CACHE.md](CONTENT-CACHE.md) описывает границы всех слоёв. Node-регрессии cover sparse/fingerprint/стабильныйID/повторное использованиеobjects/реальная смена metadata/restore/availability&owned, disk payloads+ETag304/account isolation/purge, lyrics persistence+whitelist. Изолированный runtime: diskArtwork.requests=1,reused=true после нового экземпляра и Electron PNG decode; incrementalRows.rows=true,images=true,requests=1,total=3 после добавления одной записи. Detach→sweep→reattach старой строки сохраняет img, новых запросов нет. Artwork применяется к спискам/шапкам/артистам/mini, мини-IPC ограничен одним readonly методом. Текстовый кэш входит в существующее шифрованное metadata-хранилище. Реальные VK лайки/коллекция ради проверки не менялись.
+
+Итог:417 Node-тестов и три Electron-гейта прошли. [CI40455540409](https://github.com/arthurhoodwin/wave/actions/runs/40455540409) успешен наf2ad4555708ab98b0e44f4fec786aa1447ff7b73. Все138 source-файлов совпали с ASAR, FileVersion1.1.9.800. Подписанный OTA от1.1.9.7 —332997байт; применение и откат совпали по77 файлам. Каталог46 подписанных переходов. Установщикexit0, обычное завершениеPID20496 безforce; все77 файлов совпали с канонической сборкой, окно отвечает. Отчёты: work/qa1198-real-patch.json, installed1198-summary.json, installed1198-files.json, ota1198/packages.log.
 
 ## 1.1.9.7 · Плотная навигация артиста
 
