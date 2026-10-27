@@ -43,7 +43,7 @@ function normalizePayload(input){
   }
   collections.push({playlistId:c.playlistId,kind:c.kind,title:c.title,description:typeof c.description==='string'?c.description.slice(0,2000):'',route:c.route,total:c.total,tracks});
  }
- return {version:1,accountRoot:input.accountRoot,savedAt:input.savedAt,playlists,collections};
+ return {version:1,accountRoot:input.accountRoot,savedAt:input.savedAt,playlists,collections,...(input.lyrics?{lyrics:require('./lyrics/lyrics-cache-data.cjs').normalize(input.lyrics)}:{})};
 }
 class MetadataStore{
  constructor({directory,encrypt,decrypt}){

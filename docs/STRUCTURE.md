@@ -90,3 +90,5 @@ dist/                   Игнорируемые результаты сборк
 Контракты управления коллекцией1.1.8: [VK-COLLECTION-CONTRACTS.md](VK-COLLECTION-CONTRACTS.md); реализация — main/collection-management.cjs и renderer/collection-management-ui.js.
 
 Подписанные OTA-переходы1.1.9 и окно поддержки: [OTA-UPDATES.md](OTA-UPDATES.md).
+
+Повторное использование контента и его валидаторы: [CONTENT-CACHE.md](CONTENT-CACHE.md).

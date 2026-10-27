@@ -1,6 +1,6 @@
 'use strict';
 const {PlaylistCache}=require('./playlist-cache.cjs');
-async function logout(p){p.paletteAbort?.abort();p.paletteCache?.clear();p.lyricsSources?.clear();p.batchPlans?.clear();if(p.runningBatch)p.runningBatch.cancelled=true;
+async function logout(p){p.trackContent=null;p.paletteAbort?.abort();p.paletteCache?.clear();p.lyricsSources?.clear();p.batchPlans?.clear();if(p.runningBatch)p.runningBatch.cancelled=true;
  if(!p.network)throw Error('Выход доступен в обычном режиме Wave');
  if(p.logoutJob)return p.logoutJob;
  p.logoutJob=(async()=>{p.authTransition=true;p.loginAttempt=(p.loginAttempt||0)+1;p.online=false;clearTimeout(p.reconnectTimer);p.reconnectTimer=null;clearTimeout(p.saveTimer);p.saveTimer=null;++p.playRequest;++p.warmRequest;

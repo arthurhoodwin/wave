@@ -9,7 +9,10 @@ let rebuilds = 0;
 function make(tag) {
   return { tagName: typeof tag==='string'?tag.toUpperCase():'DIV', textContent: '', value: 0, children: [],
     classList: { values: new Set(), toggle(k,v) {v ? this.values.add(k) : this.values.delete(k);}, contains(k) {return this.values.has(k);} },
-    setAttribute(k,v) {this[k]=v;}, append(...x) {this.children.push(...x);}, after() {},
+    setAttribute(k,v) {this[k]=v;}, append(...x) {for(const node of x){node.parent=this;this.children.push(node);}}, after() {},
+    querySelector(selector){const matches=node=>selector.startsWith('.')?String(node.className||'').split(' ').includes(selector.slice(1)):node.tagName===selector.toUpperCase();const walk=node=>{for(const child of node.children||[]){if(matches(child))return child;const found=walk(child);if(found)return found;}return null;};return walk(this);},
+    remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);},
+    replaceWith(next){if(this.parent){const at=this.parent.children.indexOf(this);if(at>=0){this.parent.children[at]=next;next.parent=this.parent;}}},
     replaceChildren(...x) {this.children=x;if(this===nodes.get('tracks'))rebuilds++;}, addEventListener() {} };
 }
 function get(id) {if(!nodes.has(id))nodes.set(id,make());return nodes.get(id);}

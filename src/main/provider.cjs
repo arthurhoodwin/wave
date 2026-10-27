@@ -30,7 +30,7 @@ class VkProvider {
     for(const row of rows||[]){if(this.removedPlaylists?.root===this.root&&this.removedPlaylists.keys.has(row.vkId))continue;const signature=JSON.stringify(row.vkId?['vk',row.vkId]:[row.index,row.title,row.owner]);let id=this.playlistHandles.get(signature);
       if(!id){const matches=[...this.playlists].filter(([,p])=>row.vkId&&p.vkId===row.vkId||!p.vkId&&p.title===row.title&&p.owner===row.owner);if(matches.length===1)id=matches[0][0];}
       if(!id)id=randomUUID();this.playlistHandles.set(signature,id);const current=this.playlists.get(id);const newer=(current?.confirmedRevision||0)>revision;
-      const item=newer?current:{...current,...row,kind:row.kind||current?.kind,cover:cover(row.cover)||current?.cover,owner:row.owner||current?.owner||(row.editable?'Ваш плейлист':'Плейлист VK'),route};this.playlists.set(id,item);incoming.push(this.publicPlaylist(id,item));
+      const item=newer?current:{...current,...row,description:row.description===undefined?current?.description:row.description,kind:row.kind||current?.kind,cover:cover(row.cover)||current?.cover,owner:row.owner||current?.owner||(row.editable?'Ваш плейлист':'Плейлист VK'),route};this.playlists.set(id,item);incoming.push(this.publicPlaylist(id,item));
     }
     const updated=new Map(incoming.map(p=>[p.id,p])),known=new Set(previous.map(p=>p.id));
     // New arrivals precede existing lists; a partial/stale carousel never resets their order.
@@ -117,7 +117,7 @@ class VkProvider {
   async restore(){
     const payload=await this.store?.load();
     if(payload){
-      this.root=payload.accountRoot;
+      this.root=payload.accountRoot;if(payload.lyrics){this.lyricsSources??=new (require('./lyrics/lyrics-sources.cjs').LyricsSources)();this.lyricsSources.restore(payload.lyrics,this.root);}
       for(const item of payload.playlists){this.playlists.set(item.id,item);this.playlistHandles.set(JSON.stringify(item.kind==='album'?['album',item.route,item.title,item.owner]:item.vkId?['vk',item.vkId]:[item.index,item.title,item.owner]),item.id);if(item.inLibrary===true||item.kind!=='album')this.savedPlaylists.push({id:item.id,title:item.title,owner:item.owner,cover:item.cover,kind:item.kind,editable:item.editable===true});}
       for(const item of payload.collections){
         const e=this.cache.create(item.playlistId,item.title,item.kind);e.route=item.route;e.description=item.description||'';e.total=item.total;e.cacheState='complete';e.stale=true;e.cover=cover(this.playlists.get(item.playlistId)?.cover);e.savedAt=payload.savedAt;e.createdAt=0;
@@ -125,6 +125,7 @@ class VkProvider {
         for(const track of item.tracks){e.items.set(track.id,{id:track.id,title:track.title,artist:track.artist,duration:track.duration,available:track.available,...trackMeta(track)});this.tracks.set(track.id,track);const key=JSON.stringify([track.key,track.title,track.artist,track.time]);const occurrence=occurrences.get(key)||0;occurrences.set(key,occurrence+1);this.handles.set(JSON.stringify([e.playlistId,e.scope,track.key,track.title,track.artist,track.time,occurrence]),track.id);}
       }
     }
+    if(payload){this.trackContent=new (require('./content-cache.cjs').TrackContentCache)();this.trackContent.reset(this.root);for(const track of this.tracks.values())if(track.key)this.trackContent.merge(track);}
     this.setSession({state:payload?'cached':'pending',cached:!!payload,verifying:true});return !!payload;
   }
   async startSession(initialization){
@@ -148,7 +149,7 @@ class VkProvider {
   trackAlbum(id){return require('./track-album.cjs').trackAlbum(this,id);}
   cancelLyrics(){this.lyricsSources?.cancel();return true;}
   reconcileOwnership(rows){this.onLikedOrder?.(this.root,rows,this.ownershipAliases);this.ownedAccount=this.root;this.ownedKeys=new Set(rows.map(t=>t.key));if(this.ownershipAliases?.root===this.root)for(const [source,key] of this.ownershipAliases.keys)if(this.ownedKeys.has(key))this.ownedKeys.add(source);return require('./collection-batch.cjs').ownership(this,new Map([...this.tracks.values()].map(t=>[t.key,this.ownedKeys.has(t.key)])));}
-  async lyrics(id){if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');this.lyricsSources??=new (require('./lyrics/lyrics-sources.cjs').LyricsSources)();const root=this.root;const cached=this.lyricsSources.peek(track,root);if(cached){if(this.lyricsSources.job?.key!==this.lyricsSources.key(track))this.lyricsSources.cancel();return{...cached,cached:true};}if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');const result=await this.lyricsSources.get(track,root,()=>this.network.lyrics(track.key));if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}
+  async lyrics(id,options){if(options!==undefined&&(!options||typeof options!=='object'||Object.keys(options).some(k=>k!=='refresh')||typeof options.refresh!=='boolean'))throw Error('Некорректная команда текста');if(typeof id!=='string'||id.length>200)throw Error('Некорректная песня');const track=this.tracks.get(id);if(!track)throw Error('Откройте список песни снова.');this.lyricsSources??=new (require('./lyrics/lyrics-sources.cjs').LyricsSources)();const root=this.root;if(options?.refresh){this.lyricsSources.invalidate(track);this.network?.lyricsCache?.delete(track.key);}const cached=this.lyricsSources.peek(track,root);if(cached){if(this.lyricsSources.job?.key!==this.lyricsSources.key(track))this.lyricsSources.cancel();return{...cached,cached:true};}if(!this.network||!this.online)throw Error('Подключитесь к VK и повторите загрузку текста.');const result=await this.lyricsSources.get(track,root,()=>this.network.lyrics(track.key));if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');this.scheduleSave();return result;}
   async account(){if(!this.network||!this.online)throw Error('Подключитесь к VK, чтобы получить профиль');return this.network.profile();}
   async status(){return this.session||this.checkSession();}
   async login(){
@@ -157,7 +158,7 @@ class VkProvider {
     const deadline=Date.now()+180000;while(Date.now()<deadline){try{if((await this.checkSession()).state==='ready')return{state:'ready'};}catch{}await sleep(700);}throw Error('Вход не завершён. Нажмите «Войти через VK» снова.');
   }
   exportMetadata(){
-    const visible=new Set(this.savedPlaylists.map(p=>p.id)),ordered=[...this.savedPlaylists.map(p=>[p.id,this.playlists.get(p.id)]).filter(([,p])=>p),...Array.from(this.playlists).filter(([id,p])=>!visible.has(id)&&p.kind==='album')];return{version:1,accountRoot:this.root,savedAt:Date.now(),playlists:ordered.map(([id,p])=>({id,title:p.title,description:p.description||'',owner:p.owner||'',index:p.index,route:p.route,cover:cover(p.cover),kind:p.kind,inLibrary:visible.has(id),vkId:p.vkId,editable:p.editable})),collections:Array.from(this.cache.byPlaylist.values()).filter(e=>(e.kind==='library'||visible.has(e.playlistId)||this.playlists.get(e.playlistId)?.kind==='album')&&e.cacheState==='complete'&&e.total===e.items.size).map(e=>({playlistId:e.playlistId,kind:e.kind,title:e.title,description:e.description||'',route:e.route,total:e.total,tracks:Array.from(e.items.keys()).map(id=>this.tracks.get(id)).filter(Boolean).map(t=>({id:t.id,key:t.key,title:t.title,artist:t.artist||'',time:t.time||'0:00',duration:t.duration,available:t.available,index:Number.isSafeInteger(t.index)?t.index:0,scope:t.scope,route:t.route,...trackMeta(t)}))}))};
+    const visible=new Set(this.savedPlaylists.map(p=>p.id)),ordered=[...this.savedPlaylists.map(p=>[p.id,this.playlists.get(p.id)]).filter(([,p])=>p),...Array.from(this.playlists).filter(([id,p])=>!visible.has(id)&&p.kind==='album')];return{version:1,accountRoot:this.root,savedAt:Date.now(),...(this.lyricsSources?.root===this.root?{lyrics:this.lyricsSources.export()}:{}),playlists:ordered.map(([id,p])=>({id,title:p.title,description:p.description||'',owner:p.owner||'',index:p.index,route:p.route,cover:cover(p.cover),kind:p.kind,inLibrary:visible.has(id),vkId:p.vkId,editable:p.editable})),collections:Array.from(this.cache.byPlaylist.values()).filter(e=>(e.kind==='library'||visible.has(e.playlistId)||this.playlists.get(e.playlistId)?.kind==='album')&&e.cacheState==='complete'&&e.total===e.items.size).map(e=>({playlistId:e.playlistId,kind:e.kind,title:e.title,description:e.description||'',route:e.route,total:e.total,tracks:Array.from(e.items.keys()).map(id=>this.tracks.get(id)).filter(Boolean).map(t=>({id:t.id,key:t.key,title:t.title,artist:t.artist||'',time:t.time||'0:00',duration:t.duration,available:t.available,index:Number.isSafeInteger(t.index)?t.index:0,scope:t.scope,route:t.route,...trackMeta(t)}))}))};
   }
   scheduleSave(){if(!this.store||!this.root)return;clearTimeout(this.saveTimer);this.saveTimer=setTimeout(()=>{this.saveTimer=null;this.store.save(this.exportMetadata()).catch(()=>{});},250);}
   cacheChanged(){this.scheduleSave();}
@@ -183,19 +184,19 @@ class VkProvider {
     const playlists=context.kind==='library'?this.absorbPlaylists(raw.playlists,raw.route,{revision:context.sidebarRevision??this.sidebarRevision??0}):[];
     return{tracks:Array.from(context.items.values()),playlists,playlistsRevision:this.sidebarRevision||0,partial:true,title:context.title};
   }
-  absorbRows(raw,context){this.metadataRevision=(this.metadataRevision||0)+1;
+  absorbRows(raw,context){let contentChanged=false;
     if(cover(raw.cover))context.cover=cover(raw.cover);
     const occurrences=new Map();
     for(const row of raw.rows){
       if(!row.key||!row.title)continue;
-      const occurrenceKey=JSON.stringify([row.key,row.title,row.artist,row.time]);const occurrence=occurrences.get(occurrenceKey)||0;occurrences.set(occurrenceKey,occurrence+1);
+      const occurrenceKey=row.key;const occurrence=occurrences.get(occurrenceKey)||0;occurrences.set(occurrenceKey,occurrence+1);
       const signature=JSON.stringify([context.playlistId||context.cacheId||raw.route,context.scope,row.key,row.title,row.artist,row.time,context.cacheId?occurrence:0]);
-      let id=this.handles.get(signature);if(!id){id=randomUUID();this.handles.set(signature,id);}
-      const duration=(row.time||'').split(':').map(Number).reduce((a,b)=>a*60+b,0)||0;
-      const track={id,title:row.title,artist:row.artist||'Неизвестный исполнитель',duration,available:row.available!==false&&duration>0,...trackMeta(row),owned:context.kind==='library'?true:typeof row.owned==='boolean'?row.owned:this.ownedAccount===this.root?this.ownedKeys?.has(row.key):undefined};
-      this.tracks.set(id,{...row,...track,route:raw.route,scope:context.scope});context.items.set(id,track);
+      const stable=JSON.stringify([context.playlistId||context.cacheId||raw.route,context.scope,row.key,context.cacheId?occurrence:0]);let id=this.handles.get(stable)||this.handles.get(signature);if(!id)id=randomUUID();this.handles.set(stable,id);this.handles.set(signature,id);
+      const duration=Number.isFinite(row.duration)?Math.max(0,row.duration):(row.time||'').split(':').map(Number).reduce((a,b)=>a*60+b,0)||0;
+      const content=require('./content-cache.cjs').contentFor(this,row);const candidate={id,title:content.title,artist:content.artist||'Неизвестный исполнитель',duration,available:row.available!==false&&duration>0,...content.content,contentSignature:content.signature,owned:context.kind==='library'?true:typeof row.owned==='boolean'?row.owned:this.ownedAccount===this.root?this.ownedKeys?.has(row.key):undefined};
+      const previous=context.items.get(id)||context.refreshTarget?.items.get(id),track=previous&&JSON.stringify(previous)===JSON.stringify(candidate)?previous:candidate;if(track!==previous)contentChanged=true;this.tracks.set(id,{...this.tracks.get(id),...row,...track,route:raw.route,scope:context.scope});context.items.set(id,track);
     }
-    if(context.cacheId&&raw.total!==null&&raw.total!==undefined)context.total=raw.total;
+    if(contentChanged)this.metadataRevision=(this.metadataRevision||0)+1;if(context.cacheId&&raw.total!==null&&raw.total!==undefined)context.total=raw.total;
   }
   artworkPalette(id){return require('./cover-palette.cjs').palette(this,id);}
   async collectionDetails(id){const item=this.playlists.get(id),root=this.root;if(typeof id!=='string'||!item?.vkId||!this.online||!this.network||this.authTransition)throw Error('Откройте список при подключении к VK');const result=await require('./collection-management.cjs').details(this.network,{root,playlist:item});if(this.root!==root||this.authTransition)throw Error('Аккаунт изменился');return result;}

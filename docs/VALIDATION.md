@@ -1,6 +1,10 @@
 # Проверки Wave
 
-Версия: **1.1.9.7 Stable**. Дата: 27 октября 2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+Версия: **1.1.9.8 Stable**. Дата: 27 октября 2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+
+## 1.1.9.8 · Общий контентный кэш
+
+Новый [CONTENT-CACHE.md](CONTENT-CACHE.md) описывает границы всех слоёв. Node-регрессии cover sparse/fingerprint/стабильныйID/повторное использованиеobjects/реальная смена metadata/restore/availability&owned, disk payloads+ETag304/account isolation/purge, lyrics persistence+whitelist. Изолированный runtime: diskArtwork.requests=1,reused=true после нового экземпляра и Electron PNG decode; incrementalRows.rows=true,images=true,requests=1,total=3 после добавления одной записи. Detach→sweep→reattach старой строки сохраняет img, новых запросов нет. Artwork применяется к спискам/шапкам/артистам/mini, мини-IPC ограничен одним readonly методом. Текстовый кэш входит в существующее шифрованное metadata-хранилище. Реальные VK лайки/коллекция ради проверки не менялись.
 
 ## 1.1.9.7 · Плотная навигация артиста
 
