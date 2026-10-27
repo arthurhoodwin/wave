@@ -1,12 +1,14 @@
 # Проверки Wave
 
-Версия в работе: **1.2.0-beta.1**, установлена Alpha2. Дата: 27 октября 2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+Версия: **1.2.0-beta.1**, опубликована и установлена. Дата: 27 октября 2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
 
 ## 1.2.0-beta.1 · Обратная связь и восстановление
 
 Итог442 Node-теста и три Electron-гейта прошли. Реальная запись/снятие — отдельный проверенный сценарий; долгий реальный playback остаётся непроверенным.
 
 Разрешённая реальная проверка: одна common-запись, add ACK=true/getById.dislike=true, remove ACK=true/getById без поля как в исходном состоянии. Первоначальная строгая трактовка отсутствия поля остановила тест до записи; по серверному переходу и SDK подтверждено omitted=false. Коллекция/лайки не изменялись, Wave возвращён. Read/write guards и границы: [VK-MIX-FEEDBACK.md](VK-MIX-FEEDBACK.md).
+
+[CI40573128857](https://github.com/arthurhoodwin/wave/actions/runs/40573128857) успешен наd8514157bdc91bbfc380720c124187aa40e9b7b1:442 Node-теста и три Electron-гейта. Все145 упакованных исходников совпали, FileVersion1.2.0.100. Подписанный пакет отAlpha2 —336258байт; применение/откат совпали по77 файлам. Git TLS дважды оборвался, Windows TLS также не завершил handshake; Git Data API передал30 blob, tree f4d152fc67f2f39b392eeea5d2d2188e94d686cf и тот же commit SHA без переписывания тега. Все3assetdigest проверены, [Beta1 опубликована](https://github.com/arthurhoodwin/wave/releases/tag/v1.2.0-beta.1) как prerelease, Latest=v1.1.9.9. Обычное закрытиеPID16688 безforce, installer exit0, все77 файлов совпали, окно отвечает. Отчёты work/probe120b1-contract.json, qa120b1-real-patch.json, installed120b1-summary.json, installed120b1-files.json, ota120b1/api-push.json. Сохранены текущая canonical Beta1 и нужная Stable1199; старые именованные файлы Alpha2 и temporary bases/check удалены.
 
 ## 1.2.0-alpha.2 · Живая очередь и новая карточка
 
