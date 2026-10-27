@@ -7,7 +7,7 @@
   root.setAttribute('aria-busy',String(feed.state==='loading'||!!feed.refreshing));
   setText(view.status,feed.state==='loading'?'Загружаем подборки VK…':feed.stale?'Не удалось обновить. Показаны сохранённые подборки.':feed.state==='ready'&&feed.partial?'Часть подборок VK сейчас недоступна':feed.state==='unavailable'?(state.online?(feed.reason==='empty'?'Подборки VK пока не найдены.':feed.reason==='schema'?'Не удалось прочитать подборки VK.':'Не удалось загрузить подборки VK.'):'Подключитесь к сети, чтобы загрузить подборки VK'):'');
   view.status.classList.toggle('hidden',!view.status.textContent);view.retry.classList.toggle('hidden',!state.online||!(feed.state==='unavailable'||feed.partial||feed.stale));view.retry.disabled=!!feed.refreshing;view.retry.setAttribute('aria-busy',String(!!feed.refreshing));view.retry.onclick=retry;
-  const desired=[view.status,view.retry],alive=new Set(),active=document.activeElement;
+  const desired=[...(window.WaveMix?.homeNode?[WaveMix.homeNode]:[]),view.status,view.retry],alive=new Set(),active=document.activeElement;
   for(const section of sections){if(!section.items?.length)continue;alive.add(section.id);let group=view.groups.get(section.id);
    if(!group){group={node:el('section','recommendation-section'),heading:el('h2'),grid:el('div','home-grid'),cards:new Map(),data:{},fresh:true};group.node.dataset.feed=section.id;group.node.append(group.heading,group.grid);view.groups.set(section.id,group);}
    Object.assign(group.data,section);setText(group.heading,section.title);const cards=[],items=new Set();

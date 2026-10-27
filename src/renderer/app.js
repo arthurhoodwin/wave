@@ -227,6 +227,7 @@ function saveView(){window.WaveArtistUI?.remember();if(!state.ready||state.loadi
 function navigationButtons(){$('nav-back').disabled=navigation.index<=0;$('nav-forward').disabled=navigation.index<0||navigation.index>=navigation.entries.length-1;}
 function navigationReset(){navigation.entries=[];navigation.index=-1;navigation.views.clear();navigation.snapshots.clear();persistViews();state.filter='';state.sort='original';state.albums=[];state.contributions=[];navigationButtons();}
 async function navigate(route,refresh=false,preserve=false,traveling=false){
+ if(route.type==='mix')route={type:'home'};
  window.WavePlaylistControls?.resetSearch();window.WaveMusicLinks?.cancel();
  if(!state.ready)return loadRoute(route,refresh,preserve);
  saveView();const key=routeKey(route),saved=navigation.views.get(key),snapshot=navigation.snapshots.get(key);
@@ -328,7 +329,7 @@ function trackActions(track,anchor){
  if(window.WaveCollection?.menu(track,anchor))return;
  const root=window.WaveRowMenu?window.WaveRowMenu.open(track,anchor):(collectionDialog(track.title),$('collection-options'));const action=(label,fn)=>{const b=el('button','collection-action',label);b.type='button';b.setAttribute('role','menuitem');b.onclick=()=>{window.WaveRowMenu?.close();fn();};root.append(b);};
  const remove=(title,help,action,command)=>{collectionDialog(title);$('collection-help').textContent=help;$('collection-confirm').classList.toggle('hidden',false);$('collection-confirm').classList.toggle('danger-action',true);$('collection-confirm').textContent=action;$('collection-confirm').onclick=()=>synchronise(command);};
- action('Скопировать ссылку',()=>window.WaveMusicLinks?.copy('track',track.id));
+ action('Скопировать ссылку',()=>window.WaveMusicLinks?.copy('track',track.id));if(window.WaveMix){action('Микс по песне',()=>WaveMix.track(track.id).catch(fail));if(track.artistRoute?.includes('/artist/'))action('Микс по исполнителю',()=>WaveMix.artist(track.id).catch(fail));}
  action('Добавить в плейлист…',()=>addToPlaylist(track));
  if(ownPlaylist()){action('Удалить из этого плейлиста',()=>remove('Удалить песню из плейлиста?','«'+track.title+'» будет удалена только из этого плейлиста.','Удалить из плейлиста',{action:'remove',playlistId:state.route.id,trackId:track.id}));
   if(state.cacheState==='complete'&&!state.filter&&(!state.sort||state.sort==='original'))action('Переместить на позицию…',()=>{const tracks=state.allTracks.slice(),id=state.route.id;collectionForm('Порядок песен','Позиция от 1 до '+tracks.length,String(tracks.findIndex(t=>t.id===track.id)+1),value=>{const index=Number(value)-1;if(!Number.isInteger(index)||index<0||index>=tracks.length){$('collection-help').textContent='Введите целую позицию от 1 до '+tracks.length;return;}const others=tracks.filter(t=>t.id!==track.id);synchronise({action:'move',playlistId:id,trackId:track.id,beforeTrackId:others[index]?.id||null});},{number:true,max:tracks.length});});

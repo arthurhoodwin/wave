@@ -45,7 +45,7 @@
   const root=window.WaveRowMenu.open(track,anchor),ids=selection.ids(inView()),blocked=!state.online||state.collectionBusy||!!phase;
   const caption=el('p','selection-menu-caption','Выбрано: '+ids.length+(state.partial||state.cacheState==='loading'?' · загруженные песни':''));root.append(caption);
   const action=(label,fn,disabled=false)=>{const b=el('button','collection-action',label);b.type='button';b.setAttribute('role','menuitem');b.disabled=disabled;b.onclick=()=>{window.WaveRowMenu.close();try{Promise.resolve(fn()).catch(fail);}catch(e){fail(e);}};root.append(b);};
-  if(ids.length===1)action('Скопировать ссылку',()=>window.WaveMusicLinks?.copy('track',ids[0]));
+  if(ids.length===1)action('Скопировать ссылку',()=>window.WaveMusicLinks?.copy('track',ids[0]));if(ids.length===1&&window.WaveMix)action('Микс по песне',()=>WaveMix.track(ids[0]),blocked);
   action('В «Мне нравится»',()=>prepare({action:'like',trackIds:ids}),blocked);
   action('Добавить в плейлист…',()=>add(),blocked);
   action('Скачать',()=>window.WavePersonal.download(ids),blocked||!window.WavePersonal);
