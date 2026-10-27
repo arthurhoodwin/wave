@@ -94,3 +94,5 @@ dist/                   Игнорируемые результаты сборк
 Повторное использование контента и его валидаторы: [CONTENT-CACHE.md](CONTENT-CACHE.md).
 
 VK Микс1.2: [контракт и границы Alpha](VK-MIX.md). main/mix-session.cjs владеет потоком; renderer/mix-ui.js — его маршрут и действия.
+
+Следующий этап Микса: [обратная связь и восстановление](VK-MIX-FEEDBACK.md); main/mix-feedback.cjs и renderer/mix-feedback.js отделены от мутаций коллекции.

@@ -8,7 +8,7 @@ const has=name=>typeof api?.[name]==='function';
 const format=n=>{n=Math.max(0,Math.floor(Number(n)||0));return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
 function message(text='',error=false){if(!error&&text&&!/Загружа|Войдите|Подключ|Нет |Не |В этом|Ничего|Порядок .*не|Список.*измен/i.test(text)&&window.WaveToast){window.WaveToast.show(text);return;}$('message').textContent=text;$('message').classList.toggle('error',error);}
 function fail(e){message(e?.message||String(e)||'Не удалось выполнить действие',true);}
-function requireResult(r){if(r&&((r.ok===false)||r.error))throw Object.assign(new Error(typeof r.error==='string'?r.error:r.error?.message||r.message||'Ошибка VK'),{kind:r.error?.kind,unavailableIds:r.error?.unavailableIds});return r;}
+function requireResult(r){if(r&&((r.ok===false)||r.error))throw Object.assign(new Error(typeof r.error==='string'?r.error:r.error?.message||r.message||'Ошибка VK'),{kind:r.error?.kind,uncertain:r.error?.uncertain===true,unavailableIds:r.error?.unavailableIds});return r;}
 async function call(name,...args){if(!has(name))throw new Error('Эта функция пока недоступна. Обновите Wave.');return requireResult(await api[name](...args));}
 function el(tag,cls,text){const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x;}
 function mix(items){const a=items.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -17,7 +17,7 @@ function setIcon(node,name,fallback){if(window.WaveIcons)window.WaveIcons.set(no
 const trackNumberFormat=new Intl.NumberFormat('ru-RU'),trackPlural=new Intl.PluralRules('ru-RU');function countTracks(n){const form=trackPlural.select(n);return trackNumberFormat.format(n)+' '+(form==='one'?'трек':form==='few'?'трека':'треков');}
 let controlsSignature;
 function controls(){
- window.WaveMix?.render();window.WaveArtistNavigation?.render();window.WaveHero?.render();window.WavePlaylistControls?.render();window.WaveManagement?.render();
+ window.WaveMixFeedback?.render();window.WaveMix?.render();window.WaveArtistNavigation?.render();window.WaveHero?.render();window.WavePlaylistControls?.render();window.WaveManagement?.render();
  window.WaveUI?.ranges();window.WavePersonal?.controls();window.WaveRowActions?.update();
  window.waveDesktop?.publish();window.WaveSong?.controls();window.WaveCollection?.controls();
  const signature=JSON.stringify([state.refreshing,state.online,state.nativePlayback,state.localRevision,state.current?.id,state.current?.local,playable(state.current),state.playing,state.busy,state.loading,state.ready,state.collectionBusy,state.shuffle,state.repeat,state.duration>0,(state.hasPlayableTracks??state.tracks.some(playable)),hasNextTrack(),!!previousTrack(),!!ownPlaylist(),has('mutate'),has('volume'),has('seek')]);
@@ -108,8 +108,9 @@ async function playSelection(i){
 }
 let indexedLoop,indexedOrder;
 function contextIndex(){if(indexedLoop!==state.loop){indexedLoop=state.loop;indexedOrder=new Map();state.loop.forEach((t,i)=>{if(Number.isSafeInteger(t.contextOrder)&&!indexedOrder.has(t.contextOrder))indexedOrder.set(t.contextOrder,i);});}const index=indexedOrder.get(state.current?.contextOrder);return index!==undefined&&state.loop[index]?.id===state.current?.id?index:state.loop.findIndex(t=>t.contextOrder===state.current?.contextOrder);}
-function followingTrack(index){for(let i=index+1;i<state.loop.length;i++)if(playableNow(state.loop[i]))return state.loop[i];}
-function hasNextTrack(){const index=contextIndex();return index>=0&&(!!followingTrack(index)||state.online&&state.playContext?.cacheState==='loading'||(state.repeat==='all'&&contextComplete()&&state.loop.some(playableNow)));}
+function nextPlayable(t){return playableNow(t)&&!(state.playContext?.mixId&&state.playContext.mixExcluded?.has(t.id));}
+function followingTrack(index){for(let i=index+1;i<state.loop.length;i++)if(nextPlayable(state.loop[i]))return state.loop[i];}
+function hasNextTrack(){const index=contextIndex();return index>=0&&(!!followingTrack(index)||state.online&&state.playContext?.cacheState==='loading'||(state.repeat==='all'&&contextComplete()&&state.loop.some(nextPlayable)));}
 function contextComplete(){return !state.online||(!state.playContext?.cacheId&&!state.playContext?.searchContextId&&!state.playContext?.mixId)||state.playContext.cacheState==='complete';}
 function previousTrack(){const index=contextIndex();for(let i=index-1;i>=0;i--)if(playableNow(state.loop[i]))return state.loop[i];}
 async function next(ended=false){
@@ -121,7 +122,7 @@ async function next(ended=false){
  const index=contextIndex();if(index<0)return;
  let following=followingTrack(index);
  if(!following&&state.online&&state.playContext?.cacheState==='loading'){state.pendingNext=true;state.pendingNextEnded=ended;controls();if(state.playContext.mixId)await window.WaveMix?.more(state.playContext);else if(state.playContext.searchContextId)await advanceSearchContext();return;}
- if(!following&&state.repeat==='all'&&contextComplete())following=state.loop.find(playableNow);
+ if(!following&&state.repeat==='all'&&contextComplete())following=state.loop.find(nextPlayable);
  state.pendingNext=false;if(following)await playTrack(following);
 }
 async function advanceSearchContext(){const ctx=state.playContext;if(!ctx?.searchContextId||ctx.advancing)return;ctx.advancing=true;let again=false;try{const r=await call('searchPage',ctx.searchContextId);if(state.playContext!==ctx)return;if(!Array.isArray(r.tracks))throw Error('Не удалось загрузить продолжение поиска. Повторите переключение.');if(r.partial&&r.tracks.length<=state.loop.length)throw Error('VK не вернул новые песни. Повторите переключение.');if(JSON.stringify(state.route)===ctx.routeKey){state.allTracks=r.tracks;state.listDescription=typeof r.description==='string'?r.description:'';state.partial=r.partial;trackList();}updatePlaybackCache({tracks:r.tracks,cacheState:r.partial?'loading':'complete'});again=state.pendingNext&&r.partial;}catch(e){if(state.playContext===ctx){state.pendingNext=false;fail(e);}}finally{ctx.advancing=false;if(again&&state.playContext===ctx)next(state.pendingNextEnded).catch(fail);}}
