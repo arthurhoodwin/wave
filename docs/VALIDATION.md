@@ -6,6 +6,8 @@
 
 artist-navigation.js переносит существующие tabs/toolbar/release-tools в общий ряд и возвращает прежние узлы на исходные места при уходе с артиста. Отдельная строка действий под вкладками отсутствует, release sort использует SVG-menu с сохранением select/change-контракта. Runtime: оба ряда действий совпадают по центру со вкладками, от границы tabs до table/grid —13px вместо пустой полосы; pending, focus, scroll restore и узкие окна проверены. Снимок artist-tracks.png просмотрен.
 
+Итог407 Node-тестов и три Electron-гейта прошли; [CI40423384288](https://github.com/arthurhoodwin/wave/actions/runs/40423384288) успешен на31dd82bb72816253e50597f6d7b0d9534b971fe0. artistSpacing/releaseSpacing: sameRow=true,gap=13px. Все135 source-файлов совпали с ASAR, FileVersion1.1.9.700. OTA от1.1.9.6 —280347байт; применение/откат совпали по77 файлам. Каталог44 подписанных перехода. Все пятьassetdigest проверены,1.1.9.7 опубликованаLatest. Установщикexit0, обычное завершениеPID8464 безforce; все77 файлов совпали, новое окно отвечает. Отчёты: work/qa1197-real-patch.json, installed1197-summary.json, installed1197-files.json, ota1197/packages.log.
+
 ## 1.1.9.6 · Кнопки истории
 
 Shared toolbar подключён кlistenHistory. Изолированный сценарий проверяет видимые sort/search в track-list-actions, закрытое начальное поле, фильтрацию песни и выбранный пункт «Недавно прослушанные» в общем меню. Категории альбомов/плейлистов продолжают скрывать track-section целиком.
