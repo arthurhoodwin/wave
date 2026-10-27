@@ -92,3 +92,5 @@ dist/                   Игнорируемые результаты сборк
 Подписанные OTA-переходы1.1.9 и окно поддержки: [OTA-UPDATES.md](OTA-UPDATES.md).
 
 Повторное использование контента и его валидаторы: [CONTENT-CACHE.md](CONTENT-CACHE.md).
+
+VK Микс1.2: [контракт и границы Alpha](VK-MIX.md). main/mix-session.cjs владеет потоком; renderer/mix-ui.js — его маршрут и действия.

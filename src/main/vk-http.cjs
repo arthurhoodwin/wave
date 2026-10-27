@@ -1,7 +1,7 @@
 'use strict';
 const {cover,artistRoute}=require('./navigation-meta.cjs');
 const CLIENT='6287487',VERSION='5.269';
-const METHODS=new Set(['audio.get','audio.getPlaylists','audio.getPlaylistById','audio.getById','audio.getLyrics','audio.search','audio.getAudiosByArtist','catalog.getAudio','catalog.getSection','catalog.getAudioArtist','catalog.getAudioSearch','catalog.getBlockItems','users.get','audio.createPlaylist','audio.editPlaylist','audio.deletePlaylist','audio.followPlaylist','audio.followArtist','audio.unfollowArtist','audio.add','audio.delete','audio.restore']);
+const METHODS=new Set(['audio.get','audio.getPlaylists','audio.getPlaylistById','audio.getById','audio.getLyrics','audio.getStreamMixAudios','audio.getStreamMixSettings','audio.search','audio.getAudiosByArtist','catalog.getAudio','catalog.getSection','catalog.getAudioArtist','catalog.getAudioSearch','catalog.getBlockItems','users.get','audio.createPlaylist','audio.editPlaylist','audio.deletePlaylist','audio.followPlaylist','audio.followArtist','audio.unfollowArtist','audio.add','audio.delete','audio.restore']);
 class VkError extends Error{constructor(kind,message,{code,uncertain=false}={}){super(message);this.name='VkError';this.kind=kind;this.code=code;this.uncertain=uncertain;}}
 const keyOf=a=>Number.isSafeInteger(Number(a?.owner_id))&&Number(a.owner_id)!==0&&Number.isSafeInteger(Number(a?.id))&&Number(a.id)>0?String(a.owner_id)+'_'+a.id:null;
 const playlistKeyOf=p=>keyOf(p)||(p?.type==='generated'&&Number.isSafeInteger(Number(p.owner_id))&&Number(p.owner_id)!==0&&Number.isSafeInteger(Number(p.id))&&Number(p.id)<0?String(p.owner_id)+'_'+p.id:null);
@@ -55,6 +55,8 @@ class VkHttpClient{
    if(!Object.hasOwn(response,'response'))throw new VkError('protocol','Неполный ответ VK',{uncertain:write});this.state('ready');return response.response;
   }throw new VkError('auth','Не удалось восстановить подключение к VK.');
  }
+ async mixAudios({signal}={}){const raw=await this.call('audio.getStreamMixAudios',{mix_id:'common'},{signal,fresh:true,priority:'playback'});if(!Array.isArray(raw)||raw.length>100)throw new VkError('protocol','VK вернул непонятную порцию Микса');this.rememberAudio(raw);return{rows:raw.map(audioRow).filter(Boolean)};}
+ async mixSettings({signal}={}){return this.call('audio.getStreamMixSettings',{mix_id:'common'},{signal});}
  rememberAudio(items){for(const a of items||[]){const key=keyOf(a);if(key)this.audioRefs.set(key,{owner:Number(a.owner_id),id:Number(a.id),accessKey:typeof a.access_key==='string'?a.access_key:undefined,album:a.album&&keyOf(a.album)?{...a.album}:this.audioRefs.get(key)?.album,albumChecked:Object.hasOwn(a,'album')||this.audioRefs.get(key)?.albumChecked===true,hasLyrics:a.has_lyrics===true||a.has_lyrics===1||!!a.lyrics_id});}}
  rememberPlaylist(items,{complete=false}={}){for(const p of items||[]){const key=playlistKeyOf(p);if(!key)continue;const old=this.playlistRefs.get(key);if(old?.complete&&!complete){if(typeof p.access_key==='string')old.accessKey=p.access_key;continue;}this.playlistRefs.set(key,{owner:Number(p.owner_id),id:Number(p.id),accessKey:typeof p.access_key==='string'?p.access_key:old?.accessKey,source:p,complete});}}
  async pages(method,params,{limit=500,max=100000,onPage,priority='interactive',fresh=false}={}){

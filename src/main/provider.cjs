@@ -136,13 +136,14 @@ class VkProvider {
     const s=this.network?{ready:!!this.network.accountId,root:this.network.accountId?'/audios'+this.network.accountId:null}:await this.engine.evaluate(expression(()=>({ready:!!window.vk?.id,root:Number.isSafeInteger(Number(window.vk?.id))&&Number(window.vk?.id)>0?'/audios'+window.vk.id:null})));
     if(s?.ready&&/^\/audios\d+$/.test(s.root||'')){
       if(this.root&&this.root!==s.root){this.lyricsSources?.clear();this.batchPlans?.clear();this.ownedKeys?.clear();this.ownedAccount=null;if(this.runningBatch)this.runningBatch.cancelled=true;
-        ++this.playRequest;++this.warmRequest;try{if(this.active)await this.pause();}catch{}
+        this.mixSession?.clear();++this.playRequest;++this.warmRequest;try{if(this.active)await this.pause();}catch{}
         if(this.editor!==this.network)await this.editor?.close();if(this.network){this.network.audioRefs.clear();this.network.playlistRefs.clear();await this.nativePlayer?.stop();}this.editor=null;this.operationLog=[];this.operationChanged();await this.cache.close();this.cache=new PlaylistCache(this.engine,(raw,context)=>this.absorbRows(raw,context),entry=>this.cacheChanged(entry));this.tracks.clear();this.musicLinkRefs?.clear();this.searchArtists?.clear();this.searchEntries?.clear();this.artistController?.abort();this.searchController?.abort();this.handles.clear();this.playlists.clear();this.playlistHandles.clear();this.savedPlaylists=[];this.collection=null;this.active=null;this.setSession({state:'signedOut',accountChanged:true});
       }
       this.root=s.root;if(!this.network&&typeof this.engine.fork==='function'){this.editor??=this.network||new CollectionEditor(this.engine);this.editor.warm(this.root); }const next=this.setSession({state:'ready',cached:false,verifying:false,...(this.nativePlayer?{nativePlayback:true,volume:this.nativePlayer.state().volume}:{})});const library=this.cache.byPlaylist.get('library:'+this.root);if(library?.stale)this.refreshCollection(library);return next;
     }
     return this.setSession({state:this.root?'cached':'signedOut',cached:!!this.root,verifying:false,message:this.root?'Войдите в VK для воспроизведения. Сохранённые списки доступны.':'Войдите в отдельном окне VK.'});
   }
+  mix(input){this.mixSession??=new (require('./mix-session.cjs').MixSession)(this);return this.mixSession.command(input);}
   prepareTrack(input){if(!input||Object.keys(input).some(k=>!['id','fromId'].includes(k))||typeof input.id!=='string'||typeof input.fromId!=='string')throw Error('Некорректная подготовка');const track=this.tracks.get(input.id);if(!this.online||!this.nativePlayer||!track||!track.available)return{prepared:false};return this.nativePlayer.prepare(track,input.fromId);}
   discardPrepared(){this.nativePlayer?.dropPrepared();return true;}
   async transitionTrack(input){if(!input||Object.keys(input).some(k=>!['id','fromId','seconds'].includes(k))||typeof input.id!=='string'||typeof input.fromId!=='string'||!Number.isFinite(input.seconds)||input.seconds<0||input.seconds>12)throw Error('Некорректный переход');const track=this.tracks.get(input.id);if(!this.online||!this.nativePlayer||!track||!track.available)throw Error('Выберите доступную песню');const result=await this.nativePlayer.transition(track,input.fromId,input.seconds);if(!result.prepared)return{prepared:false};this.active={...track};return result;}
@@ -285,6 +286,7 @@ class VkProvider {
   });}
   async play(id){
     let position=0;if(id&&typeof id==='object'){if(Object.keys(id).some(k=>!['id','position'].includes(k))||typeof id.id!=='string'||!Number.isFinite(id.position)||id.position<0||id.position>604800)return Promise.reject(Error('Некорректная позиция песни'));position=id.position;id=id.id;}
+    if(this.mixSession?.entry&&!this.mixSession.entry.items.has(id))this.mixSession.stop();
     let track=this.tracks.get(id);
     if(!track)return Promise.reject(Error('Список устарел. Обновите его.'));
     const local=await this.hasLocal?.(track.key);if(local){track={...track,available:true,local:true,duration:track.duration>0?track.duration:local.track?.duration||0};this.tracks.set(track.id,track);}
