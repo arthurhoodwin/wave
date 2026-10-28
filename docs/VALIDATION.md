@@ -1,10 +1,12 @@
 # Проверки Wave
 
-Версия в работе: **1.2.0-beta.3**, установлена Beta2. Дата:28 октября2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+Версия: **1.2.0-beta.3**, опубликована и установлена. Дата:28 октября2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
 
 ## 1.2.0-beta.3 · Подсказка громкости
 
 448 Node-тестов и три Electron-гейта прошли. volumeBubble:idle=true,text=37%,above=true,offset0,183px,released=true. songVolumeBubble:visible=true,text55%,mainHidden=true,released=true. miniVolumeBubble:idle=true,visible=true,text42%. Range aria-valuetext сохранён, подсказка aria-hidden не дублирует объявление. Root overflow и targetAreas1100 остались чистыми.
+
+[CI40760019268](https://github.com/arthurhoodwin/wave/actions/runs/40760019268) прошёл наd17bcf68050f4ece7b9c122709c173c664ad0ca7. Все146 упакованных исходников совпали; FileVersion1.2.0.102. Подписанное обновление отBeta2 —139427байт, применение/откат совпали по77 файлам. [Beta3 опубликована](https://github.com/arthurhoodwin/wave/releases/tag/v1.2.0-beta.3) как prerelease, все3assetdigest проверены, Latest=v1.1.9.9. Установка: обычное закрытиеPID11284 безforce, installer exit0, все77 файлов совпали, окно отвечает. Финальное ожидание80ms перед demo screenshot обеспечивает кадр с видимой подсказкой; production src не менялся. Старые именованные файлы Beta2 и temporary bases/check удалены, текущая canonical Beta3 и нужная Stable1199 сохранены. Отчёты work/qa120b3-real-patch.json, installed120b3-summary.json, installed120b3-files.json.
 
 ## 1.2.0-beta.2 · EQ, управление и обложки
 
