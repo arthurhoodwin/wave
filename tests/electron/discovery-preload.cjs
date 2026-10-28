@@ -19,6 +19,6 @@ contextBridge.exposeInMainWorld('music',{
  playlist:async id=>({description:'Описание &amp; детали<br>Вторая строка',cover:image,tracks,title:id===albumId?'damage (Deluxe)':'Алгоритмический список',kind:id===albumId?'album':'playlist',generated:id==='generated',partial:false,...(id===albumId?{albumMetadata:{id:albumId,title:'damage (Deluxe)',confirmed:true}}:{})}),
  trackAlbum:async()=>{counters.albums++;if(albumGate)await albumGate;return{id:albumId,title:'damage',confirmed:true};},
  lyrics:async()=>({text:'Демонстрационный текст.',source:'VK'}),cancelLyrics:async()=>({}),cancelSearch:async()=>({}),
- play:async()=>{counters.plays++;return{playing:true};},pause:async()=>({playing:false}),resume:async()=>({playing:true}),volume:async()=>({}),seek:async()=>({}),
+ play:async()=>{counters.plays++;return{playing:true};},pause:async()=>({playing:false}),resume:async()=>({playing:true}),volume:async value=>({volume:value}),seek:async()=>({}),
  onPlaybackCommand:()=>()=>{},onSession:fn=>{sessionListeners.add(fn);return()=>sessionListeners.delete(fn);},onPlayerState:()=>()=>{},onOperations:()=>()=>{},search:async()=>({tracks,entities:[],partial:false}),searchHistory:async()=>({queries:[]})
 });

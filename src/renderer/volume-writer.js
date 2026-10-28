@@ -6,3 +6,15 @@ class VolumeWriter{
  idle(){if(!this.pending&&!this.timer)return Promise.resolve();return new Promise(r=>this.waiters.push(r));}
 }
 if(typeof module==='object'&&module.exports)module.exports={VolumeWriter};else window.VolumeWriter=VolumeWriter;
+
+if(typeof window!=='undefined')(()=>{
+ for(const [inputId,outputId] of [['volume','volume-value'],['song-volume','song-volume-value']]){
+  const input=document.getElementById(inputId),output=document.getElementById(outputId);if(!input||!output)continue;
+  const track=document.createElement('span');track.className='volume-track';input.before(track);track.append(input,output);input.style.width='100%';input.style.minWidth='0';input.style.flex='1 1 auto';output.classList.add('volume-bubble','hidden');output.setAttribute('aria-hidden','true');let dragging=false,timer;
+  const hide=()=>{clearTimeout(timer);output.classList.add('hidden');};
+  const position=()=>{const min=Number(input.min)||0,max=Number(input.max)||1,part=Math.max(0,Math.min(1,(Number(input.value)-min)/(max-min||1))),width=input.clientWidth;output.textContent=Math.round(part*100)+'%';output.style.left=(7+Math.max(0,width-14)*part)+'px';};
+  const show=()=>{clearTimeout(timer);position();output.classList.remove('hidden');};
+  input.addEventListener('pointerdown',()=>{dragging=true;show();});input.addEventListener('input',()=>{show();if(!dragging)timer=setTimeout(hide,700);});
+  const finish=()=>{if(dragging){dragging=false;hide();}};window.addEventListener('pointerup',finish);window.addEventListener('pointercancel',finish);input.addEventListener('blur',()=>{dragging=false;hide();});window.addEventListener('resize',()=>{if(!output.classList.contains('hidden'))position();});
+ }
+})();

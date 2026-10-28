@@ -35,3 +35,7 @@
 
 /* Restrained tonal surfaces, shared by main window and mini-player. */
 :root{--gradient-hero:linear-gradient(118deg,#242a2d 0%,#1c2124 48%,#141719 100%);--gradient-raised:linear-gradient(130deg,#252a2d,#1b1f21);--gradient-card:linear-gradient(135deg,#202628,#171b1d)}
+
+.volume-track{position:relative;display:inline-flex;align-items:center;flex:1;min-width:32px}.volume-track input[type=range]{flex:1;min-width:0;width:100%}
+#volume-value.volume-bubble,#song-volume-value.volume-bubble{position:absolute;inset-block-end:calc(100% + 8px);display:block;min-width:32px;padding:4px 7px;border:1px solid var(--border-subtle);border-radius:6px;background:var(--bg-raised);color:var(--text-primary);font-size:12px;line-height:1.3;letter-spacing:0;font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap;transform:translateX(-50%);pointer-events:none;z-index:10}.volume-bubble.hidden{display:none!important}
+@media(forced-colors:active){#volume-value.volume-bubble,#song-volume-value.volume-bubble{background:Canvas;color:CanvasText;border-color:CanvasText}}

@@ -1,6 +1,10 @@
 # Проверки Wave
 
-Версия: **1.2.0-beta.2**, опубликована и установлена. Дата:28 октября2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+Версия в работе: **1.2.0-beta.3**, установлена Beta2. Дата:28 октября2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+
+## 1.2.0-beta.3 · Подсказка громкости
+
+448 Node-тестов и три Electron-гейта прошли. volumeBubble:idle=true,text=37%,above=true,offset0,183px,released=true. songVolumeBubble:visible=true,text55%,mainHidden=true,released=true. miniVolumeBubble:idle=true,visible=true,text42%. Range aria-valuetext сохранён, подсказка aria-hidden не дублирует объявление. Root overflow и targetAreas1100 остались чистыми.
 
 ## 1.2.0-beta.2 · EQ, управление и обложки
 
