@@ -2,22 +2,16 @@
 const {cover}=require('./navigation-meta.cjs');
 const heading=value=>String(value||'').normalize('NFC').replace(/\s+/g,' ').trim();
 const fail=message=>Object.assign(Error(message),{kind:'protocol'});
-function images(value){
- if(typeof value==='string')return cover(value)?[{url:cover(value)}]:[];
- if(Array.isArray(value))return value.flatMap(images);
- if(!value||typeof value!=='object')return[];
- if(value.url)return cover(value.url)?[{url:cover(value.url),width:Number(value.width)||0,height:Number(value.height)||0}]:[];
- return Object.entries(value).filter(([key])=>/^photo_\d+$/.test(key)).flatMap(([,url])=>images(url));
-}
+const {candidates:images,best}=require('./artwork-sources.cjs');
 function artistArtwork(artist){
  if(!artist)return{};
- const choose=items=>items.sort((a,b)=>(b.width||0)*(b.height||0)-(a.width||0)*(a.height||0))[0]?.url;
+ const choose=items=>best(items);
  const photos=images(artist.photo),wide=photos.filter(p=>p.width>0&&p.height>0&&p.width/p.height>=1.8),square=photos.filter(p=>p.width>0&&p.height>0&&p.width/p.height>=.7&&p.width/p.height<=1.4);
  // Named image roles take precedence. Generic artist photos need dimensions;
  // unknown-size photos are checked once on image load, never cropped blindly.
  const banner=choose(images(artist.cover))||choose(images(artist.banner))||choose(wide);
  const avatar=choose(images(artist.avatar))||choose(square);
- return{banner,avatar,profile:!avatar?choose(photos.filter(p=>!wide.includes(p)&&!p.width&&!p.height)):undefined};
+ return{banner,avatar,profile:!avatar?choose(photos.filter(p=>!wide.includes(p)&&(!p.width||!p.height))):undefined};
 }
 function releaseKind(p,section){
  if(section==='contributions')return section;

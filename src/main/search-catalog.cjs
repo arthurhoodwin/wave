@@ -2,7 +2,7 @@
 const {cover,artistRoute}=require('./navigation-meta.cjs');
 const TYPES=['tracks','artists','albums','playlists'];
 const titles={tracks:/^(Все треки|Треки|All tracks|Songs)$/i,artists:/^(Музыканты|Исполнители|Artists|Musicians)$/i,albums:/^(Альбомы|Albums)$/i,playlists:/^(Все плейлисты|Плейлисты|All playlists|Playlists)$/i};
-function image(value){if(typeof value==='string')return cover(value);if(Array.isArray(value))return image(value.at(-1));return cover(value?.url||value?.photo_300||value?.photo_270||value?.photo_135||value?.photo_68);}
+const image=require('./artwork-sources.cjs').best;
 function artistEntity(link){const route=artistRoute(link?.url);if(!route?.includes('/artist/')||typeof link.title!=='string'||!link.title.trim())return null;return{nativeId:route.split('/').at(-1),name:link.title.trim(),cover:image(link.image),route};}
 function parsePage(data,block,type,helpers){const ids=block?block[type==='tracks'?'audios_ids':type==='artists'?'links_ids':'playlists_ids']:[];if(!Array.isArray(ids))throw Error('VK вернул некорректный раздел поиска. Повторите запрос.');
  if(type==='tracks'){const byId=new Map((data.audios||[]).map(a=>[helpers.keyOf(a),a]));const items=ids.map(id=>byId.get(String(id))).filter(Boolean);if(items.length!==ids.length)throw Error('VK вернул неполный раздел песен. Повторите запрос.');helpers.rememberAudio(items);return{rows:items.map(helpers.audioRow).filter(Boolean),entities:[]};}

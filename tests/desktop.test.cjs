@@ -43,3 +43,5 @@ test('native hide and minimize publish visibility even when Chromium background 
  const w=new WindowsIntegration({electron,main,provider:{root:null},directory:'unused'});w.store={load:async()=>null};await w.init();
  try{assert.equal(w.public().mainVisible,true);visible=false;main.emit('hide');assert.equal(states.at(-1).mainVisible,false);visible=true;minimized=true;main.emit('minimize');assert.equal(states.at(-1).mainVisible,false);minimized=false;main.emit('restore');assert.equal(states.at(-1).mainVisible,true);}finally{w.sleep.close();powerMonitor.removeAllListeners();}
 });
+
+test('mini feedback state is current-track scoped and disabled offline',()=>{const w=miniFixture();w.update({currentId:'t',canDislike:true,disliked:true,canUndoDislike:true,feedbackBusy:false});assert.equal(w.public().canDislike,true);assert.equal(w.public().disliked,true);w.provider.online=false;w.update({currentId:'t',canDislike:true,canUndoDislike:true});assert.equal(w.public().canDislike,false);assert.equal(w.public().canUndoDislike,false);w.sleep.close();});

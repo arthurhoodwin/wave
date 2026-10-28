@@ -96,3 +96,5 @@ dist/                   Игнорируемые результаты сборк
 VK Микс1.2: [контракт и границы Alpha](VK-MIX.md). main/mix-session.cjs владеет потоком; renderer/mix-ui.js — его маршрут и действия.
 
 Следующий этап Микса: [обратная связь и восстановление](VK-MIX-FEEDBACK.md); main/mix-feedback.cjs и renderer/mix-feedback.js отделены от мутаций коллекции.
+
+Аудио/EQ: [AUDIO-PIPELINE.md](AUDIO-PIPELINE.md). artwork-sources.cjs выбирает источник по размеру, artwork-content-cache.getSized выдаёт ограниченные варианты для интерфейса.

@@ -1,0 +1,5 @@
+'use strict';
+const {cover}=require('./navigation-meta.cjs');
+function candidates(value,depth=0){if(depth>4)return[];if(typeof value==='string'){const url=cover(value);return url?[{url,width:0,height:0}]:[];}if(Array.isArray(value))return value.slice(0,64).flatMap(v=>candidates(v,depth+1));if(!value||typeof value!=='object')return[];const result=[];if(cover(value.url))result.push({url:cover(value.url),width:Number(value.width)||0,height:Number(value.height)||0});for(const [key,url] of Object.entries(value)){const size=/^photo_(\d+)$/.exec(key);if(size&&cover(url))result.push({url:cover(url),width:Number(size[1]),height:0});}if(Array.isArray(value.sizes))result.push(...candidates(value.sizes,depth+1));return result;}
+function best(value,max=1600){const items=candidates(value),known=items.filter(p=>p.width>0||p.height>0),size=p=>Math.max(p.width,p.height);if(!known.length)return items[0]?.url;const fitting=known.filter(p=>size(p)<=max);return(fitting.length?fitting.sort((a,b)=>size(b)-size(a)):known.sort((a,b)=>size(a)-size(b)))[0]?.url;}
+module.exports={candidates,best};

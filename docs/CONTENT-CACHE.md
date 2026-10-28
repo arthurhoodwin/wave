@@ -36,3 +36,11 @@
 Node: sparse merge, source identity, row reuse, placeholder/real-album update, restart, conditional304/new revision, disk hit/dedup, URL/account isolation, lyrics persistence/whitelist, права не из кэша. Electron: native PNG сохранён/повторно прочитан новым экземпляром без сети; вставка одного track даёт requests=1 для нового изображения, старые row/img references равны; detach/reinsert не оставляет blank. Проверки артистов/mini/metadata/OTA сохраняются. Реальная пользовательская коллекция не менялась, натурные20тыс треков/CPU/GPU не профилировались. Итоги выпуска — [VALIDATION.md](VALIDATION.md).
 
 IPC-регрессия закрыта в1.1.9.9: main принимает optional refresh для lyrics/artworkImage. Тест content-ipc.test.cjs соединяет реальный preload с реальной регистрацией команд и провайдером текста, включая cache hit и forced retry.
+
+## Beta2 · качество без больших текстур в каждой строке
+
+artwork-sources.cjs выбирает наиболее крупный валидный photo_N/size до1600px; если известны только большие размеры — самый маленький из них. Размеры и aspect metadata сохраняются, URL не переписываются. Это распространяется на песни/плейлисты/альбомы/поиск/профили; фото произвольного артиста не объявляется квадратным только из-за photo_N.
+
+На диске остаётся один оригинал с прежними ETag/лимитами. getSized проверяет width64…1600 и создаёт thumbnail по nativeImage без увеличения малого исходника; JPEG сохраняется JPEG90, PNG/WebP с возможной прозрачностью — PNG. Отдельный account+revision+width LRU64/8МиБ очищается вместе с account cache. Renderer выбирает128/256/512/1024/1600 по фактической ширине иDPR, повышает размер при увеличении окна; ключи его LRU включают размер. Главный плеер получает компактный128px вариант, развёрнутый — крупный. Renderer сохраняет прежние96/16МиБ и ленивую загрузку.
+
+Read-only mini artwork IPC также принимает bounded width; lyrics не принимает этот параметр. Реальный800px тестовый PNG уменьшен до128, вариант переиспользован тем же объектом; повторной сети нет. Новые URL более крупной картинки обновляют content fingerprint, старый metadata cache целиком не очищается. Старые offline-копии на диске автоматически не переписываются.
