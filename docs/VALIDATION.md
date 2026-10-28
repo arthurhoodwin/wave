@@ -1,10 +1,12 @@
 # Проверки Wave
 
-Версия в работе: **1.2.0-beta.2**, установлена Beta1. Дата:28 октября2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
+Версия: **1.2.0-beta.2**, опубликована и установлена. Дата:28 октября2026. Текущие результаты и границы проверки. Длительные прогоны и профилирование памяти не выполнялись.
 
 ## 1.2.0-beta.2 · EQ, управление и обложки
 
 448 Node-тестов прошли. Native discovery: bass/vocal tilt9,2633/9,5060дБ, single-band11,9672дБ, bypass=flat; MediaElementSource подключён к одному engine и отсоединён1→0. Пресет включает EQ, кривая128точек,10 полос в одном ряду. Ordinary dislike сохраняет текущую песню; кнопка слева, heartLast=true; eqNext=sleep-open. Mini feedback pressed/undo проверены. Native800px изображение уменьшено до128 и переиспользовано. Нет root overflow1100/650/320 и при200% zoom. [Аудиотракт](AUDIO-PIPELINE.md), [кэш](CONTENT-CACHE.md).
+
+[Beta2 опубликована](https://github.com/arthurhoodwin/wave/releases/tag/v1.2.0-beta.2) как prerelease, все3assetdigest совпали; Latest=v1.1.9.9. [CI40754313874](https://github.com/arthurhoodwin/wave/actions/runs/40754313874) успешен наe57b121b6975a23ec831921971fc584f28834c6b, все448 Node-тестов и три Electron-гейта. Тег1a43638cb48d053ded30919ae58e29abfd31bb2a сохранён: follow-up меняет только размеры окна fixture и дополнительный target-size на1100px, production src не менялся. Первый CI40752698297 сообщил target-size уnow-heart; локальный probe на1100 прошёл, final fixture фиксирует desktop min bounds1440×950 и отдельно проверяет targetAreas1100=[]. Все146 source-файлов совпали с ASAR, FileVersion1.2.0.101. Подписанный пакет отBeta1 —349483байт; применение/откат совпали по77 файлам. Установка: обычное закрытиеPID1748, forced=false, installer exit0, все77 файлов совпали, окно отвечает. Отчёты work/qa120b2-real-patch.json, installed120b2-summary.json, installed120b2-files.json, discovery120b2-minimum.log. Старые именованные файлы Beta1 и disposable base/check/probe-копии удалены; текущая canonical Beta2 и нужная Stable1199 сохранены.
 
 ## 1.2.0-beta.1 · Обратная связь и восстановление
 
