@@ -21,3 +21,12 @@ test('track and artist sources are resolved from registered identities, not rend
 test('closing or replacing a start while server configuration is pending cannot start a late stream',async t=>{let release;const {p,mix}=fixture(t,async()=>({rows:[row(1)]}));p.network.mixSettings=async()=>{await new Promise(r=>release=r);return{settings:{mix_categories:[]}};};const pending=mix.command({action:'open',options:{}});await new Promise(r=>setImmediate(r));await mix.command({action:'stop'});release();await assert.rejects(pending,e=>e.kind==='cancelled');assert.equal(mix.entry,null);});
 
 test('an invalid replacement seed or settings does not stop the working stream',async t=>{const {p,mix}=fixture(t,async()=>({rows:[row(1)]}));p.network.mixSettings=async()=>({settings:{mix_categories:[]}});const first=await mix.command({action:'open'});await assert.rejects(mix.command({action:'open',restart:true,seed:{type:'track',trackId:'missing'}}));assert.equal(mix.snapshot().partial,true);await assert.rejects(mix.command({action:'open',restart:true,options:{invented:'value'}}));assert.equal(mix.snapshot().mixId,first.mixId);assert.equal(mix.snapshot().partial,true);});
+
+test('long stream survives repeated offline failures, context cancellation and restart with bounded retained data',async t=>{
+ let number=0,offline=false;const refs=new Map();const {p,mix}=fixture(t,async()=>{if(offline)throw Error('offline');const rows=[row(++number),row(++number),row(++number)];for(const r of rows)refs.set(r.key,{});return{rows};});p.network.audioRefs=refs;
+ let result=await mix.command({action:'open'});for(let n=0;n<2000;n++){
+  if(n%50===0){offline=true;const before=result.tracks.map(t=>t.id);await assert.rejects(mix.command({action:'more',id:result.mixId,currentId:result.tracks.at(-1)?.id}),/offline/);assert.deepEqual(mix.snapshot().tracks.map(t=>t.id),before);offline=false;}
+  if(n&&n%200===0){mix.stop();assert.equal(mix.snapshot().stopped,true);result=await mix.command({action:'open',restart:true});}
+  result=await mix.command({action:'more',id:result.mixId,currentId:result.tracks.at(-1)?.id});assert(result.tracks.length<=MAX_TRACKS);assert(p.tracks.size<=MAX_TRACKS);assert(refs.size<=MAX_TRACKS);assert(mix.entry.seen.size<=MAX_SEEN);
+ }mix.clear();assert.equal(p.tracks.size,0);assert.equal(refs.size,0);assert.equal(p.handles.size,0);
+});

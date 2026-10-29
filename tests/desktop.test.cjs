@@ -45,3 +45,13 @@ test('native hide and minimize publish visibility even when Chromium background 
 });
 
 test('mini feedback state is current-track scoped and disabled offline',()=>{const w=miniFixture();w.update({currentId:'t',canDislike:true,disliked:true,canUndoDislike:true,feedbackBusy:false});assert.equal(w.public().canDislike,true);assert.equal(w.public().disliked,true);w.provider.online=false;w.update({currentId:'t',canDislike:true,canUndoDislike:true});assert.equal(w.public().canDislike,false);assert.equal(w.public().canUndoDislike,false);w.sleep.close();});
+
+test('unchanged desktop state is not resent, hidden mini stays quiet and showing it publishes current state',()=>{
+ const w=miniFixture(),sent=[],tips=[];let visible=false;
+ w.tray={setToolTip:t=>tips.push(t),setContextMenu(){}};w.Menu={buildFromTemplate:x=>x};w.main.webContents.send=(_channel,s)=>sent.push(['main',s.position]);
+ w.mini={isDestroyed:()=>false,isVisible:()=>visible,webContents:{send:(_channel,s)=>sent.push(['mini',s.position])}};
+ w.update({currentId:'t',position:1});w.publish();w.publish();assert.equal(sent.length,1);assert.equal(tips.length,1);
+ w.update({currentId:'t',position:2});assert.deepEqual(sent.at(-1),['main',2]);assert.equal(tips.length,1);
+ visible=true;w.publish();assert(sent.some(x=>x[0]==='mini'&&x[1]===2));
+ w.provider.tracks.get('t').title='Updated title';w.update({currentId:'t',position:2});assert.equal(tips.at(-1),'Updated title — Artist');w.sleep.close();
+});

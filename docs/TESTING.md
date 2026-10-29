@@ -103,3 +103,7 @@ node --test --test-name-pattern="signed version must equal" tests/github-updater
 1.1.5: download-parallel/download-preferences/mp3-tags проверяют пул, отмену, квоту,429, миграцию настроек, opt-in/aliases/сортировку и сохранение MPEG payload. Discovery Electron также декодирует tagged MP3 и проверяет настройки/сортировку в renderer.
 
 1.1.6: регрессии verified downloadAliases проверяют progress/ready, рестарт, локальное чтение, дедупликацию и отсутствие false positive для одинаковых названий. Legacy-ремонт требует точного совпадения разрешённого media URL, а не метаданных. Discovery UI расширен панелью справа, pin/group/fill, общим listbox в modal, toast без сдвига, скрытым фильтром выдачи, асинхронной галочкой и responsive/reduced-motion/forced-colors.
+
+## Ручной профиль производительности
+
+`npm run profile:electron -- <папка> <имя>` — отдельный изолированный Electron, synthetic audio и текущий renderer. Это необязательный измеритель, не новый обязательный гейт на каждую правку. Сравнивать одинаковые длительности и запускать последовательно. Методика/ограничения и результаты1.2.1 — [PERFORMANCE.md](PERFORMANCE.md).
