@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.2.1 Stable**, 29 октября 2026. Канал stable, Windows FileVersion1.2.1.0. Зависимости закреплены в package-lock.json; Electron45, Node.js24/Windows x64.
+Состояние: **1.2.2 Stable**, 29 октября 2026. Канал stable, Windows FileVersion1.2.2.0. Зависимости закреплены в package-lock.json; Electron45, Node.js24/Windows x64.
 
 ## Границы процессов
 
@@ -124,3 +124,5 @@ mp3-tags.cjs потоково копирует MPEG payload в sibling .tags, д
 UI: select-controls наблюдает select value/options и проксирует change, popup перемещается в открытый modal при необходимости. playlist-controls переносит filter и sort в hero только для списков, не пересоздаёт их при controls polling. Toast manual popover не сдвигает layout. Списки медиатеки объединяют сохранённые и pinned opaque handles, папочные назначения не перезаписываются при pin.
 
 Актуальный аудиотракт и миграция EQ Beta2: [AUDIO-PIPELINE.md](AUDIO-PIPELINE.md).
+
+Постоянные тексты локальных копий — [OFFLINE-LYRICS.md](OFFLINE-LYRICS.md). lyrics-service.cjs выбирает sidecar/cache/network; offline-lyrics.cjs сериализует запись и удаление.
