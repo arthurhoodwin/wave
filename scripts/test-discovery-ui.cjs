@@ -7,7 +7,7 @@ try{
  if(result.status!==0)throw Error(result.stderr||result.stdout||result.error?.message||'Discovery UI test failed');
  const report=JSON.parse(fs.readFileSync(path.join(root,'report.json'),'utf8'));
  fs.writeFileSync(path.join(scratch,'discovery-ui-report.json'),JSON.stringify(report,null,2));
- for(const name of ['home.png','album.png','interface.png','liked.png','equalizer.png','mix.png','volume.png'])fs.copyFileSync(path.join(root,name),path.join(scratch,'discovery-'+name));
+ for(const name of ['home.png','album.png','interface.png','liked.png','equalizer.png','mix.png','volume.png','readme-mix.png','readme-eq.png','readme-song.png'])fs.copyFileSync(path.join(root,name),path.join(scratch,'discovery-'+name));
  console.log('Discovery UI integration passed:',JSON.stringify(report));
 }catch(e){if(fs.existsSync(path.join(root,'error.json')))console.error(fs.readFileSync(path.join(root,'error.json'),'utf8'));console.error(e.message);process.exitCode=1;}
 finally{if(path.dirname(root)!==scratch||!path.basename(root).startsWith('discovery-ui-'))throw Error('Unsafe fixture cleanup path');fs.rmSync(root,{recursive:true,force:true,maxRetries:3,retryDelay:150});}

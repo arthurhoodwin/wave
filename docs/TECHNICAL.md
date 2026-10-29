@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.1.6 Stable**, 26 октября 2026. Публичный тег [v1.1.6](https://github.com/arthurhoodwin/wave/releases/tag/v1.1.6), канал stable, Windows FileVersion 1.1.6.300. Версии зависимостей закреплены в package-lock.json; приложение — Electron 45, сборочные команды — Node.js 24/Windows x64.
+Состояние: **1.2.0 Stable**, 29 октября 2026. Канал stable, Windows FileVersion1.2.0.1000. Зависимости закреплены в package-lock.json; Electron45, Node.js24/Windows x64.
 
 ## Границы процессов
 

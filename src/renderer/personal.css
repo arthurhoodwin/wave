@@ -21,3 +21,5 @@
 .home-cover{background:var(--bg-cover);color:var(--text-secondary)}
 .row-like[aria-busy=true],.row-download[aria-busy=true]{cursor:progress}
 @media(forced-colors:active){.row-download.is-downloaded{color:Highlight}}
+
+.personal-page:not(.personal-home) .hero{display:flex;flex-direction:column;justify-content:flex-end}
