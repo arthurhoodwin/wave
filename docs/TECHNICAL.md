@@ -1,6 +1,6 @@
 # Техническое устройство Wave
 
-Состояние: **1.2.0 Stable**, 29 октября 2026. Канал stable, Windows FileVersion1.2.0.1000. Зависимости закреплены в package-lock.json; Electron45, Node.js24/Windows x64.
+Состояние: **1.2.0.1 Stable**, 29 октября 2026. Канал stable, Windows FileVersion1.2.0.1001. Зависимости закреплены в package-lock.json; Electron45, Node.js24/Windows x64.
 
 ## Границы процессов
 
