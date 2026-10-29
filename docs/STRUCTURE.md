@@ -1,6 +1,6 @@
 # Структура проекта и документации
 
-Срез: **Wave 1.1.6 Stable**, 26 октября 2026. Канонический GitHub — [arthurhoodwin/wave](https://github.com/arthurhoodwin/wave), тег выпуска — v1.1.6; результаты публикации и установки — в VALIDATION.md. Последующие документационные коммиты не требуют перевыпуска бинарников.
+Срез: **Wave 1.2.0 Stable**, 29 октября 2026. Канонический GitHub — [arthurhoodwin/wave](https://github.com/arthurhoodwin/wave), тег выпуска — v1.2.0; результаты публикации и установки — в VALIDATION.md. Документационные правки не требуют перевыпуска бинарников.
 
 ## Что читать
 
@@ -18,7 +18,7 @@
 | Исторические отчёты и выпущенные этапы | [archive/](archive/README.md) |
 | Правила и история тестов | [TESTING.md](TESTING.md) |
 | Фактически выполненные проверки/установка и их границы | [VALIDATION.md](VALIDATION.md) |
-| Что отложено и что планировать дальше | [ROADMAP.md](ROADMAP.md) |
+| Что отложено и что планировать дальше | [ROADMAP.md](ROADMAP.md), [сверка возможностей1.2](ROADMAP-AUDIT-1.2.md) |
 | Сравнение Spotify/VK/Wave и основания плана 1.2 | [MUSIC-FEATURE-STUDY.md](MUSIC-FEATURE-STUDY.md) |
 | Причины решений и исторические срезы | [ROADMAP-AUDIT.md](archive/ROADMAP-AUDIT.md), [DESIGN-AUDIT.md](archive/DESIGN-AUDIT.md) |
 | Лайки/тексты | [VK-OWNERSHIP.md](VK-OWNERSHIP.md), [LYRICS-TIMING.md](LYRICS-TIMING.md) |
