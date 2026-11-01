@@ -100,3 +100,7 @@ VK Микс1.2: [контракт и границы Alpha](VK-MIX.md). main/mix-
 Аудио/EQ: [AUDIO-PIPELINE.md](AUDIO-PIPELINE.md). artwork-sources.cjs выбирает источник по размеру, artwork-content-cache.getSized выдаёт ограниченные варианты для интерфейса.
 
 Постоянные тексты скачанных песен1.2.2: [OFFLINE-LYRICS.md](OFFLINE-LYRICS.md); обычный TTL-кэш и его валидаторы сохраняются отдельно.
+
+Сравнение с Meridius и принятые дополнения: [MERIDIUS-STUDY.md](MERIDIUS-STUDY.md).
+
+Повторный статический REA Spotify1.3.6.1921 и обновлённые цели1.2.3–1.3.0: [SPOTIFY-1.3-STUDY.md](SPOTIFY-1.3-STUDY.md).
