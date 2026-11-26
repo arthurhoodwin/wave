@@ -1,7 +1,7 @@
 'use strict';
 const {randomUUID}=require('node:crypto'),path=require('node:path');const {trackData,playlistData}=require('./personal-library.cjs');
 class PersonalService{
- constructor({library,downloads,provider,chooseFolder}){Object.assign(this,{library,downloads,provider,chooseFolder});this.serial=Promise.resolve();}
+ constructor({library,downloads,provider,chooseFolder,artworkCache,playingLocal}){Object.assign(this,{library,downloads,provider,chooseFolder,artworkCache});this.storage=new (require('./downloads/storage-maintenance.cjs').StorageMaintenance)(downloads,{playingLocal});this.serial=Promise.resolve();}
  root(){const root=this.provider.root;if(!root||this.provider.authTransition)throw Error('Войдите в свой аккаунт VK');return root;}
  track(track,root,index){const clean=trackData(track);if(!clean)return null;let known=index?index.get(clean.key):[...this.provider.tracks.values()].find(t=>t.key===clean.key);if(!known){known={...clean,id:randomUUID(),route:'https://vk.ru'+root+'?section=all',scope:'body',index:0,time:String(Math.floor(clean.duration/60))+':'+String(Math.floor(clean.duration%60)).padStart(2,'0')};this.provider.tracks.set(known.id,known);index?.set(clean.key,known);}if(clean.albumTitleConfirmed&&!known.albumTitleConfirmed){known.albumTitle=clean.albumTitle;known.albumId=clean.albumId;known.albumTitleConfirmed=true;}const copy=this.currentCopies?.get(clean.key),offlineCover=copy?.artwork&&this.downloads.artwork?.url(root,copy);const remoteCover=require('./navigation-meta.cjs').cover(known.cover)||clean.cover,selectedCover=this.provider.online?remoteCover||offlineCover:offlineCover||remoteCover;if(selectedCover)known.cover=selectedCover;return{id:known.id,...clean,...(known.albumTitleConfirmed?{albumId:known.albumId,albumTitle:known.albumTitle,albumTitleConfirmed:true}:{}),...(selectedCover?{cover:selectedCover}:{}),...(typeof known.owned==='boolean'?{owned:known.owned}:{})};}
  playlist(item,root){let known=[...this.provider.playlists.values()].find(p=>p.vkId===item.vkId);if(!known){const id=randomUUID();known={...item,id,index:0,route:'https://vk.ru'+root+'?section=all'};this.provider.playlists.set(id,known);this.provider.playlistHandles.set(JSON.stringify(['vk',item.vkId]),id);}if(known.title&&(Number.isFinite(item.at)||known.albumTitleConfirmed&&require('./album-metadata.cjs').provisional(item.title)))item={...item,title:known.title,cover:known.cover||item.cover};Object.assign(known,item);return{id:known.id,title:known.title,owner:known.owner,cover:known.cover,type:known.kind,generated:known.generated===true};}
@@ -30,11 +30,34 @@ class PersonalService{
  case'pause-all':case'resume-all':case'cancel-all':if(command.action==='resume-all'&&!this.provider.online)throw Error('Подключитесь к VK, чтобы продолжить загрузки');await this.downloads.controlAll(root,command.action.split('-')[0]);break;
  case'pause':case'resume':case'cancel':if(command.action==='resume'&&!this.provider.online)throw Error('Подключитесь к VK, чтобы продолжить загрузку');await this.downloads.control(root,command.id,command.action);break;
  case'remove-download':await this.downloads.remove(root,command.id);break;
- case'folder':{if(this.downloads.public(root).some(j=>['waiting','running','queued','paused','error'].includes(j.state)))throw Error('Сначала завершите или отмените загрузки');const folder=await this.chooseFolder();if(root!==this.root())throw Error('Аккаунт изменился');if(folder){if(!path.isAbsolute(folder))throw Error('Выберите папку');const account=await this.library.account(root);account.data.directory=folder;await this.library.save(account);}break;}
+ case'folder':{
+  const folder=await this.chooseFolder();
+  if(root!==this.root())throw Error('Аккаунт изменился');
+  if(!folder)return {cancelled:true};
+  if(!path.isAbsolute(folder))throw Error('Выберите папку');
+  const result=await this.storage.move(root,folder);
+  return {...await this.view(root,command.type||'home'),storageResult:result};
+ }
+ case'storage-check':return this.storage.inspect(root);
+ case'storage-tags':return this.storage.tag(root);
+ case'artwork-size':return this.artworkCache.diskUsage(root);
+ case'artwork-clean':return this.artworkCache.diskUsage(root,{clean:true});
+ case'repair-download':{
+  if(!this.provider.online)throw Error('Подключитесь к VK для восстановления песни');
+  const account=await this.library.account(root);
+  const record=account.data.downloads.find(item=>item.id===command.id);
+  if(!record)throw Error('Локальная копия не найдена');
+  return this.downloads.add(root,[record.track],{replaceId:record.id});
+ }
  case'library-view':{if(!['original','title','owner','reverse'].includes(command.sort)||!['comfortable','compact'].includes(command.density))throw Error('Некорректный вид медиатеки');const account=await this.library.account(root);account.data.libraryView={sort:command.sort,density:command.density};await this.library.save(account);break;}
  case'download-settings':{const account=await this.library.account(root),previous={downloadConcurrency:account.data.downloadConcurrency,autoDownloadLikes:account.data.autoDownloadLikes};if(command.concurrency!==undefined){if(![1,2,3].includes(command.concurrency))throw Error('Выберите от1 до3 загрузок');account.data.downloadConcurrency=command.concurrency;}if(command.enabled!==undefined){if(typeof command.enabled!=='boolean')throw Error('Некорректная настройка');account.data.autoDownloadLikes=command.enabled;}try{await this.library.save(account);}catch(e){Object.assign(account.data,previous);throw e;}this.downloads.pump();break;}
  case'limit':{if(!Number.isInteger(command.limitMiB)||command.limitMiB<100||command.limitMiB>102400)throw Error('Лимит должен быть от 100 до 102400 МиБ');const account=await this.library.account(root);account.data.limitBytes=command.limitMiB*1024**2;await this.library.save(account);break;}
  default:throw Error('Недопустимое действие');}if(root!==this.root())throw Error('Аккаунт изменился');return this.view(root,['home','listenHistory','downloads'].includes(command.type)?command.type:'home');}
- handle(command){const task=this.serial.then(()=>this.request(command));this.serial=task.catch(()=>{});return task;}
+ handle(command){
+ if(command && Object.keys(command).every(key=>key==='action')){
+  if(command.action==='storage-status'){this.root();return {progress:this.storage.status||null};}
+  if(command.action==='storage-cancel'){this.root();this.storage.cancel();return {cancelRequested:true};}
+ }
+ const task=this.serial.then(()=>this.request(command));this.serial=task.catch(()=>{});return task;}
 }
 module.exports={PersonalService};

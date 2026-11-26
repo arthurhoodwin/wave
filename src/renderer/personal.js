@@ -15,7 +15,97 @@
  document.querySelector('.hero').after($('message'));
  const settingsCard=$('settings-dialog').querySelector('.modal-card');
  const historySettings=el('section','history-settings');historySettings.innerHTML='<h3>Недавно прослушанное</h3><label><input id="listening-enabled" type="checkbox" checked> Сохранять историю</label><p class="muted">Запись добавляется после 0,5 секунды воспроизведения. История хранится отдельно для каждого аккаунта.</p><button id="listening-clear" class="secondary danger-action">Очистить историю…</button>';settingsCard.insertBefore(historySettings,settingsCard.querySelector('.settings-about'));
- const downloadSettings=el('section','history-settings');downloadSettings.innerHTML='<h3>Скачивание</h3><p id="download-space" class="muted"></p><div class="download-settings"><button id="download-folder" class="secondary">Выбрать папку…</button><label>Лимит, МиБ <input id="download-limit" type="number" min="100" max="102400" value="5120"></label><button id="download-limit-save" class="secondary">Сохранить лимит</button></div><p class="muted">Поддерживаются прямые MP3, M4A, WAV, AAC и совместимые HLS-записи. Очередь сохраняется; после перезапуска нажмите «Продолжить». Прямой файл продолжается с места паузы, если сервер подтверждает его неизменность.</p>';settingsCard.insertBefore(downloadSettings,settingsCard.querySelector('.settings-about'));
+ const downloadSettings=el('section','history-settings');downloadSettings.innerHTML='<h3>Скачивание</h3><p id="download-space" class="muted"></p><div class="download-settings"><button id="download-folder" class="secondary">Перенести скачанное…</button><label>Лимит, МиБ <input id="download-limit" type="number" min="100" max="102400" value="5120"></label><button id="download-limit-save" class="secondary">Сохранить лимит</button></div><p class="muted">Поддерживаются прямые MP3, M4A, WAV, AAC и совместимые HLS-записи. Очередь сохраняется; после перезапуска нажмите «Продолжить». Прямой файл продолжается с места паузы, если сервер подтверждает его неизменность.</p>';settingsCard.insertBefore(downloadSettings,settingsCard.querySelector('.settings-about'));
+ const storageSettings=el('div','storage-maintenance');
+ storageSettings.innerHTML=`
+  <div class="download-settings">
+   <button id="storage-check" class="secondary">Проверить файлы</button>
+   <button id="storage-tags" class="secondary">Дополнить теги MP3…</button>
+  </div>
+  <div class="download-settings">
+   <span id="artwork-space">Сетевой кэш обложек</span>
+   <button id="artwork-clean" class="secondary">Очистить кэш</button>
+  </div>
+  <p id="storage-status" class="muted" role="status"></p>
+  <progress id="storage-progress" aria-label="Операция с хранилищем" hidden></progress>
+  <button id="storage-cancel" class="secondary" hidden>Отменить операцию</button>
+  <ul id="storage-issues"></ul>`;
+ downloadSettings.append(storageSettings);
+ let storageBusy=false;
+ const storageButtons=['download-folder','storage-check','storage-tags','artwork-clean'];
+ const storageCall=action=>call('personal',{action});
+ const statusText=text=>setText($('storage-status'),text);
+ const refreshArtworkSize=async()=>{
+  if(!state.ready)return;
+  const result=await storageCall('artwork-size');
+  if(Number.isFinite(result.bytes))setText($('artwork-space'),'Сетевой кэш обложек: '+mib(result.bytes));
+ };
+ document.addEventListener('toggle',event=>{
+  if(event.target.id==='settings-group-library'&&event.target.open)refreshArtworkSize().catch(()=>{});
+ },true);
+ new MutationObserver(()=>{
+  if($('settings-dialog').open&&$('settings-group-library')?.open)refreshArtworkSize().catch(()=>{});
+ }).observe($('settings-dialog'),{attributes:true,attributeFilter:['open']});
+ async function storageOperation(action,work){
+  if(storageBusy)return;
+  storageBusy=true;
+  storageButtons.forEach(id=>$(id).disabled=true);
+  const bar=$('storage-progress'),cancel=$('storage-cancel');
+  let pending=false;
+  const timer=setInterval(async()=>{
+   if(pending)return;
+   pending=true;
+   try{
+    const {progress}=await storageCall('storage-status');
+    if(!storageBusy||!progress)return;
+    const titles={preparing:'Подготовка…',checking:'Проверяем файлы…',copying:'Копируем скачанное…',saving:'Сохраняем медиатеку…',tagging:'Дополняем теги…'};
+    statusText(titles[progress.phase]||'Выполняем операцию…');
+    bar.hidden=false;
+    if(progress.total){bar.max=progress.total;bar.value=progress.done;}
+    else bar.removeAttribute('value');
+    cancel.hidden=progress.phase==='saving';
+   }catch{}finally{pending=false;}
+  },350);
+  statusText(action==='folder'?'Выберите папку.':'Выполняем операцию…');
+  try{await work();}
+  catch(error){statusText(error.message);}
+  finally{
+   clearInterval(timer);bar.hidden=cancel.hidden=true;storageBusy=false;
+   storageButtons.forEach(id=>$(id).disabled=false);
+  }
+ }
+ $('storage-cancel').onclick=()=>storageCall('storage-cancel').catch(fail);
+ $('storage-check').onclick=()=>storageOperation('storage-check',async()=>{
+  const result=await storageCall('storage-check'),list=$('storage-issues');
+  if(result.cancelled){statusText('Проверка отменена.');return;}
+  list.replaceChildren();
+  for(const issue of result.issues||[]){
+   const item=el('li','storage-issue');
+   const retry=el('button','secondary','Восстановить');
+   retry.setAttribute('aria-label','Восстановить '+issue.title);
+   retry.onclick=async()=>{
+    retry.disabled=true;
+    try{
+     const queued=await call('personal',{action:'repair-download',id:issue.id});
+     item.remove();
+     statusText(queued.added?'Песня добавлена в очередь восстановления.':'Песня уже стоит в очереди.');
+    }catch(error){retry.disabled=false;statusText(error.message);}
+   };
+   item.append(el('span','',issue.artist+' — '+issue.title),retry);
+   list.append(item);
+  }
+  statusText('Проверено: '+result.checked+'. Требуют восстановления: '+result.issues.length+'.');
+ });
+ $('storage-tags').onclick=()=>ask('Дополнить теги старых MP3?','Wave добавит название, исполнителя и имеющуюся обложку в сохранённые MP3.',()=>storageOperation('storage-tags',async()=>{
+  const result=await storageCall('storage-tags');
+  statusText(result.cancelled?'Операция остановлена. Уже записанные теги сохранены.':'Обновлено MP3: '+result.tagged+'. Пропущено: '+result.skipped+'.'+(result.retained?' Старых файлов осталось: '+result.retained+'.':''));
+ }));
+ $('artwork-clean').onclick=()=>storageOperation('artwork-clean',async()=>{
+  const result=await storageCall('artwork-clean');
+  await refreshArtworkSize().catch(()=>{});
+  statusText('Освобождено: '+mib(result.freed)+'.');
+ });
+
  const downloadPrefs=el('div','download-settings');downloadPrefs.innerHTML='<label>Одновременные загрузки <select id="download-concurrency" aria-label="Одновременные загрузки"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></label><label><input id="auto-download-likes" type="checkbox"> Автоматически скачивать песню, добавленную в «Мне нравится»</label>';
  downloadSettings.append(downloadPrefs);$('download-concurrency').onchange=()=>command({action:'download-settings',concurrency:Number($('download-concurrency').value)}).catch(fail);$('auto-download-likes').onchange=()=>command({action:'download-settings',enabled:$('auto-download-likes').checked}).catch(fail);
  const likedSort=el('option','','Как в «Мне нравится»');likedSort.value='liked';$('list-sort').append(likedSort);
@@ -44,8 +134,15 @@
  function downloadState(id){const copy=data?.localCopies?.find(d=>d.id===id);if(copy)return{state:'ready',downloadId:copy.downloadId};const key=state.allTracks.find(t=>t.id===id)?.key||state.current?.id===id&&state.current.key;const job=(data?.jobs||[]).findLast(j=>!['ready','cancelled'].includes(j.state)&&(j.trackIds?.includes(id)||key&&j.key===key));return job||{state:data?.localIds?.includes(id)?'ready':'none'};}
  function removeCopy(id){const copy=downloadState(id);if(!copy.downloadId)return;const title=state.allTracks.find(t=>t.id===id)?.title||'Песня';ask('Удалить локальную копию?',title+' останется в VK.',()=>command({action:'remove-download',id:copy.downloadId}));}
  $('downloads-resume').onclick=()=>command({action:'resume-all'}).catch(fail);$('downloads-pause').onclick=()=>command({action:'pause-all'}).catch(fail);$('downloads-cancel').onclick=()=>ask('Отменить все загрузки?','Все ожидающие загрузки и частичные файлы будут удалены. Готовые песни сохранятся.',()=>command({action:'cancel-all'}));
- $('download-folder').onclick=()=>command({action:'folder'}).catch(fail);$('download-limit-save').onclick=()=>command({action:'limit',limitMiB:Number($('download-limit').value)}).catch(fail);$('listening-enabled').onchange=()=>command({action:'history-enabled',enabled:$('listening-enabled').checked}).catch(fail);$('listening-clear').onclick=()=>ask('Очистить недавно прослушанное?','Будет удалена история этого аккаунта на компьютере.',()=>command({action:'history-clear'}));
+ $('download-folder').onclick=()=>storageOperation('folder',async()=>{
+  const ticket=epoch;
+  const result=await call('personal',{action:'folder',type:routes.has(state.route.type)?state.route.type:'home'});
+  if(result.cancelled||result.storageResult?.cancelled){statusText('Перенос отменён.');return;}
+  if(ticket!==epoch)return;
+  data=result;paint();
+  statusText('Перенесено песен: '+result.storageResult.moved+'.'+(result.storageResult.retained?' Старых файлов осталось: '+result.storageResult.retained+'.':''));
+ });$('download-limit-save').onclick=()=>command({action:'limit',limitMiB:Number($('download-limit').value)}).catch(fail);$('listening-enabled').onchange=()=>command({action:'history-enabled',enabled:$('listening-enabled').checked}).catch(fail);$('listening-clear').onclick=()=>ask('Очистить недавно прослушанное?','Будет удалена история этого аккаунта на компьютере.',()=>command({action:'history-clear'}));
  $('home').onclick=()=>{$('search').value='';navigate({type:'home'}).catch(fail);};$('home').setAttribute('aria-label','Wave — Главная');$('home').title='Главная';
- window.WavePersonal={empty:()=>{if(!routes.has(state.route.type)||state.route.type==='home'||!state.ready||state.loading||state.allTracks.length)return false;$('empty-state').classList.remove('hidden');const downloaded=state.route.type==='downloads';setText($('empty-heading'),downloaded?'Пока ничего не скачано':'Пока нет прослушанных песен');setText($('empty-copy'),downloaded?'Нажмите кнопку скачивания в строке песни.':data?.historyEnabled===false?'Сохранение истории выключено.':'Песня появится после 0,5 секунды воспроизведения.');setText($('empty-action'),downloaded?'Открыть «Мне нравится»':'Открыть настройки');$('empty-action').onclick=()=>downloaded?navigate({type:'library'}).catch(fail):(()=>{$('settings-group-library')?.setAttribute('open','');$('settings').click();})();return true;},controls:()=>{},isRoute:type=>routes.has(type),view:async type=>{data=await call('personal',{action:'view',type});paint();return data;},header:()=>{paint();if(!routes.has(state.route.type))return false;heroCover();renderAlbums();setText($('heading'),names[state.route.type]);setText($('eyebrow'),'');setText($('subtitle'),'');setText($('list-heading'),'Песни');playlists();return true;},visit:route=>{if(['playlist','album'].includes(route.type))command({action:'visit',id:route.id}).catch(()=>{});else refresh();},download,downloadState,removeCopy,refresh,reset:()=>{epoch++;historyKind='tracks';jobNodes.clear();libraryLoaded=false;data=null;state.pinnedLists=[];lastView=lastHome=lastVisits='';cards.replaceChildren();visits.replaceChildren();$('download-jobs').replaceChildren();paint();}};
+ window.WavePersonal={empty:()=>{if(!routes.has(state.route.type)||state.route.type==='home'||!state.ready||state.loading||state.allTracks.length)return false;$('empty-state').classList.remove('hidden');const downloaded=state.route.type==='downloads';setText($('empty-heading'),downloaded?'Пока ничего не скачано':'Пока нет прослушанных песен');setText($('empty-copy'),downloaded?'Нажмите кнопку скачивания в строке песни.':data?.historyEnabled===false?'Сохранение истории выключено.':'Песня появится после 0,5 секунды воспроизведения.');setText($('empty-action'),downloaded?'Открыть «Мне нравится»':'Открыть настройки');$('empty-action').onclick=()=>downloaded?navigate({type:'library'}).catch(fail):(()=>{$('settings-group-library')?.setAttribute('open','');$('settings').click();})();return true;},controls:()=>{},isRoute:type=>routes.has(type),view:async type=>{data=await call('personal',{action:'view',type});paint();return data;},header:()=>{paint();if(!routes.has(state.route.type))return false;heroCover();renderAlbums();setText($('heading'),names[state.route.type]);setText($('eyebrow'),'');setText($('subtitle'),'');setText($('list-heading'),'Песни');playlists();return true;},visit:route=>{if(['playlist','album'].includes(route.type))command({action:'visit',id:route.id}).catch(()=>{});else refresh();},download,downloadState,removeCopy,refresh,reset:()=>{epoch++;$('storage-issues').replaceChildren();statusText('');setText($('artwork-space'),'Сетевой кэш обложек');historyKind='tracks';jobNodes.clear();libraryLoaded=false;data=null;state.pinnedLists=[];lastView=lastHome=lastVisits='';cards.replaceChildren();visits.replaceChildren();$('download-jobs').replaceChildren();paint();}};
  api.onPersonalChange?.(()=>{clearTimeout(timer);timer=setTimeout(refresh,40);});routeHeader();if(state.ready)refresh();
 })();

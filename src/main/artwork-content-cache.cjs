@@ -8,6 +8,24 @@ class ArtworkContentCache{
  clear(){this.generation++;this.variants.clear();this.variantBytes=0;for(const c of this.controllers)c.abort();this.pending.clear();for(const job of this.queue.splice(0))job.reject(Error('Аккаунт изменился'));}
  close(){this.clear();}
  async purge(root){this.clear();if(!/^\/audios\d+$/.test(root||''))return;const base=path.resolve(this.directory),dir=path.join(base,digest(root));if(path.dirname(dir)!==base||(await fs.lstat(dir).catch(()=>null))?.isSymbolicLink())throw Error('Недопустимый кэш обложек');await fs.rm(dir,{recursive:true,force:true});}
+ async diskUsage(root,{clean=false}={}){
+  if(!/^\/audios\d+$/.test(root||''))throw Error('Аккаунт изменился');
+  const base=await fs.realpath(this.directory).catch(error=>{if(error.code!=='ENOENT')throw error;});
+  if(!base)return {bytes:0,freed:0};
+  const dir=path.join(base,digest(root));
+  const entries=await fs.readdir(dir,{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error;});
+  if(entries.length&&path.resolve(await fs.realpath(dir))!==dir)throw Error('Папка кэша изменилась');
+  let bytes=0, freed=0;
+  for(const entry of entries){
+   const match=/^([a-f0-9]{64})\.(image|json)$/.exec(entry.name);
+   if(!match||!entry.isFile()||entry.isSymbolicLink()||this.pending.has(match[1]))continue;
+   const file=path.join(dir,entry.name),stat=await fs.lstat(file).catch(error=>{if(error.code!=='ENOENT')throw error;});
+   if(!stat?.isFile()||stat.isSymbolicLink()||this.pending.has(match[1]))continue;
+   if(!clean){bytes+=stat.size;continue;}
+   try{await fs.unlink(file);freed+=stat.size;}catch(error){if(error.code!=='ENOENT')bytes+=stat.size;}
+  }
+  return {bytes,freed};
+ }
  async get(root,value,{refresh=false}={}){const url=cover(value);if(!/^\/audios\d+$/.test(root||'')||!url)return null;const key=digest(root+'|'+url);if(this.pending.has(key))return this.pending.get(key);if(this.pending.size>=256)return null;const generation=this.generation;const task=new Promise((resolve,reject)=>{this.queue.push({run:()=>this.read(root,key,url,refresh,generation),resolve,reject});this.pump();}).catch(()=>null).finally(()=>{if(this.pending.get(key)===task)this.pending.delete(key);});this.pending.set(key,task);return task;}
  async getSized(root,value,{refresh=false,width}={}){if(width!==undefined&&(!Number.isSafeInteger(width)||width<64||width>1600))throw Error('Недопустимый размер обложки');const epoch=this.generation,image=await this.get(root,value,{refresh});if(!image||width===undefined||!process.versions.electron)return image;if(epoch!==this.generation)return null;const key=root+'|'+image.revision+'|'+width,known=this.variants.get(key);if(known){this.variants.delete(key);this.variants.set(key,known);return known;}const bytes=Buffer.from(image.data.split(',')[1]||'','base64'),native=require('electron').nativeImage.createFromBuffer(bytes);if(native.isEmpty())return image;if(native.getSize().width<=width)return image;const resized=native.resize({width,quality:'best'}),png=!image.data.startsWith('data:image/jpeg'),out={...image,data:'data:image/'+(png?'png':'jpeg')+';base64,'+(png?resized.toPNG():resized.toJPEG(90)).toString('base64')};this.variants.set(key,out);this.variantBytes+=out.data.length;while(this.variants.size>64||this.variantBytes>8*1024**2){const first=this.variants.keys().next().value;this.variantBytes-=this.variants.get(first).data.length;this.variants.delete(first);}return out;}
  pump(){while(this.active<2&&this.queue.length){const job=this.queue.shift();this.active++;Promise.resolve().then(job.run).then(job.resolve,job.reject).finally(()=>{this.active--;this.pump();});}}

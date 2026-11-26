@@ -23,3 +23,9 @@
 @media(forced-colors:active){.row-download.is-downloaded{color:Highlight}}
 
 .personal-page:not(.personal-home) .hero{display:flex;flex-direction:column;justify-content:flex-end}
+
+.storage-maintenance {display:grid;gap:8px;margin-block:12px;}
+.storage-maintenance progress {width:100%;accent-color:var(--text-accent);}
+.storage-maintenance #storage-cancel {justify-self:start;}
+.storage-maintenance #storage-issues {margin:0;padding:0;list-style:none;max-height:15rem;overflow:auto;}
+.storage-issue {display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:4px;overflow-wrap:anywhere;}
