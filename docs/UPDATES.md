@@ -1,18 +1,18 @@
 # Сборка, публикация и установка обновлений
 
-Актуально для **1.2.2 Stable**, 29 октября 2026. Пользовательское описание — [LATEST.md](../releases/LATEST.md), результаты и границы — [VALIDATION.md](VALIDATION.md).
+Актуально для **1.2.3 Stable**, 26 ноября 2026. Пользовательское описание — [LATEST.md](../releases/LATEST.md), результаты и границы — [VALIDATION.md](VALIDATION.md).
 
 ## Версии и артефакты
 
 | Поле | Значение |
 | --- | --- |
-| version / releaseVersion | 1.2.2 / 1.2.2 |
+| version / releaseVersion | 1.2.3 / 1.2.3 |
 | releaseChannel | stable |
-| Windows buildVersion | 1.2.2.0 |
-| Тег | v1.2.2 |
-| otaBases | 1.2.1 |
+| Windows buildVersion | 1.2.3.0 |
+| Тег | v1.2.3 |
+| otaBases | 1.2.2 |
 
-Поставка: EXE, каноническая дельта от Stable1.2.1, runtime/application пакет, подписанный OTA-каталог и SHA256SUMS.txt. Runtime-пакет содержит приложение и переиспользует совместимый Electron, не является полным EXE.
+Поставка: EXE, каноническая дельта от Stable1.2.2, runtime/application пакет, подписанный OTA-каталог и SHA256SUMS.txt. Runtime-пакет содержит приложение и переиспользует совместимый Electron, не является полным EXE.
 
 ## Совместимость OTA
 
