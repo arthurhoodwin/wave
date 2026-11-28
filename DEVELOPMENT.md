@@ -4,7 +4,7 @@
 
 ## Текущий результат
 
-**Wave 1.1.6 Stable** опубликована как [Latest](https://github.com/arthurhoodwin/wave/releases/latest) и установлена на основном ПК. Границы проверки — [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
+Текущая стабильная версия доступна на [странице последнего выпуска](https://github.com/arthurhoodwin/wave/releases/latest). Проверки конкретных версий и статус установки — [VALIDATION.md](docs/VALIDATION.md). Действующие договорённости и карта документов — [STRUCTURE.md](docs/STRUCTURE.md); дизайн-код — [DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md), архитектура/данные — [TECHNICAL.md](docs/TECHNICAL.md). История Alpha/Beta не является текущим списком незавершённых задач.
 
 ## Запуск
 
@@ -23,7 +23,7 @@ npm start
 
 Если пакет Electron установился без исполняемого файла: `node node_modules/electron/install.js`.
 
-`npm start` открывает официальное окно входа VK в отдельном профиле Wave. Не используйте производственный профиль для тестовых сборок с отладочными портами. Автоматические тесты обходятся без аккаунта и настоящей музыки.
+При входе Wave открывает окно VK в своей отдельной сессии. Не используйте производственный профиль для тестовых сборок с отладочными портами. Автоматические тесты обходятся без аккаунта и настоящей музыки.
 
 ## Устройство
 

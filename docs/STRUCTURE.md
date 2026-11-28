@@ -10,7 +10,7 @@
 | Установить, настроить и обновить Wave | [USER-GUIDE.md](USER-GUIDE.md) |
 | Запустить/изменить/собрать форк | [DEVELOPMENT.md](../DEVELOPMENT.md) |
 | Сохранить текущий внешний вид | [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) |
-| Проверить анимации и план визуальной полировки | [MOTION-AUDIT.md](MOTION-AUDIT.md) |
+| Понять действующие анимации | [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md#движение-и-доступность), [аудит 1.1.7](MOTION-AUDIT.md) |
 | Понять модули и форматы данных | [TECHNICAL.md](TECHNICAL.md) |
 | Собрать, подписать, выпустить или откатить обновление | [UPDATES.md](UPDATES.md) |
 | Понять скачивание и его ограничения | [DOWNLOADS-PLAN.md](DOWNLOADS-PLAN.md) |
@@ -43,7 +43,7 @@ tests/                  Node.js-проверки по подсистемам
 tests/helpers/          Общие фикстуры/ожидания
 tests/electron/         Настоящий runtime ASAR без пользовательского профиля
 docs/                   Действующие правила, результаты и исторические отчёты
-docs/images/            Обезличенные демонстрационные снимки
+docs/images/            Демонстрационные снимки и обложка проекта
 releases/LATEST.md       Единственные заметки к текущему выпуску
 .github/                CI и шаблоны обращений
 dist/                   Игнорируемые результаты сборки и текущая основа патча
@@ -89,15 +89,15 @@ dist/                   Игнорируемые результаты сборк
 
 Контракты управления коллекцией1.1.8: [VK-COLLECTION-CONTRACTS.md](VK-COLLECTION-CONTRACTS.md); реализация — main/collection-management.cjs и renderer/collection-management-ui.js.
 
-Подписанные OTA-переходы1.1.9 и окно поддержки: [OTA-UPDATES.md](OTA-UPDATES.md).
+Подписанные OTA-переходы1.1.9 и окно поддержки: [UPDATES.md](UPDATES.md#совместимость-ota).
 
 Повторное использование контента и его валидаторы: [CONTENT-CACHE.md](CONTENT-CACHE.md).
 
-VK Микс1.2: [контракт и границы Alpha](VK-MIX.md). main/mix-session.cjs владеет потоком; renderer/mix-ui.js — его маршрут и действия.
+VK Микс1.2: [поток, восстановление и контракт](VK-MIX.md). main/mix-session.cjs владеет потоком; renderer/mix-ui.js — его маршрут и действия.
 
-Следующий этап Микса: [обратная связь и восстановление](VK-MIX-FEEDBACK.md); main/mix-feedback.cjs и renderer/mix-feedback.js отделены от мутаций коллекции.
+Действия с рекомендациями: [обратная связь и восстановление](VK-MIX.md#обратная-связь); main/mix-feedback.cjs и renderer/mix-feedback.js отделены от мутаций коллекции.
 
-Аудио/EQ: [AUDIO-PIPELINE.md](AUDIO-PIPELINE.md). artwork-sources.cjs выбирает источник по размеру, artwork-content-cache.getSized выдаёт ограниченные варианты для интерфейса.
+Аудио и эквалайзер описаны в [AUDIO-PIPELINE.md](AUDIO-PIPELINE.md). Источники обложек и их размеры для интерфейса описаны в [CONTENT-CACHE.md](CONTENT-CACHE.md).
 
 Постоянные тексты скачанных песен1.2.2: [OFFLINE-LYRICS.md](OFFLINE-LYRICS.md); обычный TTL-кэш и его валидаторы сохраняются отдельно.
 

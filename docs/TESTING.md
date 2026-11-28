@@ -1,8 +1,8 @@
 # Тестирование Wave
 
-## Текущий срез · 1.1.6 Stable
+## Проверки релиза
 
-26 октября 2026: **374 Node.js-теста** и отдельный обязательный Electron ASAR-gate. Музыкальные ссылки и native видимость индикатора покрыты отдельными сценариями; точные результаты публикации/установки и границы — [VALIDATION.md](VALIDATION.md). Эти цифры относятся к срезу 1.1.6, в последующих версиях источник истины — фактический прогон.
+Windows CI запускает набор Node.js и три проверки Electron: обновления, артистов и интерфейс плеера/главной. Последний зафиксированный прогон 1.2.4 включал 467 Node-тестов и все три проверки Electron. Результаты выпусков собраны в [VALIDATION.md](VALIDATION.md).
 
 ## Запуск
 
@@ -11,6 +11,8 @@
 ```powershell
 npm test
 npm run test:updates-electron
+npm run test:artists-electron
+npm run test:discovery-electron
 node --test --test-timeout=15000 tests/download-manager.test.cjs
 node --test --test-name-pattern="signed version must equal" tests/github-updater.test.cjs
 ```
@@ -28,9 +30,9 @@ node --test --test-name-pattern="signed version must equal" tests/github-updater
 | Поиск и альбомы | `search`, `albums`, `navigation-meta` |
 | Плеер, отмена и восстановление | `native-player`, `provider-regression`, `media-player`, `crossfade`, `ui-playback` |
 | Прокси и сетевое планирование | `media-proxy`, `request-scheduler`, `download-http` |
-| Скачивание и офлайн | `download-manager`, `hls-download`, `offline-artwork`, `download-validation` |
+| Скачивание и офлайн | `download-manager`, `hls-download`, `offline-artwork`, `download-validation`, `storage-maintenance` |
 | История, медиатека и подборки | `personal-library`, `home-feed`, `library-folders`, `virtual-list` |
-| Текст песни | `lyrics-vk`, `lyrics-sources`, `lyrics-timing` |
+| Текст песни | `lyrics-vk`, `lyrics-sources`, `lyrics-timing`, `offline-lyrics` |
 | Настройки и Windows | `desktop`, `audio-settings`, `volume`, `keyboard`, `mouse-navigation`, `motion`, `stdio-guard` |
 | Сохранение данных | `metadata-store`, `personal-library`, `desktop` |
 | Обновление и публикация | `update-manager`, `github-updater`, `startup-health`, `versions`, `release-publishing` |
