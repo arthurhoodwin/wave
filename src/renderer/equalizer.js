@@ -70,7 +70,9 @@
   return {input,filters,output,dry,wet,level};
  }
  function create(Context){
-  let context, nodes, settings=normalize(),level=0;
+  let context, nodes, settings=normalize(),level=0,outputId="";
+  let route=Promise.resolve();
+  let onOutputFallback=()=>{};
   const sources=new Set();
   function apply(){
    level=makeup(settings,context?.sampleRate);
@@ -82,12 +84,35 @@
     param.setTargetAtTime(target,now,.02);
    }
   }
+  function selectOutput(id){
+   if(typeof id!=='string'||id.length>256)return Promise.reject(Error('Устройство вывода недоступно'));
+   const task=route.then(async()=>{
+    if(context){
+     if(typeof context.setSinkId!=='function'&&id)throw Error('Выбор устройства недоступен');
+     if(context.setSinkId&&context.sinkId!==id)await context.setSinkId(id);
+    }
+    outputId=id;
+   });
+   route=task.catch(()=>{});
+   return task;
+  }
   return {
    set(value){settings=normalize(value);apply();return normalize(settings);},
    get(){return normalize(settings);},
+   selectOutput,
+   currentOutput(){return outputId;},
+   canSelectOutput(){return typeof Context?.prototype?.setSinkId==='function';},
+   onOutputFallback(callback){onOutputFallback=callback;},
    async attach(audio){
     if(!Context)throw Error('Аудиообработка недоступна');
-    if(!context){context=new Context();nodes=graph(context,settings);level=nodes.level;}
+    if(!context){
+     context=new Context();
+     nodes=graph(context,settings);level=nodes.level;
+     if(outputId){
+      try{await selectOutput(outputId);}
+      catch{outputId='';onOutputFallback();}
+     }
+    }else await route;
     const source=context.createMediaElementSource(audio),envelope=context.createGain();
     source.connect(envelope).connect(nodes.input);
     sources.add(source);

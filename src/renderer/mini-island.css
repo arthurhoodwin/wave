@@ -1,0 +1,14 @@
+body.mini-window {padding:0;min-height:0;overflow:auto;background:var(--bg-raised);}
+.island-top {height:36px;display:flex;align-items:center;gap:5px;padding-inline:6px;border-bottom:1px solid var(--border-subtle);}
+.island-grip {display:flex;align-items:center;gap:7px;min-width:0;flex:1;height:100%;app-region:drag;cursor:grab;}
+.island-grip img {width:19px;height:19px;flex:none;border-radius:4px;}
+#island-track {font-size:12px;font-weight:650;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+#island-shortcut {height:25px;min-height:25px;width:auto;padding-inline:7px;border:1px solid var(--border-subtle);border-radius:5px;font-size:10px;white-space:nowrap;app-region:no-drag;}
+#island-panel {position:relative;padding:9px 12px 6px;}
+#island-panel[hidden] {display:none;}
+body[data-expanded="true"] .island-grip {app-region:no-drag;cursor:default;}
+body[data-expanded="false"] {overflow:hidden;}
+@media(prefers-reduced-motion:no-preference) {
+  body[data-expanded="true"] #island-panel {animation:island-reveal 120ms ease-out;}
+  @keyframes island-reveal {from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+}
