@@ -7,11 +7,32 @@
  const hint=document.getElementById('island-key-hint'),hideHint=document.getElementById('island-hide-hint');
  const source=document.getElementById('art'),logo=art.firstElementChild;
  let cover,coverUrl,armed,desired=false,revision=0,settling=null,anchorKey;
+ const canvas=document.createElement('canvas');
+ canvas.width=canvas.height=32;
+ const pixels=canvas.getContext('2d',{willReadFrequently:true});
+
+ function tint(image){
+  if(!pixels||!image?.naturalWidth)return;
+  try{
+   canvas.width=32;
+   pixels.drawImage(image,0,0,32,32);
+   const color=window.WaveCoverColor.dominant(pixels.getImageData(0,0,32,32).data);
+   if(color)shell.style.setProperty('--island-tint',color.map(channel=>Math.round(channel*.43+8)).join(' '));
+  }catch{
+   // A remote fallback may not allow canvas reads. The neutral background remains available.
+  }
+ }
 
  function syncCover(){
   const image=source.querySelector('img');
   if(image===cover&&image?.src===coverUrl)return;
   cover=image;coverUrl=image?.src;
+  shell.style.removeProperty('--island-tint');
+  if(image){
+   const imageUrl=coverUrl;
+   if(image.complete)tint(image);
+   else image.addEventListener('load',()=>{if(cover===image&&coverUrl===imageUrl)tint(image);},{once:true});
+  }
   const thumbnail=image?.cloneNode();
   if(thumbnail){
    thumbnail.alt='';

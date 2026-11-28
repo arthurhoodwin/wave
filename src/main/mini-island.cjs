@@ -1,5 +1,7 @@
 'use strict';
 
+const {observeOutsideClick}=require('./island-outside-click.cjs');
+
 const DEFAULT_SHORTCUT = 'Ctrl+Shift+F9';
 const COLLAPSED_HEIGHT = 36;
 const COLLAPSED_WIDTH = 248;
@@ -60,8 +62,9 @@ function relative(area, box) {
 }
 
 class MiniIsland {
-  constructor(owner) {
+  constructor(owner,{watchOutside=observeOutsideClick}={}) {
     this.owner = owner;
+    this.watchOutside=watchOutside;
     this.expanded = false;
     this.wide = false;
     this.motionId = 0;
@@ -157,6 +160,7 @@ class MiniIsland {
   }
 
   hide() {
+    this.stopOutside();
     this.motionId++;
     clearTimeout(this.closing);
     this.closing=null;
@@ -246,6 +250,9 @@ class MiniIsland {
         this.place();
       }
       if(!mini.isVisible())mini.showInactive();
+      this.stopWatchingOutside=this.watchOutside(this.owner.electron.app,mini,()=>{
+        if(motion===this.motionId&&this.expanded)this.collapse();
+      });
       this.owner.publish();
     }catch(error){
       if(motion===this.motionId){this.hide();this.syncVisibility();}
@@ -253,8 +260,14 @@ class MiniIsland {
     }
   }
 
+  stopOutside() {
+    this.stopWatchingOutside?.();
+    this.stopWatchingOutside=null;
+  }
+
   collapse() {
     if(!this.expanded)return;
+    this.stopOutside();
     const motion=++this.motionId;
     this.expanded=false;
     if(this.wide)this.closing=setTimeout(()=>this.settle(motion),SETTLE_TIMEOUT);
@@ -310,6 +323,7 @@ class MiniIsland {
   }
 
   async close() {
+    this.stopOutside();
     this.closed=true;
     this.motionId++;
     clearTimeout(this.closing);

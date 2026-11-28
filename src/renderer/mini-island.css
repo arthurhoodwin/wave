@@ -14,7 +14,7 @@ html:has(.mini-window),body.mini-window {
   --fold-top:calc(var(--extra-height) * var(--anchor-y, 0));
   --fold-bottom:calc(var(--extra-height) - var(--fold-top));
   position:absolute;inset:0;
-  background:var(--island-ink);
+  background:linear-gradient(150deg,rgb(var(--island-tint,24 39 39)) 0%,#0b0e0f 62%,#040505 100%);
   border:1px solid var(--island-line);border-radius:18px;
   clip-path:inset(var(--fold-top) var(--fold-right) var(--fold-bottom) var(--fold-left) round 18px);
 }
@@ -62,7 +62,7 @@ html:has(.mini-window),body.mini-window {
 #island-panel {
   position:absolute;inset:0;
   overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;
-  background:radial-gradient(ellipse at 4% 0%,#a5f2bf17,transparent 65%);
+  background:transparent;
   opacity:0;visibility:hidden;pointer-events:none;
 }
 .mini-window[data-expanded="true"] #island-panel {opacity:1;visibility:visible;pointer-events:auto;}

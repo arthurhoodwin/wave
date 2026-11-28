@@ -3,6 +3,13 @@ const fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:
 const scratch=path.resolve(__dirname,'../work');fs.mkdirSync(scratch,{recursive:true});
 const root=fs.mkdtempSync(path.join(scratch,'discovery-ui-')),env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
 try{
+ const helper=require('./build-island-click.cjs').buildIslandClick();
+ if(helper){
+  for(const flag of ['--check','--probe']){
+   const probe=spawnSync(helper,[flag],{windowsHide:true,timeout:4000});
+   if(probe.status!==0)throw Error(probe.error?.message||'Mini-player outside click check failed: '+flag+' ('+probe.status+')');
+  }
+ }
  const result=spawnSync(require('electron'),[path.resolve(__dirname,'../tests/electron/discovery-ui.cjs'),root],{env,windowsHide:true,encoding:'utf8',timeout:45000});
  if(result.status!==0)throw Error(result.stderr||result.stdout||result.error?.message||'Discovery UI test failed');
  const report=JSON.parse(fs.readFileSync(path.join(root,'report.json'),'utf8'));

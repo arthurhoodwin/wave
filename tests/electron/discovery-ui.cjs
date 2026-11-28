@@ -136,7 +136,13 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  await miniDebug.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
  const expandedIsland={expanded:true,fold:{left:.18,right:.18,top:0,bottom:.83},shortcut:'Ctrl+Shift+F9',shortcutActive:true};
  const setMini=next=>miniEval('miniFixture.set('+JSON.stringify(next)+');void 0');
- await setMini({island:expandedIsland,position:43,volume:.42});
+ const coverSample=require('electron').nativeImage.createFromBitmap(Buffer.from([25,42,230,255]),{width:1,height:1}).toDataURL();
+ await setMini({island:expandedIsland,position:43,volume:.42,current:{id:'tinted',title:'Вторая песня',artist:'Другой',cover:coverSample}});
+ const tint=()=>miniEval("document.querySelector('.island-shell').style.getPropertyValue('--island-tint')");
+ for(let attempt=0;attempt<30&&!await tint();attempt++)await wait(25);
+ assert.equal(await tint(),'107 26 19');
+ assert.match(await miniEval("getComputedStyle(document.querySelector('.island-shell')).backgroundImage"),/linear-gradient.*rgb\(107, 26, 19\).*rgb\(4, 5, 5\)/);
+ report.miniCoverTint=true;
  await miniEval("document.querySelector('#volume').dispatchEvent(new Event('blur'));void 0");
  mini.setContentSize(342,await miniEval("document.querySelector('#island-content').offsetHeight+2"));
  await wait(270);
@@ -190,32 +196,6 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  const {WindowsIntegration}=require('../../src/main/windows-integration.cjs');
  const {MiniIsland}=require('../../src/main/mini-island.cjs'),electron=require('electron');
  let savedIslandEnabled;
- const reference=path.join(output,'loudness.wav'),frames=48000,wav=Buffer.alloc(44+frames*2);
- wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);
- wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(48000,24);wav.writeUInt32LE(96000,28);
- wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(frames*2,40);
- for(let i=0;i<frames;i++)wav.writeInt16LE(Math.round(8000*Math.sin(2*Math.PI*997*i/48000)),44+i*2);
- fs.writeFileSync(reference,wav);
- const {measureFile,gainFor}=require('../../src/main/track-loudness.cjs');
- const measured=await measureFile({file:reference,record:{bytes:wav.length,ext:'wav'}},new AbortController().signal,electron);
- assert(Math.abs(measured.lufs-(-3.01+20*Math.log10(8000/32768)))<.08,JSON.stringify(measured));
- assert.equal(measured.channels,1);assert(Number.isFinite(gainFor(measured)));
- for(let i=0;i<frames;i++)wav.writeInt16LE(Math.round(32000*Math.sin(2*Math.PI*997*i/48000)),44+i*2);
- fs.writeFileSync(reference,wav);
- const loud=await measureFile({file:reference,record:{bytes:wav.length,ext:'wav'}},new AbortController().signal,electron);
- assert(Math.abs(loud.lufs-measured.lufs-20*Math.log10(4))<.08,JSON.stringify(loud));
- assert(Math.abs((loud.lufs+gainFor(loud))-(measured.lufs+gainFor(measured)))<.08);
- report.loudness={measured,loud};
- await ev("$('settings-dialog').classList.remove('hidden');if(!$('settings-dialog').open)$('settings-dialog').showModal();$('settings-group-playback').open=true");
- await until("!$('track-loudness-start').disabled");
- await ev("$('track-loudness-enabled').click();$('track-loudness-start').click()");
- await until("!$('track-loudness-cancel').hidden");
- assert.equal(await ev("$('track-loudness-status').textContent"),'Измеряем · 1 из 2');
- assert.equal(await ev("localStorage.getItem('wave-track-loudness-v1')"),'1');
- await ev("$('track-loudness-cancel').click()");
- await until("$('track-loudness-cancel').hidden");
- assert.match(await ev("$('track-loudness-status').textContent"),/остановлено/);
- await ev("$('track-loudness-enabled').click();$('settings-dialog').close();$('settings-dialog').classList.add('hidden')");
  // Use native Electron for the island and deterministic foreground events for the main window.
  const {EventEmitter}=require('node:events'),foreground=new EventEmitter();
  let focused=true,minimized=false;
@@ -223,7 +203,9 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  const islandOwner={electron,main:foreground,prefs:{islandEnabled:false,islandDisplay:'',islandShortcut:'Ctrl+Alt+Shift+F11'},store:{save:async(kind,prefs)=>{savedIslandEnabled=prefs.islandEnabled;}},
   publish(){if(this.mini?.isVisible())this.mini.webContents.send('desktop:state',this.public());},
   public(){return {prefs:this.prefs,island:island.state(),sleep:{mode:'off'}};}};
- const island=islandOwner.island=new MiniIsland(islandOwner),switchMiniMode=()=>WindowsIntegration.prototype.action.call(islandOwner,'mini');
+ let outside;
+ const watchOutside=(_app,_window,handler)=>{outside=handler;return ()=>{if(outside===handler)outside=null;};};
+ const island=islandOwner.island=new MiniIsland(islandOwner,{watchOutside}),switchMiniMode=()=>WindowsIntegration.prototype.action.call(islandOwner,'mini');
  const nativeUntil=async check=>{
   const deadline=Date.now()+3000;
   while(!check()&&Date.now()<deadline)await wait(15);
@@ -246,9 +228,12 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
   assert.equal(islandOwner.mini.isAlwaysOnTop(),true);
   assert.equal(island.expanded,false);
   await island.toggle();assert(islandOwner.mini.getBounds().height>compactHeight+100);assert.equal(islandOwner.mini.isFocused(),false);
-  island.collapse();assert(islandOwner.mini.getBounds().height>compactHeight+100);
+  const previousClick=outside;assert.equal(typeof previousClick,'function');
+  previousClick();assert.equal(island.expanded,false);assert.equal(outside,null);
+  assert(islandOwner.mini.getBounds().height>compactHeight+100);
   await wait(45);await island.toggle();await wait(260);
   assert.equal(island.expanded,true);assert(islandOwner.mini.getBounds().height>compactHeight+100);
+  previousClick();assert.equal(island.expanded,true);
   island.collapse();await nativeUntil(()=>islandOwner.mini.getBounds().height===compactHeight);
   assert(settlements>0);
   const area=electron.screen.getPrimaryDisplay().workArea;
@@ -272,7 +257,7 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
   focused=true;minimized=false;foreground.emit('focus');
   focused=false;minimized=true;foreground.emit('minimize');
   assert.equal(island.state().visible,false);
-  report.island={height:compactHeight,above:true,shortcut:true,restored:true,modeToggle:true,focus:true,settlements};
+  report.island={height:compactHeight,above:true,shortcut:true,restored:true,modeToggle:true,focus:true,settlements,outsideClick:true};
  }finally{
   electron.ipcMain.removeHandler('desktop:request');
   electron.ipcMain.removeListener('desktop:island-settled',settled);

@@ -74,19 +74,6 @@
   let route=Promise.resolve();
   let onOutputFallback=()=>{};
   const sources=new Set();
-  let loudnessEnabled=false;
-  const trackGain=db=>loudnessEnabled&&Number.isFinite(db)&&db>=-40&&db<=6?10**(db/20):1;
-  function setLoudnessEnabled(enabled){
-   const next=enabled===true;
-   if(loudnessEnabled===next)return;
-   loudnessEnabled=next;
-   if(!context)return;
-   const now=context.currentTime;
-   for(const source of sources){
-    source.trim.gain.cancelAndHoldAtTime(now);
-    source.trim.gain.setTargetAtTime(trackGain(source.db),now,.035);
-   }
-  }
   function apply(){
    level=makeup(settings,context?.sampleRate);
    if(!nodes)return;
@@ -116,8 +103,7 @@
    currentOutput(){return outputId;},
    canSelectOutput(){return typeof Context?.prototype?.setSinkId==='function';},
    onOutputFallback(callback){onOutputFallback=callback;},
-   setLoudnessEnabled,
-   async attach(audio,db){
+   async attach(audio){
     if(!Context)throw Error('Аудиообработка недоступна');
     if(!context){
      context=new Context();
@@ -127,12 +113,10 @@
       catch{outputId='';onOutputFallback();}
      }
     }else await route;
-    const source=context.createMediaElementSource(audio),envelope=context.createGain(),trim=context.createGain();
-    trim.gain.value=trackGain(db);
-    source.connect(trim).connect(envelope).connect(nodes.input);
-    const record={trim,db};
-    sources.add(record);
-    const disconnect=()=>{source.disconnect();trim.disconnect();envelope.disconnect();sources.delete(record);};
+    const source=context.createMediaElementSource(audio),envelope=context.createGain();
+    source.connect(envelope).connect(nodes.input);
+    sources.add(source);
+    const disconnect=()=>{source.disconnect();envelope.disconnect();sources.delete(source);};
     try{await context.resume();}catch(error){disconnect();throw error;}
     disconnect.gain=(from,to,seconds)=>{
      const now=context.currentTime;
