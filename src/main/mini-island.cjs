@@ -152,7 +152,7 @@ class MiniIsland {
     try { await this.owner.store.save('preferences',settings); }
     catch (error) {this.owner.prefs=previous;if(input.shortcut!==undefined)this.register(previous.islandShortcut);throw error;}
     if (input.enabled === true) await this.show();
-    if (input.enabled === false) {
+    if (input.enabled === false && !this.prefs.islandEnabled) {
       clearTimeout(this.closing);
       this.closing=null;
       this.expanded=false;
@@ -165,6 +165,7 @@ class MiniIsland {
 
   async show() {
     const mini=await this.create();
+    if(!this.prefs.islandEnabled)return;
     this.place();
     mini.showInactive();
     this.owner.publish();
@@ -176,6 +177,7 @@ class MiniIsland {
       this.owner.prefs={...this.prefs,islandEnabled:true};
       await this.owner.store.save('preferences',this.prefs);
     }
+    if(!this.prefs.islandEnabled)return;
     if(this.expanded){this.collapse();return;}
     clearTimeout(this.closing);
     this.closing=null;

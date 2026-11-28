@@ -40,7 +40,7 @@ class WindowsIntegration{
 
  public(){return{...this.view,fullscreen:this.main.isFullScreen?.()===true,mainVisible:!this.main.isDestroyed()&&this.main.isVisible()&&!this.main.isMinimized?.(),prefs:{...this.prefs},island:this.island?.state(),keys:{...this.keyStatus},sleep:this.sleep.state(),miniVisible:!!this.mini&&!this.mini.isDestroyed()&&this.mini.isVisible()};}
  show(){if(this.main.isDestroyed())return;if(this.main.isMinimized())this.main.restore();this.main.show();this.main.focus();}
- action(type,data={}){if(!ACTIONS.has(type))throw Error('Недопустимая команда плеера');if(type==='show'){this.show();return;}if(type==='mini')return this.showMini();if(type==='hideMini'){this.island.collapse();return;}if(type==='toggleIsland')return this.island.toggle();if(type==='quit'){this.electron.app.quit();return;}
+ action(type,data={}){if(!ACTIONS.has(type))throw Error('Недопустимая команда плеера');if(type==='show'){this.show();return;}if(type==='mini')return this.island.configure({enabled:!this.prefs.islandEnabled});if(type==='hideMini'){this.island.collapse();return;}if(type==='toggleIsland')return this.island.toggle();if(type==='quit'){this.electron.app.quit();return;}
   const key=['toggle','play','pause'].includes(type)?'transport':type,now=Date.now();if(key==='transport'&&!data.sleep&&this.lastAction[key]&&now-this.lastAction[key]<160)return;this.lastAction[key]=now;
   if(type==='seek'&&(!Number.isFinite(data.time)||data.time<0||data.time>604800))throw Error('Неверная позиция');if(!this.main.isDestroyed())this.main.webContents.send('desktop:action',{type,...(type==='seek'?{time:data.time}:{}),...(data.sleep?{sleep:true}:{})});
  }

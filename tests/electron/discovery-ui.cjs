@@ -169,12 +169,24 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  }
  miniDebug.detach();report.islandMotion={reversible:true,reducedMotion:true,narrow:true};
  await ev("return (async()=>{const names=(await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==='audiooutput');const output=names.find(d=>d.deviceId&&d.deviceId!=='default');const clip=new Audio();const release=await waveAudio.attach(clip);try{await waveAudio.selectOutput(output?.deviceId||'');if(waveAudio.currentOutput()!==(output?.deviceId||''))throw Error('Unexpected output');await waveAudio.selectOutput('');return {outputs:names.length,switched:!!output};}finally{release();}})()").then(value=>{report.audioOutput=value;});
+ assert.equal(await ev("$('mini-open').getAttribute('aria-pressed')"),'false');
+ await ev("$('mini-open').click()");
+ await until("$('mini-open').getAttribute('aria-pressed')==='true'&&$('island-enabled').checked&&!$('mini-open').disabled");
+ await ev("$('mini-open').click()");
+ await until("$('mini-open').getAttribute('aria-pressed')==='false'&&!$('island-enabled').checked&&!$('mini-open').disabled");
+ await ev("await music.desktop('island-configure',{enabled:true})");
+ await until("$('mini-open').getAttribute('aria-pressed')==='true'");
+ const {WindowsIntegration}=require('../../src/main/windows-integration.cjs');
  const {MiniIsland}=require('../../src/main/mini-island.cjs'),electron=require('electron');
- const islandOwner={electron,main:window,prefs:{islandEnabled:true,islandDisplay:'',islandShortcut:'Ctrl+Alt+Shift+F11'},store:{save:async()=>{}},publish(){},public(){return island.state();}};
- const island=new MiniIsland(islandOwner);
+ let savedIslandEnabled;
+ const islandOwner={electron,main:window,prefs:{islandEnabled:false,islandDisplay:'',islandShortcut:'Ctrl+Alt+Shift+F11'},store:{save:async(kind,prefs)=>{savedIslandEnabled=prefs.islandEnabled;}},publish(){},public(){return island.state();}};
+ const island=islandOwner.island=new MiniIsland(islandOwner);
+ const switchMiniMode=()=>WindowsIntegration.prototype.action.call(islandOwner,'mini');
  try{
   island.start();assert.equal(island.state().shortcutActive,true);
-  await island.show();
+  await switchMiniMode();
+  assert.equal(savedIslandEnabled,true);assert.equal(island.expanded,false);
+  assert.equal(islandOwner.mini.isVisible(),true);
   const compactHeight=islandOwner.mini.getBounds().height;
   assert.equal(island.placed.height,36);
   // The Windows frame can round the outer native bounds differently from the requested DIPs.
@@ -189,7 +201,15 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
   islandOwner.prefs.islandPosition={x:1,y:1};island.place();
   const box=islandOwner.mini.getBounds();assert(box.x+box.width<=area.x+area.width+4&&box.y+box.height<=area.y+area.height+4,JSON.stringify({area,box}));
   await island.configure({reset:true});assert.equal(islandOwner.prefs.islandPosition,null);
-  report.island={height:compactHeight,above:true,shortcut:true,restored:true};
+  await island.toggle();
+  assert.equal(island.expanded,true);
+  await switchMiniMode();
+  assert.equal(savedIslandEnabled,false);assert.equal(island.expanded,false);
+  assert.equal(islandOwner.mini.isVisible(),false);
+  await switchMiniMode();
+  assert.equal(savedIslandEnabled,true);assert.equal(island.expanded,false);
+  assert.equal(islandOwner.mini.isVisible(),true);
+  report.island={height:compactHeight,above:true,shortcut:true,restored:true,modeToggle:true};
  }finally{await island.close();islandOwner.mini?.destroy();}
  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
  }catch(e){fs.writeFileSync(path.join(output,'error.json'),JSON.stringify({error:e.stack,report},null,2));console.error(e.stack);process.exitCode=1;}finally{mini?.destroy();window?.destroy();app.exit(process.exitCode||0);}});
