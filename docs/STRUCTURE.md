@@ -1,6 +1,6 @@
 # Структура проекта и документации
 
-Срез: **Wave 1.2.4 Stable**, 28 ноября 2026. Канонический GitHub — [arthurhoodwin/wave](https://github.com/arthurhoodwin/wave), тег выпуска — v1.2.4; результаты публикации и установки — в VALIDATION.md. Документационные правки не требуют перевыпуска бинарников.
+Срез: **Wave 1.2.5 Stable**, 28 ноября 2026. Канонический GitHub — [arthurhoodwin/wave](https://github.com/arthurhoodwin/wave), тег выпуска — v1.2.5; результаты публикации и установки — в VALIDATION.md. Документационные правки не требуют перевыпуска бинарников.
 
 ## Что читать
 
@@ -104,3 +104,5 @@ VK Микс1.2: [поток, восстановление и контракт](V
 Сравнение с Meridius и принятые дополнения: [MERIDIUS-STUDY.md](MERIDIUS-STUDY.md).
 
 Повторный статический REA Spotify1.3.6.1921 и обновлённые цели1.2.3–1.3.0: [SPOTIFY-1.3-STUDY.md](SPOTIFY-1.3-STUDY.md).
+
+Первое сравнение алгоритмов для караоке описано в [KARAOKE-STUDY.md](KARAOKE-STUDY.md). Сводки прослушиваний и их хранение описаны в [TECHNICAL.md](TECHNICAL.md).
