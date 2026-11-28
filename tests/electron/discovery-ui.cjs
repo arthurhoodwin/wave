@@ -132,6 +132,8 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  assert(report.miniVolumeBubble.idle&&report.miniVolumeBubble.visible);assert.equal(report.miniVolumeBubble.text,'42%');
  await miniEval("miniFixture.set({current:{id:'two',title:'Вторая песня',artist:'Другой'},playing:true});void 0");
  assert.equal(await miniEval("document.getElementById('title').textContent"),'Вторая песня');
+ const miniDebug=mini.webContents.debugger;miniDebug.attach('1.3');
+ await miniDebug.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
  const expandedIsland={expanded:true,fold:{left:.18,right:.18,top:0,bottom:.83},shortcut:'Ctrl+Shift+F9',shortcutActive:true};
  const setMini=next=>miniEval('miniFixture.set('+JSON.stringify(next)+');void 0');
  await setMini({island:expandedIsland,position:43,volume:.42});
@@ -140,8 +142,8 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  await wait(270);
  assert.equal(await miniEval("document.querySelector('#island-panel').inert"),false);
  fs.writeFileSync(path.join(output,'mini-open.png'),(await mini.webContents.capturePage()).toPNG());
- await setMini({island:{...expandedIsland,expanded:false}});
- assert(await miniEval("document.querySelector('.island-shell').getAnimations().some(a=>a.transitionProperty==='clip-path')"));
+ const closingIsland=JSON.stringify({island:{...expandedIsland,expanded:false}});
+ assert(await miniEval("(()=>{const shell=document.querySelector('.island-shell');getComputedStyle(shell).clipPath;miniFixture.set("+closingIsland+");return shell.getAnimations().some(animation=>animation.transitionProperty==='clip-path');})()"));
  assert.equal(await miniEval("document.querySelector('#island-panel').inert"),true);
  await wait(70);
  await setMini({island:expandedIsland});
@@ -156,7 +158,6 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  await setMini({playing:false});
  assert.equal(await miniEval("getComputedStyle(document.querySelector('.island-signal i')).animationPlayState"),'paused');
  mini.setContentSize(320,245);
- const miniDebug=mini.webContents.debugger;miniDebug.attach('1.3');
  await miniDebug.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
  await setMini({island:expandedIsland});
  assert.equal(await miniEval("getComputedStyle(document.querySelector('.island-shell')).transitionDuration"),'0s');
