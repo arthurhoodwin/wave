@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(!card)return;
  const about=card.querySelector('.settings-about');
  const groups=[
-  ['playback','Воспроизведение',['#settings-equalizer','.transition-settings','.audio-output-settings','.shuffle-settings','.karaoke-settings']],
+  ['playback','Воспроизведение',['#settings-equalizer','.transition-settings','.audio-output-settings','.loudness-settings','.shuffle-settings','.karaoke-settings']],
   ['library','Библиотека и скачивание',['.history-settings']],
   ['application','Приложение',['.update-settings','.windows-settings','.island-settings','.interface-settings','.diagnostic-settings','.shortcut-settings']]
  ];

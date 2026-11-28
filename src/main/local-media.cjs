@@ -10,8 +10,15 @@ class LocalMedia{
  async close(){this.reset();if(this.server){this.server.closeAllConnections();await new Promise(r=>this.server.close(r));this.server=null;}}
 }
 class HybridProxy extends MediaProxy{
- constructor(options){super(options);this.local=new LocalMedia(options);}
- async open(url){if(typeof url==='string'&&url.startsWith('wave-local:')){super.reset();return this.local.open(url.slice(11));}this.local.reset();return super.open(url);}
+ constructor(options){super(options);this.local=new LocalMedia(options);this.localGain=options.localGain;}
+ async open(url){
+  if(typeof url!=='string'||!url.startsWith('wave-local:')){this.local.reset();return super.open(url);}
+  super.reset();
+  const lease=await this.local.open(url.slice(11)),media=this.local.media;
+  if(!this.localGain||media?.token!==lease.leaseId)return lease;
+  const trackGainDb=await this.localGain(media.root,media.record).catch(()=>null);
+  return Number.isFinite(trackGainDb)?{...lease,trackGainDb}:lease;
+ }
  reset(){super.reset();this.local?.reset();}
  async close(){await Promise.all([super.close(),this.local.close()]);}
 }
