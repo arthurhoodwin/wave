@@ -1,13 +1,203 @@
 'use strict';
-(()=>{const EQ=window.WaveEqualizer,engine=window.waveAudio||EQ.create(window.AudioContext||window.webkitAudioContext);let settings=engine.get();if(!window.waveAudio){try{settings=EQ.load(localStorage);}catch{}engine.set(settings);}window.waveAudio=engine;
- const dialog=document.createElement('dialog');dialog.id='equalizer-dialog';dialog.className='modal-overlay hidden';dialog.setAttribute('aria-labelledby','equalizer-heading');dialog.innerHTML='<section class="modal-card eq-card"><div class="section-head"><h2 id="equalizer-heading">Эквалайзер</h2><button id="eq-close" class="secondary">Закрыть</button></div><label class="eq-switch"><input id="eq-enabled" type="checkbox"> Эквалайзер включён</label><p class="muted">Выбор пресета или движение полосы включает эквалайзер. Переключатель позволяет сравнить звук без обработки.</p><svg id="eq-response" class="eq-response" preserveAspectRatio="none" viewBox="0 0 640 100" role="img" aria-label="Частотная характеристика"><path class="eq-zero" d="M0 50H640"/><path id="eq-response-path"/></svg><label class="eq-preset">Пресет <select id="eq-preset"><option value="flat">Ровный</option><option value="bass">Бас</option><option value="vocal">Вокал</option><option value="soft">Мягкий</option><option value="custom" disabled>Свой</option></select></label><div id="eq-bands" class="eq-bands"></div><div class="eq-bottom"><button id="eq-reset" class="secondary">Сбросить</button><span id="eq-status" role="status" class="muted"></span></div></section>';document.body.append(dialog);
- const names={flat:'Ровный',bass:'Бас',vocal:'Вокал',soft:'Мягкий',warm:'Тёплый',bright:'Яркий',rock:'Рок',pop:'Поп',electronic:'Электроника',acoustic:'Акустика',jazz:'Джаз',classical:'Классика',speech:'Речь',night:'Ночной',bassSoft:'Лёгкий бас'};const preset=$('eq-preset');preset.replaceChildren(...Object.keys(EQ.presets).map(key=>{const option=el('option','',names[key]);option.value=key;return option;}));const custom=el('option','','Свой');custom.value='custom';custom.disabled=true;preset.append(custom);
- const labels=EQ.frequencies.map(f=>f<1000?f.toLocaleString('ru-RU')+' Гц':(f/1000).toLocaleString('ru-RU')+' кГц'),sliders=[];
- function render(){window.WaveUI?.ranges(dialog);const s=engine.get();$('eq-enabled').checked=s.enabled;for(let i=0;i<sliders.length;i++){if(Number(sliders[i].value)!==s.gains[i])sliders[i].value=s.gains[i];const value=(s.gains[i]>0?'+':'')+s.gains[i].toLocaleString('ru-RU',{maximumFractionDigits:2})+' дБ';sliders[i].setAttribute('aria-valuetext',value);setText($('eq-value-'+i),value);}const preset=Object.entries(EQ.presets).find(([,g])=>g.every((v,i)=>v===s.gains[i]))?.[0]||'custom';$('eq-preset').value=preset;const info=engine.info();setText($('eq-status'),s.enabled?'Компенсация усиления: −'+info.headroomDb.toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+' дБ':'Выключен');const curve=EQ.response(s,info.sampleRate,128);$('eq-response-path').setAttribute('d',curve.map((p,i)=>(i?'L':'M')+(i*640/127).toFixed(1)+' '+(50-Math.max(-18,Math.min(18,p.db))*2.5).toFixed(1)).join(' '));$('eq-open').classList.toggle('active',s.enabled);$('eq-open').setAttribute('aria-pressed',String(s.enabled));}
- function save(value){settings=engine.set(value);try{localStorage.setItem('wave-equalizer-v2',JSON.stringify(settings));}catch{setText($('eq-status'),'Не удалось сохранить настройку. Она действует до закрытия Wave.');}render();}
- EQ.frequencies.forEach((frequency,i)=>{const label=document.createElement('label');label.className='eq-band';const name=el('span','',labels[i]),input=document.createElement('input'),value=el('output','','0 дБ');value.id='eq-value-'+i;input.type='range';input.min=-12;input.max=12;input.step=.25;input.value=settings.gains[i];input.setAttribute('aria-label',labels[i]);input.oninput=()=>{const s=engine.get();s.gains[i]=Number(input.value);s.enabled=true;save(s);};sliders.push(input);label.append(name,input,value);$('eq-bands').append(label);});
- const button=el('button','icon');button.id='eq-open';button.type='button';button.title='Эквалайзер';button.setAttribute('aria-label','Эквалайзер');button.setAttribute('aria-pressed','false');button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','equalizer-dialog');button.innerHTML='<svg class="wave-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3v18M12 3v18M19 3v18M2 8h6m1 8h6m1-10h6"/></svg>';if($('sleep-open'))$('sleep-open').before(button);else document.querySelector('.player-right').prepend(button);
- const settingsButton=el('button','secondary','Эквалайзер');settingsButton.id='settings-equalizer';$('settings-dialog').querySelector('.modal-card').append(settingsButton);
- const open=()=>{render();dialog.classList.remove('hidden');window.WaveDialogs?.focus(dialog);};button.onclick=open;settingsButton.onclick=open;$('eq-close').onclick=()=>dialog.classList.add('hidden');$('eq-enabled').onchange=()=>save({...engine.get(),enabled:$('eq-enabled').checked});$('eq-preset').onchange=()=>{const gains=EQ.presets[$('eq-preset').value];if(gains)save({...engine.get(),enabled:true,gains});};$('eq-reset').onclick=()=>save({...engine.get(),gains:EQ.presets.flat});render();
+(()=>{
+ const EQ=window.WaveEqualizer, engine=window.waveAudio;
+ const presetsKey='wave-eq-presets-v1';
+ const panel=el('section','library-popover eq-card');
+ panel.id='equalizer-dialog';
+ panel.setAttribute('popover','auto');
+ panel.setAttribute('role','dialog');
+ panel.setAttribute('aria-labelledby','equalizer-heading');
+ panel.innerHTML=`
+  <div class="section-head eq-heading">
+   <h2 id="equalizer-heading">Эквалайзер</h2>
+   <label class="eq-switch"><input id="eq-enabled" type="checkbox"> Включён</label>
+   <button id="eq-close" class="icon" type="button" aria-label="Закрыть эквалайзер" title="Закрыть">×</button>
+  </div>
+  <label class="eq-preset">Пресет <select id="eq-preset" aria-label="Пресет эквалайзера"></select></label>
+  <svg id="eq-response" class="eq-response" preserveAspectRatio="none" viewBox="0 0 640 100" role="img" aria-label="Частотная характеристика">
+   <path class="eq-zero" d="M0 50H640"/><path id="eq-response-path"/>
+  </svg>
+  <div id="eq-bands" class="eq-bands"></div>
+  <div class="eq-actions">
+   <button id="eq-save-preset" class="secondary" type="button">Сохранить как…</button>
+   <button id="eq-rename" class="secondary" type="button" hidden>Переименовать…</button>
+   <button id="eq-remove" class="secondary" type="button" hidden>Удалить пресет</button>
+   <button id="eq-reset" class="secondary" type="button">Сбросить</button>
+  </div>
+  <form id="eq-name-form" class="eq-actions" hidden>
+   <label for="eq-name">Название пресета</label><input id="eq-name" maxlength="50" required>
+   <button class="secondary" type="submit">Сохранить</button>
+   <button class="secondary" id="eq-name-cancel" type="button">Отмена</button>
+  </form>
+  <details class="eq-transfer"><summary>Импорт и экспорт</summary>
+   <div class="eq-actions"><button id="eq-import" class="secondary" type="button">Импортировать…</button>
+   <input id="eq-import-file" type="file" accept=".json,application/json" hidden>
+   <button id="eq-export" class="secondary" type="button">Экспортировать…</button></div>
+  </details>
+  <p id="eq-status" role="status" class="muted"></p>`;
+ document.body.append(panel);
+
+ const names={flat:'Ровный',bass:'Бас',vocal:'Вокал',soft:'Мягкий',warm:'Тёплый',bright:'Яркий',rock:'Рок',pop:'Поп',electronic:'Электроника',acoustic:'Акустика',jazz:'Джаз',classical:'Классика',speech:'Речь',night:'Ночной',bassSoft:'Лёгкий бас'};
+ const validGains=gains=>Array.isArray(gains)&&gains.length===EQ.frequencies.length&&gains.every(g=>Number.isFinite(g)&&g>=-12&&g<=12&&Number.isInteger(g*4));
+ const validName=name=>typeof name==='string'&&name.trim().length>0&&name.length<=50&&!/[\x00-\x1f]/.test(name);
+ const validId=id=>typeof id==='string'&&/^user-[a-f0-9-]{36}$/.test(id);
+ let profiles=[], selected='', editId=null;
+ try{
+  const stored=JSON.parse(localStorage.getItem(presetsKey)||'[]');
+  if(Array.isArray(stored))profiles=stored.filter(p=>validId(p?.id)&&validName(p.name)&&validGains(p.gains)).slice(0,40);
+ }catch{}
+ const sliders=[],preset=$('eq-preset');
+ const profile=()=>profiles.find(p=>p.id===selected);
+ const option=(key,title)=>{const node=el('option','',title);node.value=key;return node;};
+ const status=text=>setText($('eq-status'),text);
+ function options(){
+  const builtIns=el('optgroup');builtIns.label='Готовые';
+  builtIns.append(...Object.keys(EQ.presets).map(key=>option(key,names[key])));
+  const own=el('optgroup');own.label='Мои пресеты';
+  own.append(...profiles.map(p=>option(p.id,p.name)));
+  const manual=option('custom','Ручная настройка');manual.disabled=true;
+  preset.replaceChildren(builtIns,...(profiles.length?[own]:[]),manual);
+ }
+ options();
+
+ const button=el('button','icon');
+ button.id='eq-open';button.type='button';button.title='Эквалайзер';
+ button.setAttribute('aria-label','Эквалайзер');
+ button.setAttribute('aria-haspopup','dialog');
+ button.setAttribute('aria-controls',panel.id);
+ button.setAttribute('aria-expanded','false');
+ button.innerHTML='<svg class="wave-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3v18M12 3v18M19 3v18M2 8h6m1 8h6m1-10h6"/></svg>';
+ if($('sleep-open'))$('sleep-open').before(button);
+ else document.querySelector('.player-right').prepend(button);
+
+ function same(a,b){return a?.every((gain,i)=>gain===b[i]);}
+ function render(){
+  const current=engine.get(), gains=current.gains;
+  const matched=Object.entries(EQ.presets).find(([,values])=>same(values,gains))?.[0];
+  if(!same(profile()?.gains||EQ.presets[selected],gains))selected=matched||'custom';
+  preset.value=selected;
+  $('eq-enabled').checked=current.enabled;
+  $('eq-rename').hidden=$('eq-remove').hidden=!profile();
+  sliders.forEach((input,i)=>{
+   input.value=gains[i];
+   const label=(gains[i]>0?'+':'')+gains[i].toLocaleString('ru-RU')+' дБ';
+   input.setAttribute('aria-valuetext',label);
+   setText($('eq-value-'+i),label);
+  });
+  window.WaveUI?.ranges(panel);
+  window.WaveSelect?.refresh();
+  const curve=EQ.response(current,engine.info().sampleRate,128);
+  $('eq-response-path').setAttribute('d',curve.map((p,i)=>(i?'L':'M')+(i*640/127).toFixed(1)+' '+(50-Math.max(-18,Math.min(18,p.db))*2.5).toFixed(1)).join(' '));
+  button.classList.toggle('active',current.enabled);
+ }
+ function set(value){
+  const current=engine.set(value);
+  try{localStorage.setItem(EQ.storageKey,JSON.stringify(current));status('');}
+  catch{status('Настройка действует до закрытия Wave.');}
+  render();
+ }
+ EQ.frequencies.forEach((frequency,i)=>{
+  const text=frequency<1000?frequency+' Гц':(frequency/1000).toLocaleString('ru-RU')+' кГц';
+  const label=el('label','eq-band'),input=el('input'),value=el('output');
+  value.id='eq-value-'+i;input.type='range';input.min=-12;input.max=12;input.step=.25;
+  input.setAttribute('aria-label',text);
+  input.oninput=()=>{
+   const current=engine.get();
+   current.gains[i]=Number(input.value);
+   set({...current,enabled:true});
+  };
+  sliders.push(input);label.append(el('span','',text),input,value);$('eq-bands').append(label);
+ });
+ function place(){
+  if(!panel.matches(':popover-open'))return;
+  const a=button.getBoundingClientRect();
+  panel.style.maxHeight=Math.max(100,a.top-16)+'px';
+  const box=panel.getBoundingClientRect();
+  panel.style.left=Math.max(8,Math.min(innerWidth-box.width-8,a.right-box.width))+'px';
+  panel.style.top=Math.max(8,a.top-box.height-8)+'px';
+ }
+ const sizeObserver=new ResizeObserver(place);sizeObserver.observe(panel);
+ addEventListener('resize',place);
+ function closeForm(){
+  $('eq-name-form').hidden=true;editId=null;
+ }
+ function close(){
+  if(panel.matches(':popover-open'))panel.hidePopover();
+  button.focus({preventScroll:true});
+ }
+ function open(){
+  window.WaveMenus?.close();window.WaveSelect?.close();
+  render();panel.showPopover({source:button});place();$('eq-enabled').focus({preventScroll:true});
+ }
+ button.onclick=()=>panel.matches(':popover-open')?close():open();
+ const settingsButton=el('button','secondary','Эквалайзер');settingsButton.id='settings-equalizer';
+ const preferences=$('settings-dialog');
+ preferences.querySelector('.modal-card').append(settingsButton);
+ settingsButton.onclick=()=>{
+  preferences.addEventListener('close',()=>requestAnimationFrame(open),{once:true});
+  preferences.classList.add('hidden');
+ };
+ panel.addEventListener('toggle',event=>{
+  button.setAttribute('aria-expanded',String(event.newState==='open'));
+  if(event.newState==='closed')closeForm();
+ });
+ panel.addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();close();}
+ });
+ $('eq-close').onclick=close;
+ $('eq-enabled').onchange=()=>set({...engine.get(),enabled:$('eq-enabled').checked});
+ preset.onchange=()=>{
+  selected=preset.value;const gains=profile()?.gains||EQ.presets[selected];
+  if(gains)set({enabled:true,gains});
+ };
+ $('eq-reset').onclick=()=>{selected='flat';set({...engine.get(),gains:EQ.presets.flat});};
+ function edit(item){
+  editId=item?.id||null;
+  $('eq-name').value=item?.name||'';
+  $('eq-name-form').hidden=false;$('eq-name').focus();
+ }
+ function store(next){
+  if(next.length>40)throw Error('Можно сохранить до 40 пресетов.');
+  localStorage.setItem(presetsKey,JSON.stringify(next));
+  profiles=next;options();
+ }
+ $('eq-save-preset').onclick=()=>edit(null);
+ $('eq-rename').onclick=()=>edit(profile());
+ $('eq-name-cancel').onclick=()=>{closeForm();$('eq-save-preset').focus();};
+ $('eq-name-form').onsubmit=event=>{
+  event.preventDefault();
+  const name=$('eq-name').value.trim();
+  if(!validName(name)){status('Введите название пресета.');return;}
+  try{
+   const existing=profiles.find(p=>p.id===editId);
+   const item={id:existing?.id||'user-'+crypto.randomUUID(),name,gains:existing?.gains||engine.get().gains};
+   store(existing?profiles.map(p=>p.id===existing.id?item:p):[...profiles,item]);
+   selected=item.id;closeForm();render();$('eq-save-preset').focus();status('Пресет сохранён.');
+  }catch(error){status(error.message);}
+ };
+ $('eq-remove').onclick=()=>{
+  try{store(profiles.filter(p=>p.id!==selected));render();$('eq-save-preset').focus();status('Пресет удалён.');}
+  catch(error){status(error.message);}
+ };
+ $('eq-import').onclick=()=>$('eq-import-file').click();
+ $('eq-import-file').onchange=async event=>{
+  const file=event.target.files[0];event.target.value='';
+  if(!file)return;
+  try{
+   if(file.size>16384)throw Error('Файл пресета слишком большой.');
+   const value=JSON.parse(await file.text());
+   if(value?.version!==1||JSON.stringify(value.frequencies)!==JSON.stringify(EQ.frequencies)||!validName(value.name)||!validGains(value.gains))throw Error('Этот файл не подходит для эквалайзера Wave.');
+   const item={id:'user-'+crypto.randomUUID(),name:value.name.trim(),gains:value.gains};
+   store([...profiles,item]);selected=item.id;
+   set({enabled:true,gains:item.gains});status('Пресет импортирован.');
+  }catch(error){status(error instanceof SyntaxError?'Не удалось прочитать JSON пресета.':error.message);}
+ };
+ $('eq-export').onclick=()=>{
+  const value={version:1,name:profile()?.name||names[selected]||'Мой пресет',frequencies:EQ.frequencies,gains:engine.get().gains};
+  const link=el('a'),url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));
+  link.href=url;link.download='Wave-EQ.json';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+ };
+ render();
  const exportButton=el('button','secondary','Сохранить диагностику');exportButton.id='diagnostics-export';const help=el('p','muted','Отчёт содержит версию, технические счётчики и категории ошибок. Без названий песен, данных аккаунта и ссылок. Никуда не отправляется автоматически.');help.id='diagnostics-help';exportButton.setAttribute('aria-describedby',help.id);exportButton.onclick=async()=>{exportButton.disabled=true;try{const result=requireResult(await api.diagnostics({enabled:engine.get().enabled}));setText(help,result.canceled?'Сохранение отменено.':'Отчёт сохранён. Вы можете проверить файл перед отправкой.');}catch(e){setText(help,e.message||'Не удалось сохранить отчёт. Повторите попытку.');}finally{exportButton.disabled=false;}};const diagnosticsSection=el('section','diagnostic-settings');diagnosticsSection.append(el('h3','','Диагностика'),help,exportButton);$('settings-dialog').querySelector('.modal-card').append(diagnosticsSection);
 })();
