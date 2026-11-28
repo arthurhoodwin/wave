@@ -1,0 +1,31 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+const {TrackMoments}=require('../src/main/track-moments.cjs');
+
+test('moments survive a restart, are isolated by track and account, and support edits',async t=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'wave-moments-'));
+ t.after(async()=>{for(const file of await fs.readdir(directory))await fs.unlink(path.join(directory,file));await fs.rmdir(directory);});
+ const options={directory,encrypt:async text=>Buffer.from(text),decrypt:async bytes=>bytes.toString()};
+ const original=new TrackMoments(options),root='/audios42',track='42_66';
+ const request=(store,command,account=root,key=track,check=()=>{})=>store.request(account,key,command,check);
+ const first=await request(original,{action:'moment-save',time:102,label:' Второй куплет '});
+ const {id}=first.moments[0];
+ assert.equal(first.moments[0].label,'Второй куплет');
+ await request(original,{action:'moment-save',time:3,label:''});
+ const reopened=new TrackMoments(options);
+ assert.deepEqual((await request(reopened,{action:'moments'})).moments.map(row=>row.time),[3,102]);
+ assert.deepEqual(await request(reopened,{action:'moments'},'/audios43'),{moments:[]});
+ assert.deepEqual(await request(reopened,{action:'moments'},root,'42_67'),{moments:[]});
+ await assert.rejects(request(reopened,{action:'moment-remove',momentId:id},root,'42_67'),/удалён/);
+ const renamed=await request(reopened,{action:'moment-rename',momentId:id,label:'Распев'});
+ assert.equal(renamed.moments[1].label,'Распев');
+ const duplicate=await request(reopened,{action:'moment-save',time:102,label:'Припев'});
+ assert.deepEqual(duplicate.moments.map(row=>[row.time,row.label]),[[3,''],[102,'Припев']]);
+ assert.equal(duplicate.moments[1].id,id);
+ await assert.rejects(request(reopened,{action:'moment-save',time:NaN,label:''}),/позиция/);
+ await assert.rejects(request(reopened,{action:'moment-save',time:9,label:'x'.repeat(81)}),/подпись/);
+ await assert.rejects(request(reopened,{action:'moment-remove',momentId:id},root,track,()=>{throw Error('Аккаунт изменился');}),/изменился/);
+ const removed=await request(reopened,{action:'moment-remove',momentId:id});
+ assert.deepEqual(removed.moments.map(row=>row.time),[3]);
+});

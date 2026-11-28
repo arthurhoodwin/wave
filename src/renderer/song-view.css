@@ -33,3 +33,22 @@
 /* Keep the timed line legible without painting a second selected panel. */
 .lyric-line.is-current{color:var(--text-primary);background:transparent;border-inline-start-color:var(--text-accent)}
 .song-cover{background:var(--bg-cover);color:var(--text-secondary)}
+
+.song-moments {
+ width:min(100%,560px);margin-block:12px 0;clear:both;flex-shrink:0;
+ border-block-start:1px solid var(--border-subtle);text-align:start;font-size:13px;
+}
+.song-moments summary {min-height:36px;padding-block:9px;cursor:pointer;font-weight:650;}
+.song-moments #moment-add {margin-block:2px 6px;}
+#moment-form {margin-block:6px 10px;padding:10px;background:var(--bg-surface);border-radius:8px;}
+#moment-form-time {margin:0 0 5px;font-variant-numeric:tabular-nums;color:var(--text-accent);}
+#moment-label {display:block;width:100%;min-height:36px;margin:3px 0 8px;padding-inline:8px;}
+.moment-form-actions {display:flex;gap:6px;flex-wrap:wrap;}
+#moment-status {min-width:0;line-height:1.4;margin-block:6px;}
+#moment-status:empty {display:none;}
+#moment-list {list-style:none;margin:0;padding:0;}
+.moment-row {display:flex;align-items:center;gap:4px;margin-block:3px;}
+.moment-jump {display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:start;}
+.moment-time {font-variant-numeric:tabular-nums;color:var(--text-accent);flex:none;}
+.moment-name {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.moment-row .icon {width:32px;height:32px;flex:none;}

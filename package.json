@@ -1,6 +1,6 @@
 {
   "name": "wave-vk-research-client",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "private": false,
   "description": "Windows music client with an independent VK network adapter and local audio player",
   "main": "src/main/main.cjs",
@@ -57,7 +57,7 @@
         "nsis"
       ],
       "icon": "assets/icons/wave.ico",
-      "artifactName": "Wave-Setup-1.2.6.3.${ext}"
+      "artifactName": "Wave-Setup-1.2.7.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -80,7 +80,7 @@
       "src/main/karaoke-worker.cjs",
       "build/windows/island-click.exe"
     ],
-    "buildVersion": "1.2.6.3"
+    "buildVersion": "1.2.7.0"
   },
   "license": "GPL-3.0-only",
   "repository": {
@@ -91,11 +91,11 @@
   "bugs": {
     "url": "https://github.com/arthurhoodwin/wave/issues"
   },
-  "releaseVersion": "1.2.6.3",
+  "releaseVersion": "1.2.7",
   "releaseChannel": "stable",
   "updateMode": "files",
   "otaBases": [
-    "1.2.6.2"
+    "1.2.6.3"
   ],
   "otaManifest": true,
   "otaHistory": [
@@ -134,6 +134,7 @@
     "1.2.5.1",
     "1.2.6",
     "1.2.6.1",
-    "1.2.6.2"
+    "1.2.6.2",
+    "1.2.6.3"
   ]
 }

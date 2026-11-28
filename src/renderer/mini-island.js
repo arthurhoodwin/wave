@@ -112,7 +112,12 @@
    .filter(animation=>['clip-path','opacity'].includes(animation.transitionProperty))
    .map(animation=>animation.finished));
   Promise.allSettled(finishes).then(()=>{
-   if(settling===motion&&!desired)window.desktop.settleMotion?.(motion);
+   if(settling!==motion||desired)return;
+   // The viewport-dependent inset changes again when Windows shrinks the canvas.
+   // Apply that size change without starting a second clip-path transition.
+   body.dataset.motion='false';
+   shell.getBoundingClientRect();
+   window.desktop.settleMotion?.(motion);
   });
  }
 

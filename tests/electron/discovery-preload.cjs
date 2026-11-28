@@ -1,5 +1,6 @@
 const {contextBridge}=require('electron');
 const albumId='33333333-3333-4333-8333-333333333333',listeners=new Set(),counters={albums:0,plays:0,images:0};let localPlaylistCover={image:null};let mode='normal',albumGate,releaseAlbum,downloadConcurrency=3,autoDownloadLikes=false,pins=[],albumSaved=false,foreignSaved=false,savedLists=[{id:'own-list',title:'Тестовый плейлист',kind:'playlist',editable:true}],mutations=0,detailsGate,releaseDetails;
+const moments=new Map();let momentNumber=0;
 const tracks=[{id:'song',key:'13_1',title:'madam',artist:'Example artist',duration:180,available:true,albumTitle:'unnamed',cover:'https://sun1.userapi.com/song-one.jpg'},{id:'song-two',key:'13_2',title:'Second song',cover:'https://sun1.userapi.com/song-two.jpg',artist:'Example artist',duration:120,available:true}];
 let mixTracks=[],mixNumber=0,mixFailure=false,mixStopped=false,feedbackUncertain=false,mixGate,rejectMix;const disliked=new Map(),sessionListeners=new Set(),desktopListeners=new Set();let mainVisible=true,islandEnabled=false;
 let lyricsMode='saved';let libraryTracks=tracks;const image='https://sun1.userapi.com/fixture.jpg';
@@ -15,7 +16,15 @@ contextBridge.exposeInMainWorld('music',{
  collectionDetails:async id=>{if(detailsGate)await detailsGate;return({title:'Тестовый плейлист',kind:id===albumId?'album':'playlist',canDelete:id==='own-list',canSave:id===albumId||id==='foreign-list'||id==='saved-foreign',saved:id===albumId?albumSaved:foreignSaved});},
  mutate:async command=>{mutations++;if(command.action==='save-playlist'||command.action==='remove-playlist'){foreignSaved=command.action==='save-playlist';savedLists=savedLists.filter(p=>p.id!=='saved-foreign');if(foreignSaved)savedLists.unshift({id:'saved-foreign',title:'Плейлист другого пользователя',kind:'playlist',editable:false});return{operation:{state:'success'},playlists:savedLists,playlistsRevision:mutations,listSaved:foreignSaved,removedPlaylistIds:foreignSaved?[]:['saved-foreign'],replacementPlaylist:{id:'foreign-list',title:'Плейлист другого пользователя',kind:'playlist'}};}if(command.action==='delete-playlist'){savedLists=savedLists.filter(p=>p.id!==command.playlistId);return{operation:{state:'success'},playlists:savedLists,playlistsRevision:mutations,removedPlaylistIds:[command.playlistId]};}if(command.action==='save-album'||command.action==='remove-album'){albumSaved=command.action==='save-album';savedLists=savedLists.filter(p=>p.id!=='saved-album');if(albumSaved)savedLists.push({id:'saved-album',title:'damage',kind:'album',editable:false});return{operation:{state:'success'},playlists:savedLists,playlistsRevision:mutations,albumSaved};}throw Error('Unsupported fixture mutation');},
  playlistDetails:async()=>({title:'Тестовый плейлист',description:'Описание'}),
- personal:async command=>{if(command.action==='playlist-cover-thumbnails')return localPlaylistCover.image?[{id:'own-list',image:localPlaylistCover.image.replace('image/png','image/jpeg')}]:[];
+ personal:async command=>{
+  if(command.action==='moments'||command.action.startsWith('moment-')){
+   const rows=moments.get(command.id)||[];
+   if(command.action==='moment-save')rows.push({id:'moment-'+(++momentNumber),time:command.time,label:command.label});
+   if(command.action==='moment-rename')rows.find(row=>row.id===command.momentId).label=command.label;
+   if(command.action==='moment-remove')rows.splice(rows.findIndex(row=>row.id===command.momentId),1);
+   moments.set(command.id,rows);
+   return {moments:rows};
+  }if(command.action==='playlist-cover-thumbnails')return localPlaylistCover.image?[{id:'own-list',image:localPlaylistCover.image.replace('image/png','image/jpeg')}]:[];
  if(command.action==='recap-invitation')return {month:null};
  if(command.action==='recap-archive')return {months:[{month:'2026-10',coverage:'complete',hasData:true},{month:'2026-09',coverage:'missing',hasData:false}]};
  if(command.action==='recap-report')return command.month==='2026-10'?{coverage:'complete',report:{ms:7200000,days:4,tracks:12,artists:5,plays:14,hour:null,streak:2,mixMs:120000,mixTracks:2,offlineMs:0,outside:0,longestMs:3600000,track:{name:'Тестовая песня',artist:'Исполнитель',ms:320000}}}:{coverage:'missing',report:null};
@@ -26,6 +35,6 @@ contextBridge.exposeInMainWorld('music',{
  playlist:async id=>({description:'Описание &amp; детали<br>Вторая строка',cover:image,tracks,title:id===albumId?'damage (Deluxe)':'Алгоритмический список',kind:id===albumId?'album':'playlist',generated:id==='generated',partial:false,...(id===albumId?{albumMetadata:{id:albumId,title:'damage (Deluxe)',confirmed:true}}:{})}),
  trackAlbum:async()=>{counters.albums++;if(albumGate)await albumGate;return{id:albumId,title:'damage',confirmed:true};},
  lyrics:async(_id,options)=>{counters.lyrics=(counters.lyrics||0)+1;if(options?.refresh)counters.lyricsRefresh=(counters.lyricsRefresh||0)+1;if(lyricsMode==='missing')return{text:'',offlineMissing:true};return({offlineSaved:true,text:'Город уснул за стеклом.\nТихо погасли огни.\nМы эту ночь сбережём —\nПусть не кончается миг.\n\nВетер листает дворы,\nСвет отражается в лужах.\nСнова знакомый мотив\nСлышится медленно, глуше.\n\nУтро вернётся потом.\nЛиния звука простая.\nГород уснул за стеклом.\nМузыка нас не оставит.',source:'VK',timings:[{time:0,text:'Город уснул за стеклом.'},{time:15,text:'Тихо погасли огни.'},{time:30,text:'Мы эту ночь сбережём —'},{time:45,text:'Пусть не кончается миг.'},{time:60,text:'Ветер листает дворы,'},{time:75,text:'Свет отражается в лужах.'},{time:90,text:'Снова знакомый мотив'},{time:105,text:'Слышится медленно, глуше.'},{time:120,text:'Утро вернётся потом.'},{time:135,text:'Музыка нас не оставит.'}]});},cancelLyrics:async()=>({}),cancelSearch:async()=>({}),
- play:async()=>{counters.plays++;return{playing:true};},pause:async()=>({playing:false}),resume:async()=>({playing:true}),volume:async value=>({volume:value}),seek:async()=>({}),
+ play:async()=>{counters.plays++;return{playing:true};},pause:async()=>({playing:false}),resume:async()=>({playing:true}),volume:async value=>({volume:value}),seek:async time=>{counters.seek=time;return {};},
  onPlaybackCommand:()=>()=>{},onSession:fn=>{sessionListeners.add(fn);return()=>sessionListeners.delete(fn);},onPlayerState:()=>()=>{},onOperations:()=>()=>{},search:async()=>({tracks,entities:[],partial:false}),searchHistory:async()=>({queries:[]})
 });
