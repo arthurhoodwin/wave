@@ -16,3 +16,31 @@ test('seek preserves pause intent and timeout does not become a fatal media fail
 test('reset cancels an in-flight seek and ignores its late events',async()=>{const f=renderer();await f.send({type:'reset'});await f.send({type:'load',id:1,format:'hls',url:'fixture',volume:.5});f.audio.seeking=true;const old=f.audio,pending=f.send({type:'seek',id:3,time:90});await f.send({type:'reset',generation:2,id:4});old.seeking=false;old.dispatchEvent(new Event('seeked'));await pending;assert(!f.reports.some(e=>e.requestId===3));assert(f.reports.some(e=>e.requestId===4));});
 
 test('seek failure releases its command without refreshing the selected track',async()=>{const {NativePlayer}=require('../src/main/native-player.cjs');let p,resolves=0;p=new NativePlayer({api:{resolveAudio:async()=>{resolves++;return{url:'fixture'};}},proxy:{open:async()=>({url:'fixture',leaseId:'fixture'}),reset(){},close:async()=>{}},send:c=>{setImmediate(()=>p.accept({generation:c.generation,requestId:c.id,type:c.type==='seek'?'seek-error':'state',playing:true,duration:120,currentTime:0}));return true;}});try{await p.play({id:'selected',key:'fixture',duration:120});await assert.rejects(p.seek(90),/перемотать/);assert.equal(resolves,1);assert.equal(p.current.id,'selected');assert.equal(p.pending.size,0);assert.equal(p.last.buffering,false);}finally{await p.close();}});
+
+test('first track after restarting uses the restored volume instead of the reset acknowledgement',async()=>{
+ const {NativePlayer}=require('../src/main/native-player.cjs');
+ for(const volume of [0,.23]){
+  const fresh=renderer(),commands=[];
+  let consumed=0;
+  const player=new NativePlayer({
+   api:{resolveAudio:async()=>({url:'fixture',format:'audio'})},
+   proxy:{reset(){},open:async()=>({url:'fixture',leaseId:'new'}),close:async()=>{}},
+   send(command){
+    commands.push(command);
+    queueMicrotask(async()=>{
+     await fresh.send(command);
+     for(const report of fresh.reports.slice(consumed))player.accept(report);
+     consumed=fresh.reports.length;
+    });
+    return true;
+   }
+  });
+  try{
+   player.last.volume=volume; // Same initial value populated from preferences by WindowsIntegration.init.
+   await player.play({id:'track',key:'13_1',duration:120});
+   assert.equal(commands.find(c=>c.type==='load').volume,volume);
+   assert.equal(fresh.audio.volume,volume);
+   assert.equal(player.last.volume,volume);
+  }finally{await player.close();}
+ }
+});

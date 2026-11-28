@@ -55,7 +55,7 @@
         "nsis"
       ],
       "icon": "assets/icons/wave.ico",
-      "artifactName": "Wave-Setup-1.2.5.${ext}"
+      "artifactName": "Wave-Setup-1.2.5.1.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -76,7 +76,7 @@
     "asarUnpack": [
       "build/windows/apply-update.ps1"
     ],
-    "buildVersion": "1.2.5.0"
+    "buildVersion": "1.2.5.1"
   },
   "license": "GPL-3.0-only",
   "repository": {
@@ -87,11 +87,11 @@
   "bugs": {
     "url": "https://github.com/arthurhoodwin/wave/issues"
   },
-  "releaseVersion": "1.2.5",
+  "releaseVersion": "1.2.5.1",
   "releaseChannel": "stable",
   "updateMode": "files",
   "otaBases": [
-    "1.2.4"
+    "1.2.5"
   ],
   "otaManifest": true,
   "otaHistory": [
@@ -125,6 +125,7 @@
     "1.2.1",
     "1.2.2",
     "1.2.3",
-    "1.2.4"
+    "1.2.4",
+    "1.2.5"
   ]
 }
