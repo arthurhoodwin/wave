@@ -37,7 +37,7 @@
   render,
   localCover(id){return overrideSession===state.sessionRevision?overrides.get(id)?.image:null;},
   setPlaylistCover(id,result){
-   remember(id,result);
+   remember(id,result);window.WaveSidebarCovers?.refresh();
    if(state.route.type==='playlist'&&state.route.id===id){key='';heroCover(state.route.cover);render();}
   }
  };render();

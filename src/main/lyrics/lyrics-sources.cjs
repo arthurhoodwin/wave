@@ -3,7 +3,29 @@ const normalize=s=>String(s||'').normalize('NFKC').toLocaleLowerCase().replace(/
 const names=t=>(t.artists?.length?t.artists.map(a=>a.name):[t.artist]).filter(Boolean);
 function matches(track,title,artist,duration){const expected=names(track);return normalize(track.title)===normalize(title)&&expected.every(n=>(' '+normalize(artist)+' ').includes(' '+normalize(n)+' '))&&(!Number.isFinite(duration)||!track.duration||Math.abs(duration-track.duration)<=3);}
 function cancelled(){return Object.assign(Error('Поиск текста отменён'),{kind:'cancelled'});}
-async function geniusText(html){const {Parser}=await import('htmlparser2');const chunks=[];let depth=0,skip=0;const parser=new Parser({onopentag(tag,attrs){if(depth){depth++;if(['script','style','noscript','button'].includes(tag))skip++;if(!skip&&['br','p'].includes(tag))chunks.push('\n');}else if(attrs['data-lyrics-container']==='true'||attrs.class==='lyrics'){depth=1;chunks.push('\n');}},ontext(value){if(depth&&!skip)chunks.push(value);},onclosetag(tag){if(!depth)return;if(['script','style','noscript','button'].includes(tag)&&skip)skip--;if(!skip&&['div','p'].includes(tag))chunks.push('\n');depth--;if(!depth)chunks.push('\n');}},{decodeEntities:true});parser.write(html);parser.end();return chunks.join('').replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();}
+async function geniusText(html){
+ const {Parser}=await import('htmlparser2');
+ const chunks=[],stack=[];
+ const decoration=/(?:LyricsHeader|SongHeader|SongDescription|Translations|Contributors|ReadMore|Footer|Embed|Advertisement|AdSlot|LyricsEnding|RelatedSongs|LyricsMetadata)(?:__|[-_]|$)/i;
+ const parser=new Parser({
+  onopentag(tag,attrs){
+   const parent=stack.at(-1);
+   const inside=parent?.inside||attrs['data-lyrics-container']==='true'||(attrs.class||'').split(/\s+/).includes('lyrics');
+   const skip=parent?.skip||['script','style','noscript','button','aside','nav','svg','h1','h2'].includes(tag)
+    ||['navigation','complementary','banner'].includes(attrs.role)||attrs['aria-hidden']==='true'
+    ||decoration.test(attrs.class||'')||attrs['data-exclude-from-selection']==='true';
+   stack.push({inside,skip});
+   if(inside&&!skip&&(!parent?.inside||tag==='br'||tag==='p'))chunks.push('\n');
+  },
+  ontext(text){const current=stack.at(-1);if(current?.inside&&!current.skip)chunks.push(text);},
+  onclosetag(tag){
+   const current=stack.pop();
+   if(current?.inside&&!current.skip&&['div','p'].includes(tag))chunks.push('\n');
+  }
+ },{decodeEntities:true});
+ parser.end(html);
+ return chunks.join('').replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+}
 class LyricsSources{
  constructor({fetch:request=globalThis.fetch,now=Date.now,timeout=3500,budget=11000}={}){this.fetch=request;this.now=now;this.timeout=timeout;this.budget=budget;this.cache=new Map();this.cacheBytes=0;this.cooldowns=new Map();this.blockedUntil=0;}
  clear(){this.job?.controller.abort();this.job=null;this.cache.clear();this.cacheBytes=0;this.root=null;}

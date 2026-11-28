@@ -42,6 +42,24 @@ class PlaylistCovers {
   return {image:'data:image/jpeg;base64,'+bytes.toString('base64'),tint};
  }
 
+ async thumbnails(root){
+  if(this.provider.root!==root||this.provider.authTransition)throw Error('Аккаунт изменился');
+  const folder=path.join(this.directory,hash(root));
+  const files=new Set(await fs.readdir(folder).catch(error=>{if(error.code==='ENOENT')return [];throw error;}));
+  const result=[];
+  for(const [id,item] of this.provider.playlists){
+   if(!item.editable||item.kind==='album'||!files.has(item.vkId?.split('_')[1]+'.jpg'))continue;
+   try{
+    const file=this.key(root,id),stat=await fs.lstat(file);
+    if(!stat.isFile()||stat.size>maxJpeg)continue;
+    const image=this.nativeImage.createFromBuffer(await fs.readFile(file));
+    if(!image.isEmpty())result.push({id,image:'data:image/jpeg;base64,'+image.resize({width:96,height:96,quality:'good'}).toJPEG(80).toString('base64')});
+   }catch{}
+  }
+  if(this.provider.root!==root||this.provider.authTransition)throw Error('Аккаунт изменился');
+  return result;
+ }
+
  async save(root,id,data){
   const file=this.key(root,id);
   if(data===null){

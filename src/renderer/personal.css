@@ -29,3 +29,19 @@
 .storage-maintenance #storage-cancel {justify-self:start;}
 .storage-maintenance #storage-issues {margin:0;padding:0;list-style:none;max-height:15rem;overflow:auto;}
 .storage-issue {display:flex;align-items:center;justify-content:space-between;gap:10px;padding-block:4px;overflow-wrap:anywhere;}
+
+#history-recap {margin: 4px 0 10px;}
+.recap-dialog .recap-card {width:75vw;max-width:calc(100vw - 24px);max-height:75vh;overflow:auto;}
+.recap-dialog[data-view="invite"] .recap-card {height:75vh;}
+.recap-top,.recap-actions {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;}
+.recap-top h2 {margin:0;}
+.recap-invite {min-height:min(42vh,330px);display:flex;flex-direction:column;justify-content:center;gap:10px;}
+.recap-invite[hidden],#recap-archive[hidden] {display:none;}
+.recap-month-name {margin:0;font-size:clamp(22px,4vw,48px);font-weight:750;color:var(--text-accent);}
+.recap-period {display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+.recap-cards {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:8px;margin-block:12px;}
+.recap-stat {border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--bg-raised);padding:10px;overflow-wrap:anywhere;}
+.recap-stat h3,.recap-stat p {margin:0;font-size:12px;}
+.recap-stat strong,.recap-link {display:block;margin-block:4px;}
+.recap-link {padding:0;min-height:24px;background:none;color:var(--text-accent);text-align:left;border:0;overflow-wrap:anywhere;}
+@media(max-width:700px){.recap-dialog .recap-card{width:calc(100vw - 24px);}}

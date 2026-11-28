@@ -8,7 +8,8 @@
  window.music?.onDesktopState?.(receive);window.music?.desktop?.('status').then(receive).catch(()=>{});
  document.addEventListener('visibilitychange',visibility);visibility();
  function update(node,{current,playing,busy,index,title}){
-  const mode=!current?'number':busy?'loading':playing?'playing':'paused';
+  const hasWave=!!node.querySelector('.track-wave');
+  const mode=!current?'number':busy&&!hasWave?'loading':playing&&!busy?'playing':'paused';
   if(node.dataset.waveMode!==mode){
    node.dataset.waveMode=mode;node.removeAttribute('data-icon-state');
    if(mode==='playing'||mode==='paused'){
