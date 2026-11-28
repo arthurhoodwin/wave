@@ -3,7 +3,9 @@
 const DEFAULT_SHORTCUT = 'Ctrl+Shift+F9';
 const COLLAPSED_HEIGHT = 36;
 const COLLAPSED_WIDTH = 248;
-const EXPANDED_WIDTH = 390;
+const EXPANDED_WIDTH = 342;
+const EXPANDED_HEIGHT = 190;
+const COLLAPSE_MS = 250;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 function shortcut(value) {
@@ -22,7 +24,7 @@ function position(value) {
   return {x:clamp(value.x,0,1), y:clamp(value.y,0,1)};
 }
 
-function bounds(area, location, expanded, height = 220) {
+function bounds(area, location, expanded, height = EXPANDED_HEIGHT) {
   const margin = Math.min(6, Math.floor(Math.min(area.width,area.height)/10));
   const left = area.x + margin, top = area.y + margin;
   const workWidth = Math.max(1,area.width - margin*2), workHeight = Math.max(1,area.height - margin*2);
@@ -40,6 +42,15 @@ function bounds(area, location, expanded, height = 220) {
   };
 }
 
+function fold(compact, canvas) {
+  return {
+    top:clamp((compact.y-canvas.y)/canvas.height,0,1),
+    right:clamp((canvas.x+canvas.width-compact.x-compact.width)/canvas.width,0,1),
+    bottom:clamp((canvas.y+canvas.height-compact.y-compact.height)/canvas.height,0,1),
+    left:clamp((compact.x-canvas.x)/canvas.width,0,1)
+  };
+}
+
 function relative(area, box) {
   const margin = Math.min(6, Math.floor(Math.min(area.width,area.height)/10));
   return position({
@@ -52,7 +63,7 @@ class MiniIsland {
   constructor(owner) {
     this.owner = owner;
     this.expanded = false;
-    this.height = 220;
+    this.height = EXPANDED_HEIGHT;
     this.onScreen = () => {this.place();owner.publish();};
   }
 
@@ -87,6 +98,7 @@ class MiniIsland {
     const {screen} = this.owner.electron;
     return {
       expanded:this.expanded,
+      fold:this.fold||null,
       shortcut:this.prefs.islandShortcut,
       shortcutActive:!!this.registered,
       displays:screen?.getAllDisplays?.().map((display,index)=>({
@@ -98,7 +110,11 @@ class MiniIsland {
 
   place() {
     if (!this.mini || this.mini.isDestroyed()) return;
-    this.placed=bounds(this.display().workArea,this.prefs.islandPosition,this.expanded,this.height);
+    const area=this.display().workArea;
+    const compact=bounds(area,this.prefs.islandPosition,false);
+    const wide=this.expanded||!!this.closing;
+    this.placed=wide?bounds(area,this.prefs.islandPosition,true,this.height):compact;
+    this.fold=wide?fold(compact,this.placed):null;
     this.mini.setBounds(this.placed,false);
   }
 
@@ -109,6 +125,7 @@ class MiniIsland {
     if(next===this.height)return;
     this.height=next;
     this.place();
+    this.owner.publish();
   }
 
   async configure(input) {
@@ -135,7 +152,12 @@ class MiniIsland {
     try { await this.owner.store.save('preferences',settings); }
     catch (error) {this.owner.prefs=previous;if(input.shortcut!==undefined)this.register(previous.islandShortcut);throw error;}
     if (input.enabled === true) await this.show();
-    if (input.enabled === false) this.mini?.hide();
+    if (input.enabled === false) {
+      clearTimeout(this.closing);
+      this.closing=null;
+      this.expanded=false;
+      this.mini?.hide();
+    }
     this.place();
     this.owner.publish();
     return this.owner.public();
@@ -154,15 +176,24 @@ class MiniIsland {
       this.owner.prefs={...this.prefs,islandEnabled:true};
       await this.owner.store.save('preferences',this.prefs);
     }
-    this.expanded=!this.expanded;
+    if(this.expanded){this.collapse();return;}
+    clearTimeout(this.closing);
+    this.closing=null;
+    this.expanded=true;
     this.place();
     mini.showInactive();
     this.owner.publish();
   }
 
   collapse() {
+    if(!this.expanded)return;
     this.expanded=false;
-    this.place();
+    // Hold the transparent canvas until the pill has returned to its anchor.
+    this.closing=setTimeout(()=>{
+      this.closing=null;
+      this.place();
+      this.owner.publish();
+    },COLLAPSE_MS);
     this.owner.publish();
   }
 
@@ -179,7 +210,7 @@ class MiniIsland {
     const mini=this.owner.mini=new BrowserWindow({
       ...bounds(this.display().workArea,this.prefs.islandPosition,false),
       show:false,frame:false,resizable:false,maximizable:false,minimizable:false,fullscreenable:false,
-      skipTaskbar:true,alwaysOnTop:true,backgroundColor:'#141617',title:'Wave · Мини-плеер',
+      skipTaskbar:true,alwaysOnTop:true,transparent:true,hasShadow:false,backgroundColor:'#00000000',title:'Wave · Мини-плеер',
       webPreferences:{preload:require('node:path').join(__dirname,'../preload/mini-preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}
     });
     mini.webContents.setWindowOpenHandler(()=>({action:'deny'}));
@@ -190,7 +221,7 @@ class MiniIsland {
       this.configure({enabled:false}).catch(()=>{mini.hide();this.owner.publish();});
     });
     mini.on('move',()=>{
-      if(this.expanded||mini.isDestroyed())return;
+      if(this.expanded||this.closing||mini.isDestroyed())return;
       const box=mini.getBounds();
       if(box.x===this.placed?.x&&box.y===this.placed?.y)return;
       this.placed=box;
@@ -205,6 +236,7 @@ class MiniIsland {
   }
 
   async close() {
+    clearTimeout(this.closing);
     const {screen,globalShortcut}=this.owner.electron;
     for (const event of ['display-added','display-removed','display-metrics-changed']) screen?.removeListener?.(event,this.onScreen);
     if (this.registered) globalShortcut?.unregister(this.registered);
@@ -215,4 +247,4 @@ class MiniIsland {
   }
 }
 
-module.exports={MiniIsland,DEFAULT_SHORTCUT,shortcut,position,bounds,relative};
+module.exports={MiniIsland,DEFAULT_SHORTCUT,shortcut,position,bounds,relative,fold};
