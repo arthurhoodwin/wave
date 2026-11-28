@@ -5,9 +5,8 @@
  const button=document.getElementById('island-shortcut'),hide=document.getElementById('hide');
  const track=document.getElementById('island-track'),art=document.getElementById('island-art');
  const hint=document.getElementById('island-key-hint'),hideHint=document.getElementById('island-hide-hint');
- const source=document.getElementById('art');
- const logo=art.firstElementChild;
- let wide,cover,coverUrl;
+ const source=document.getElementById('art'),logo=art.firstElementChild;
+ let cover,coverUrl,armed,desired=false,revision=0,settling=null,anchorKey;
 
  function syncCover(){
   const image=source.querySelector('img');
@@ -21,29 +20,92 @@
   art.replaceChildren(thumbnail||logo);
  }
 
- function update(state){
-  if(!state?.island)return;
-  const {expanded,shortcut,shortcutActive,fold}=state.island;
-  const initial=wide===undefined,wideChanged=wide!==!!fold;
-  if(wideChanged)body.dataset.motion='false';
-  wide=!!fold;
-  for(const edge of ['top','right','bottom','left']){
-   shell.style.setProperty('--fold-'+edge,((fold?.[edge]||0)*100)+'%');
-  }
-  if(wideChanged&&(!initial||fold))shell.getBoundingClientRect();
+ function anchor(fold){
+  if(!fold)return;
+  const x=fold.left/(fold.left+fold.right)||0;
+  const y=fold.top/(fold.top+fold.bottom)||0;
+  const key=x+','+y;
+  if(key===anchorKey)return;
+  anchorKey=key;
+  shell.style.setProperty('--anchor-x',String(x));
+  shell.style.setProperty('--anchor-y',String(y));
+ }
+
+ function reflect(expanded,animate){
   const focus=document.activeElement;
-  body.dataset.motion='true';
+  body.dataset.motion=String(animate);
   body.dataset.expanded=String(expanded);
-  body.dataset.playing=String(state.playing===true);
   panel.inert=!expanded;
   compact.inert=expanded;
   if(expanded&&focus===button)hide.focus({preventScroll:true});
   if(!expanded&&panel.contains(focus))button.focus({preventScroll:true});
+  button.setAttribute('aria-expanded',String(expanded));
+ }
+
+ function reset(){
+  revision++;
+  desired=false;
+  settling=null;
+  armed=null;
+  reflect(false,false);
+  shell.getBoundingClientRect();
+ }
+
+ window.WaveIslandMotion={reset,prepare(fold){
+  reset();
+  armed={width:innerWidth,height:innerHeight};
+  shell.style.setProperty('--compact-width',armed.width+'px');
+  shell.style.setProperty('--compact-height',armed.height+'px');
+  anchor(fold);
+  shell.getBoundingClientRect();
+ }};
+
+ function move(expanded){
+  if(desired===expanded)return;
+  desired=expanded;
+  const version=++revision;
+  if(!expanded||!armed){
+   armed=null;
+   reflect(expanded,true);
+   return;
+  }
+  const {width,height}=armed,start=performance.now();
+  armed=null;
+  const afterResize=()=>{
+   if(version!==revision)return;
+   if(innerWidth===width&&innerHeight===height&&performance.now()-start<120){
+    requestAnimationFrame(afterResize);
+    return;
+   }
+   // Commit the still-folded shape with the new viewport before starting the morph.
+   shell.getBoundingClientRect();
+   requestAnimationFrame(()=>{if(version===revision)reflect(true,true);});
+  };
+  requestAnimationFrame(afterResize);
+ }
+
+ function acknowledge(motion){
+  if(!Number.isSafeInteger(motion)||motion===settling)return;
+  settling=motion;
+  const finishes=[shell,compact,panel].flatMap(node=>node.getAnimations()
+   .filter(animation=>['clip-path','opacity'].includes(animation.transitionProperty))
+   .map(animation=>animation.finished));
+  Promise.allSettled(finishes).then(()=>{
+   if(settling===motion&&!desired)window.desktop.settleMotion?.(motion);
+  });
+ }
+
+ function update(state){
+  if(!state?.island)return;
+  const {expanded,shortcut,shortcutActive,fold,settling:motion}=state.island;
+  anchor(fold);
+  move(expanded===true);
+  if(!expanded)acknowledge(motion);
+  body.dataset.playing=String(state.playing===true);
   const key=shortcutActive?shortcut:'';
   if(hint.textContent!==key){hint.textContent=key;hideHint.textContent=key;}
   button.title=key?'Раскрыть мини-плеер · '+key:'Раскрыть мини-плеер';
   hide.title=key?'Свернуть мини-плеер · '+key:'Свернуть мини-плеер';
-  button.setAttribute('aria-expanded',String(expanded));
   for(const control of [button,hide]){
    if(key)control.setAttribute('aria-keyshortcuts',key.replace('Ctrl+','Control+'));
    else control.removeAttribute('aria-keyshortcuts');
@@ -54,7 +116,7 @@
  }
  button.onclick=()=>window.desktop.action('toggleIsland').catch(()=>{});
  document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'&&body.dataset.expanded==='true'){
+  if(event.key==='Escape'&&desired){
    event.preventDefault();window.desktop.action('hideMini').catch(()=>{});
   }
  });

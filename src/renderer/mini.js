@@ -131,15 +131,6 @@
  for(const event of ['pointerup','pointercancel','blur'])window.addEventListener(event,()=>volumeDragging=false);
  volume.addEventListener('blur',()=>volumeDragging=false);
 
- const content=$('island-content');
- let fitFrame;
- function fit(){
-  cancelAnimationFrame(fitFrame);
-  fitFrame=requestAnimationFrame(()=>window.desktop.fit?.(Math.max(36,Math.min(600,content.offsetHeight+2))).catch?.(()=>{}));
- }
- new ResizeObserver(fit).observe(content);
- window.addEventListener('resize',fit);
- document.fonts.ready.then(fit);
  window.desktop.onState(render);
  window.desktop.status().then(render).catch(e=>text(error,e.message));
 })();

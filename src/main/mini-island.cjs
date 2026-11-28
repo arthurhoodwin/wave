@@ -4,8 +4,8 @@ const DEFAULT_SHORTCUT = 'Ctrl+Shift+F9';
 const COLLAPSED_HEIGHT = 36;
 const COLLAPSED_WIDTH = 248;
 const EXPANDED_WIDTH = 342;
-const EXPANDED_HEIGHT = 190;
-const COLLAPSE_MS = 250;
+const EXPANDED_HEIGHT = 198;
+const SETTLE_TIMEOUT = 600;
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 function shortcut(value) {
@@ -63,18 +63,33 @@ class MiniIsland {
   constructor(owner) {
     this.owner = owner;
     this.expanded = false;
+    this.wide = false;
+    this.motionId = 0;
     this.height = EXPANDED_HEIGHT;
     this.onScreen = () => {this.place();owner.publish();};
+    this.onFocus = () => this.hide();
+    this.onBlur = () => this.syncVisibility();
+    this.onBackground = () => {
+      if(this.expanded||this.wide)this.hide();
+      this.syncVisibility();
+    };
   }
 
   get prefs() { return this.owner.prefs; }
-  get mini() { return this.owner.mini; }
+  get mini() { const mini=this.owner.mini;return mini&&!mini.isDestroyed()?mini:null; }
 
   start() {
     const {screen} = this.owner.electron;
     if (!screen) return;
     for (const event of ['display-added','display-removed','display-metrics-changed']) screen.on?.(event,this.onScreen);
     this.register(this.prefs.islandShortcut);
+    this.owner.main?.on?.('focus',this.onFocus);
+    this.owner.main?.on?.('blur',this.onBlur);
+    this.owner.main?.on?.('restore',this.onBlur);
+    this.owner.main?.on?.('show',this.onBlur);
+    this.owner.main?.on?.('minimize',this.onBackground);
+    this.owner.main?.on?.('hide',this.onBackground);
+    this.syncVisibility();
   }
 
   register(candidate) {
@@ -97,7 +112,9 @@ class MiniIsland {
   state() {
     const {screen} = this.owner.electron;
     return {
-      expanded:this.expanded,
+      expanded:this.expanded&&this.wide,
+      visible:!!this.mini?.isVisible?.(),
+      settling:this.closing?this.motionId:null,
       fold:this.fold||null,
       shortcut:this.prefs.islandShortcut,
       shortcutActive:!!this.registered,
@@ -108,19 +125,53 @@ class MiniIsland {
     };
   }
 
-  place() {
-    if (!this.mini || this.mini.isDestroyed()) return;
+  layout() {
     const area=this.display().workArea;
     const compact=bounds(area,this.prefs.islandPosition,false);
-    const wide=this.expanded||!!this.closing;
-    this.placed=wide?bounds(area,this.prefs.islandPosition,true,this.height):compact;
-    this.fold=wide?fold(compact,this.placed):null;
-    this.mini.setBounds(this.placed,false);
+    const expanded=bounds(area,this.prefs.islandPosition,true,this.height);
+    return {compact,expanded};
+  }
+
+  place() {
+    if (!this.mini || this.mini.isDestroyed()) return;
+    const {compact,expanded}=this.layout();
+    const next=this.wide?expanded:compact;
+    this.fold=this.wide?fold(compact,expanded):null;
+    if(this.placed&&Object.keys(next).every(key=>next[key]===this.placed[key]))return;
+    this.placed=next;
+    this.mini.setBounds(next,false);
+  }
+
+  mainFocused() {
+    const main=this.owner.main;
+    return !!main?.isFocused?.()&&main.isVisible?.()!==false&&!main.isMinimized?.();
+  }
+
+  shouldShow() {
+    return !this.closed&&!this.owner.electron.app?.isQuitting&&!!this.prefs.islandEnabled&&!this.mainFocused();
+  }
+
+  syncVisibility() {
+    if(this.shouldShow())this.show().catch(()=>{});
+    else this.hide();
+  }
+
+  hide() {
+    this.motionId++;
+    clearTimeout(this.closing);
+    this.closing=null;
+    this.expanded=false;
+    this.wide=false;
+    if(this.mini&&!this.mini.isDestroyed()){
+      this.mini.hide();
+      this.place();
+    }
+    this.owner.publish();
   }
 
   fit(height) {
     if (!Number.isFinite(height) || height < 36 || height > 720) throw Error('Некорректная высота мини-плеера');
-    if (!this.expanded || !this.mini) return;
+    if (!this.expanded || !this.mini || !this.wide) return;
     const next=Math.ceil(height*(this.mini.webContents.getZoomFactor?.()||1));
     if(next===this.height)return;
     this.height=next;
@@ -151,12 +202,9 @@ class MiniIsland {
     this.owner.prefs=settings;
     try { await this.owner.store.save('preferences',settings); }
     catch (error) {this.owner.prefs=previous;if(input.shortcut!==undefined)this.register(previous.islandShortcut);throw error;}
-    if (input.enabled === true) await this.show();
-    if (input.enabled === false && !this.prefs.islandEnabled) {
-      clearTimeout(this.closing);
-      this.closing=null;
-      this.expanded=false;
-      this.mini?.hide();
+    if(input.enabled!==undefined){
+      if(this.shouldShow())await this.show();
+      else this.hide();
     }
     this.place();
     this.owner.publish();
@@ -164,38 +212,62 @@ class MiniIsland {
   }
 
   async show() {
+    if(!this.shouldShow()||this.expanded||this.mini?.isVisible?.())return;
     const mini=await this.create();
-    if(!this.prefs.islandEnabled)return;
+    if(!this.shouldShow()||this.expanded||mini.isVisible())return;
+    const motion=this.motionId;
+    await mini.webContents.executeJavaScript('window.WaveIslandMotion.reset()');
+    if(!this.shouldShow()||this.expanded||motion!==this.motionId)return;
     this.place();
     mini.showInactive();
     this.owner.publish();
   }
 
   async toggle() {
-    const mini=await this.create();
+    if(this.closed||this.owner.electron.app?.isQuitting||this.mainFocused())return;
     if (!this.prefs.islandEnabled) {
       this.owner.prefs={...this.prefs,islandEnabled:true};
       await this.owner.store.save('preferences',this.prefs);
     }
-    if(!this.prefs.islandEnabled)return;
+    if(!this.shouldShow())return;
     if(this.expanded){this.collapse();return;}
+    const motion=++this.motionId;
     clearTimeout(this.closing);
     this.closing=null;
     this.expanded=true;
-    this.place();
-    mini.showInactive();
-    this.owner.publish();
+    try{
+      const mini=await this.create();
+      if(!this.shouldShow()||motion!==this.motionId)return;
+      if(!this.wide){
+        const {compact,expanded}=this.layout();
+        await mini.webContents.executeJavaScript('window.WaveIslandMotion.prepare('+JSON.stringify(fold(compact,expanded))+')');
+        if(!this.shouldShow()||motion!==this.motionId)return;
+        this.wide=true;
+        this.place();
+      }
+      if(!mini.isVisible())mini.showInactive();
+      this.owner.publish();
+    }catch(error){
+      if(motion===this.motionId){this.hide();this.syncVisibility();}
+      throw error;
+    }
   }
 
   collapse() {
     if(!this.expanded)return;
+    const motion=++this.motionId;
     this.expanded=false;
-    // Hold the transparent canvas until the pill has returned to its anchor.
-    this.closing=setTimeout(()=>{
-      this.closing=null;
-      this.place();
-      this.owner.publish();
-    },COLLAPSE_MS);
+    if(this.wide)this.closing=setTimeout(()=>this.settle(motion),SETTLE_TIMEOUT);
+    else this.syncVisibility();
+    this.owner.publish();
+  }
+
+  settle(motion) {
+    if(!this.closing||motion!==this.motionId||this.expanded)return;
+    clearTimeout(this.closing);
+    this.closing=null;
+    this.wide=false;
+    this.place();
     this.owner.publish();
   }
 
@@ -223,9 +295,9 @@ class MiniIsland {
       this.configure({enabled:false}).catch(()=>{mini.hide();this.owner.publish();});
     });
     mini.on('move',()=>{
-      if(this.expanded||this.closing||mini.isDestroyed())return;
+      if(this.expanded||this.wide||mini.isDestroyed()||!mini.isVisible())return;
       const box=mini.getBounds();
-      if(box.x===this.placed?.x&&box.y===this.placed?.y)return;
+      if(Math.abs(box.x-this.placed?.x)<=2&&Math.abs(box.y-this.placed?.y)<=2)return;
       this.placed=box;
       const display=screen.getDisplayMatching(box);
       this.owner.prefs={...this.prefs,islandDisplay:String(display.id),islandPosition:relative(display.workArea,box)};
@@ -238,7 +310,12 @@ class MiniIsland {
   }
 
   async close() {
+    this.closed=true;
+    this.motionId++;
     clearTimeout(this.closing);
+    this.owner.main?.removeListener?.('focus',this.onFocus);
+    for(const event of ['blur','restore','show'])this.owner.main?.removeListener?.(event,this.onBlur);
+    for(const event of ['minimize','hide'])this.owner.main?.removeListener?.(event,this.onBackground);
     const {screen,globalShortcut}=this.owner.electron;
     for (const event of ['display-added','display-removed','display-metrics-changed']) screen?.removeListener?.(event,this.onScreen);
     if (this.registered) globalShortcut?.unregister(this.registered);

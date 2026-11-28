@@ -7,7 +7,12 @@ html:has(.mini-window),body.mini-window {
   --island-line:#ffffff20;
 }
 .island-shell {
-  --fold-top:0%;--fold-right:0%;--fold-bottom:0%;--fold-left:0%;
+  --extra-width:max(0px, calc(100dvw - var(--compact-width, 248px)));
+  --extra-height:max(0px, calc(100dvh - var(--compact-height, 36px)));
+  --fold-left:calc(var(--extra-width) * var(--anchor-x, .5));
+  --fold-right:calc(var(--extra-width) - var(--fold-left));
+  --fold-top:calc(var(--extra-height) * var(--anchor-y, 0));
+  --fold-bottom:calc(var(--extra-height) - var(--fold-top));
   position:absolute;inset:0;
   background:var(--island-ink);
   border:1px solid var(--island-line);border-radius:18px;
@@ -106,20 +111,17 @@ html:has(.mini-window),body.mini-window {
 }
 @media (prefers-reduced-motion:no-preference) {
   .mini-window[data-motion="true"] .island-shell {
-    transition:clip-path 215ms cubic-bezier(.2,0,0,1),border-radius 215ms cubic-bezier(.2,0,0,1);
+    transition:clip-path 235ms cubic-bezier(.2,0,0,1),border-radius 235ms cubic-bezier(.2,0,0,1);
   }
-  .mini-window[data-motion="true"][data-expanded="true"] .island-shell {transition-duration:250ms;}
   .mini-window[data-motion="true"] .island-compact {
-    transition:opacity 140ms 32ms ease-out,visibility 140ms 32ms;
+    transition:opacity 155ms ease-out,visibility 155ms;
   }
-  .mini-window[data-motion="true"][data-expanded="true"] .island-compact {transition-delay:0ms;}
   .mini-window[data-motion="true"] #island-panel {
-    translate:0 5px;
-    transition:opacity 125ms ease-out,translate 150ms ease-out,visibility 150ms;
+    translate:0 3px;
+    transition:opacity 155ms ease-out,translate 175ms ease-out,visibility 155ms;
   }
   .mini-window[data-motion="true"][data-expanded="true"] #island-panel {
     translate:0 0;
-    transition:opacity 160ms 55ms ease-out,translate 160ms 55ms ease-out,visibility 160ms;
   }
   .mini-window[data-expanded="false"] .island-signal i {
     animation:island-meter 780ms ease-in-out infinite alternate paused;

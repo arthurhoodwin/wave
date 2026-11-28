@@ -167,6 +167,17 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
   const layout=await miniEval("(()=>{const p=document.querySelector('#island-panel'),v=document.querySelector('#volume');return {overflow:p.scrollWidth>p.clientWidth,usable:v.getBoundingClientRect().width>0};})()");
   assert(!layout.overflow&&layout.usable,JSON.stringify({zoom,...layout}));
  }
+ mini.webContents.setZoomFactor(1);
+ await miniDebug.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'no-preference'}]});
+ await setMini({island:{...expandedIsland,expanded:false,fold:null}});
+ mini.setContentSize(248,36);await wait(90);
+ await miniEval("WaveIslandMotion.prepare({left:.14,right:.14,top:0,bottom:.82})");
+ mini.setContentSize(342,198);await wait(90);
+ const poised=await miniEval("({width:innerWidth,height:innerHeight,clip:getComputedStyle(document.querySelector('.island-shell')).clipPath,expanded:document.body.dataset.expanded})");
+ assert.equal(poised.expanded,'false');
+ const [insetTop,insetRight=insetTop,insetBottom=insetTop,insetLeft=insetRight]=poised.clip.split(' round')[0].match(/[-.\d]+(?=px)/g).map(Number);
+ assert(Math.abs(poised.width-insetRight-insetLeft-248)<=3,JSON.stringify(poised));
+ assert(Math.abs(poised.height-insetTop-insetBottom-36)<=3,JSON.stringify(poised));
  miniDebug.detach();report.islandMotion={reversible:true,reducedMotion:true,narrow:true};
  await ev("return (async()=>{const names=(await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==='audiooutput');const output=names.find(d=>d.deviceId&&d.deviceId!=='default');const clip=new Audio();const release=await waveAudio.attach(clip);try{await waveAudio.selectOutput(output?.deviceId||'');if(waveAudio.currentOutput()!==(output?.deviceId||''))throw Error('Unexpected output');await waveAudio.selectOutput('');return {outputs:names.length,switched:!!output};}finally{release();}})()").then(value=>{report.audioOutput=value;});
  assert.equal(await ev("$('mini-open').getAttribute('aria-pressed')"),'false');
@@ -205,37 +216,67 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  await until("$('track-loudness-cancel').hidden");
  assert.match(await ev("$('track-loudness-status').textContent"),/остановлено/);
  await ev("$('track-loudness-enabled').click();$('settings-dialog').close();$('settings-dialog').classList.add('hidden')");
- const islandOwner={electron,main:window,prefs:{islandEnabled:false,islandDisplay:'',islandShortcut:'Ctrl+Alt+Shift+F11'},store:{save:async(kind,prefs)=>{savedIslandEnabled=prefs.islandEnabled;}},publish(){},public(){return island.state();}};
- const island=islandOwner.island=new MiniIsland(islandOwner);
- const switchMiniMode=()=>WindowsIntegration.prototype.action.call(islandOwner,'mini');
+ // Use native Electron for the island and deterministic foreground events for the main window.
+ const {EventEmitter}=require('node:events'),foreground=new EventEmitter();
+ let focused=true,minimized=false;
+ Object.assign(foreground,{isFocused:()=>focused,isVisible:()=>!minimized,isMinimized:()=>minimized});
+ const islandOwner={electron,main:foreground,prefs:{islandEnabled:false,islandDisplay:'',islandShortcut:'Ctrl+Alt+Shift+F11'},store:{save:async(kind,prefs)=>{savedIslandEnabled=prefs.islandEnabled;}},
+  publish(){if(this.mini?.isVisible())this.mini.webContents.send('desktop:state',this.public());},
+  public(){return {prefs:this.prefs,island:island.state(),sleep:{mode:'off'}};}};
+ const island=islandOwner.island=new MiniIsland(islandOwner),switchMiniMode=()=>WindowsIntegration.prototype.action.call(islandOwner,'mini');
+ const nativeUntil=async check=>{
+  const deadline=Date.now()+3000;
+  while(!check()&&Date.now()<deadline)await wait(15);
+  assert(check(),JSON.stringify(island.state()));
+ };
+ let settlements=0;
+ const settled=(_event,token)=>{settlements++;island.settle(token);};
+ electron.ipcMain.handle('desktop:request',(_event,method)=>method==='status'?islandOwner.public():undefined);
+ electron.ipcMain.on('desktop:island-settled',settled);
  try{
   island.start();assert.equal(island.state().shortcutActive,true);
-  await switchMiniMode();
-  assert.equal(savedIslandEnabled,true);assert.equal(island.expanded,false);
-  assert.equal(islandOwner.mini.isVisible(),true);
+  await switchMiniMode();assert.equal(savedIslandEnabled,true);
+  assert.equal(island.state().visible,false);
+  await island.toggle();assert.equal(island.state().visible,false);
+  focused=false;minimized=true;foreground.emit('minimize');
+  await nativeUntil(()=>island.state().visible);
   const compactHeight=islandOwner.mini.getBounds().height;
   assert.equal(island.placed.height,36);
-  // The Windows frame can round the outer native bounds differently from the requested DIPs.
   assert(Math.abs(compactHeight-island.placed.height)<=4,JSON.stringify(islandOwner.mini.getBounds()));
   assert.equal(islandOwner.mini.isAlwaysOnTop(),true);
+  assert.equal(island.expanded,false);
   await island.toggle();assert(islandOwner.mini.getBounds().height>compactHeight+100);assert.equal(islandOwner.mini.isFocused(),false);
   island.collapse();assert(islandOwner.mini.getBounds().height>compactHeight+100);
-  await wait(70);await island.toggle();await wait(260);
+  await wait(45);await island.toggle();await wait(260);
   assert.equal(island.expanded,true);assert(islandOwner.mini.getBounds().height>compactHeight+100);
-  island.collapse();await wait(270);assert.equal(islandOwner.mini.getBounds().height,compactHeight);
+  island.collapse();await nativeUntil(()=>islandOwner.mini.getBounds().height===compactHeight);
+  assert(settlements>0);
   const area=electron.screen.getPrimaryDisplay().workArea;
   islandOwner.prefs.islandPosition={x:1,y:1};island.place();
   const box=islandOwner.mini.getBounds();assert(box.x+box.width<=area.x+area.width+4&&box.y+box.height<=area.y+area.height+4,JSON.stringify({area,box}));
   await island.configure({reset:true});assert.equal(islandOwner.prefs.islandPosition,null);
-  await island.toggle();
-  assert.equal(island.expanded,true);
-  await switchMiniMode();
-  assert.equal(savedIslandEnabled,false);assert.equal(island.expanded,false);
-  assert.equal(islandOwner.mini.isVisible(),false);
-  await switchMiniMode();
-  assert.equal(savedIslandEnabled,true);assert.equal(island.expanded,false);
-  assert.equal(islandOwner.mini.isVisible(),true);
-  report.island={height:compactHeight,above:true,shortcut:true,restored:true,modeToggle:true};
- }finally{await island.close();islandOwner.mini?.destroy();}
+  await island.toggle();assert.equal(island.expanded,true);
+  minimized=false;focused=true;foreground.emit('focus');
+  assert.equal(island.state().visible,false);assert.equal(island.expanded,false);
+  focused=false;foreground.emit('blur');
+  await nativeUntil(()=>island.state().visible);
+  assert.equal(islandOwner.mini.getBounds().height,compactHeight);
+  await island.toggle();assert.equal(island.expanded,true);
+  minimized=true;foreground.emit('minimize');
+  await nativeUntil(()=>island.state().visible);
+  assert.equal(island.expanded,false);assert.equal(islandOwner.mini.getBounds().height,compactHeight);
+  const interrupted=island.toggle();
+  minimized=false;focused=true;foreground.emit('focus');
+  await interrupted;assert.equal(island.state().visible,false);
+  await switchMiniMode();assert.equal(savedIslandEnabled,false);assert.equal(island.state().visible,false);
+  focused=true;minimized=false;foreground.emit('focus');
+  focused=false;minimized=true;foreground.emit('minimize');
+  assert.equal(island.state().visible,false);
+  report.island={height:compactHeight,above:true,shortcut:true,restored:true,modeToggle:true,focus:true,settlements};
+ }finally{
+  electron.ipcMain.removeHandler('desktop:request');
+  electron.ipcMain.removeListener('desktop:island-settled',settled);
+  await island.close();islandOwner.mini?.destroy();
+ }
  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
  }catch(e){fs.writeFileSync(path.join(output,'error.json'),JSON.stringify({error:e.stack,report},null,2));console.error(e.stack);process.exitCode=1;}finally{mini?.destroy();window?.destroy();app.exit(process.exitCode||0);}});
