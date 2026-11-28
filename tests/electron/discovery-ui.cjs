@@ -174,17 +174,22 @@ await ev("fixture.holdDetails();window.oldDelete=WaveManagement.deletePlaylist('
  const island=new MiniIsland(islandOwner);
  try{
   island.start();assert.equal(island.state().shortcutActive,true);
-  await island.show();assert.equal(islandOwner.mini.getBounds().height,36);assert.equal(islandOwner.mini.isAlwaysOnTop(),true);
-  await island.toggle();assert(islandOwner.mini.getBounds().height>36);assert.equal(islandOwner.mini.isFocused(),false);
-  island.collapse();assert(islandOwner.mini.getBounds().height>36);
+  await island.show();
+  const compactHeight=islandOwner.mini.getBounds().height;
+  assert.equal(island.placed.height,36);
+  // The Windows frame can round the outer native bounds differently from the requested DIPs.
+  assert(Math.abs(compactHeight-island.placed.height)<=4,JSON.stringify(islandOwner.mini.getBounds()));
+  assert.equal(islandOwner.mini.isAlwaysOnTop(),true);
+  await island.toggle();assert(islandOwner.mini.getBounds().height>compactHeight+100);assert.equal(islandOwner.mini.isFocused(),false);
+  island.collapse();assert(islandOwner.mini.getBounds().height>compactHeight+100);
   await wait(70);await island.toggle();await wait(260);
-  assert.equal(island.expanded,true);assert(islandOwner.mini.getBounds().height>36);
-  island.collapse();await wait(270);assert.equal(islandOwner.mini.getBounds().height,36);
+  assert.equal(island.expanded,true);assert(islandOwner.mini.getBounds().height>compactHeight+100);
+  island.collapse();await wait(270);assert.equal(islandOwner.mini.getBounds().height,compactHeight);
   const area=electron.screen.getPrimaryDisplay().workArea;
   islandOwner.prefs.islandPosition={x:1,y:1};island.place();
-  const box=islandOwner.mini.getBounds();assert(box.x+box.width<=area.x+area.width&&box.y+box.height<=area.y+area.height);
+  const box=islandOwner.mini.getBounds();assert(box.x+box.width<=area.x+area.width+4&&box.y+box.height<=area.y+area.height+4,JSON.stringify({area,box}));
   await island.configure({reset:true});assert.equal(islandOwner.prefs.islandPosition,null);
-  report.island={height:36,above:true,shortcut:true,restored:true};
+  report.island={height:compactHeight,above:true,shortcut:true,restored:true};
  }finally{await island.close();islandOwner.mini?.destroy();}
  fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
  }catch(e){fs.writeFileSync(path.join(output,'error.json'),JSON.stringify({error:e.stack,report},null,2));console.error(e.stack);process.exitCode=1;}finally{mini?.destroy();window?.destroy();app.exit(process.exitCode||0);}});
