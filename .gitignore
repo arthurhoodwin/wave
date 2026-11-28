@@ -27,3 +27,4 @@ Thumbs.db
 
 # Local code graph, cache and machine-specific runtime paths
 graphify-out/
+/build/windows/island-click.exe

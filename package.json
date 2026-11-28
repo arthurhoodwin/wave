@@ -49,7 +49,8 @@
       "LICENSE",
       "COPYRIGHT",
       "docs/THIRD_PARTY_NOTICES.md",
-      "package.json"
+      "package.json",
+      "build/windows/island-click.exe"
     ],
     "win": {
       "target": [
@@ -76,15 +77,10 @@
     "forceCodeSigning": false,
     "asarUnpack": [
       "build/windows/apply-update.ps1",
-      "src/main/karaoke-worker.cjs"
+      "src/main/karaoke-worker.cjs",
+      "build/windows/island-click.exe"
     ],
-    "buildVersion": "1.2.6.3",
-    "extraResources": [
-      {
-        "from": "work/native/island-click.exe",
-        "to": "island-click.exe"
-      }
-    ]
+    "buildVersion": "1.2.6.3"
   },
   "license": "GPL-3.0-only",
   "repository": {
